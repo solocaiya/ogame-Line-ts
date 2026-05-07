@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.svg" alt="OGame Vue TS Logo" width="128" height="128">
+  <img src="public/logo.svg" alt="OGame Line TS Logo" width="128" height="128">
 
   # OGame Vue TS
 
@@ -15,7 +15,7 @@
 
 ## 关于项目
 
-OGame Vue TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器的太空策略游戏。在银河系中建立你的帝国，研究科技，建造舰船，参与史诗般的太空战斗。本项目采用现代 Web 技术构建，完全在浏览器中运行，提供流畅且响应迅速的游戏体验，所有数据都存储在本地。
+OGame Line TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器的太空策略游戏。在银河系中建立你的帝国，研究科技，建造舰船，参与史诗般的太空战斗。本项目采用现代 Web 技术构建，完全在浏览器中运行，提供流畅且响应迅速的游戏体验，所有数据都存储在本地。
 
 ## 核心特性
 
