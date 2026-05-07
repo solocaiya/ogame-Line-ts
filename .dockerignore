@@ -1,0 +1,31 @@
+# 排除不需要的文件和目录，减少 Docker 构建上下文大小
+
+# 开发工具
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# 构建产物（本地构建时会重新生成）
+docs/
+pkg/
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# CI 相关文件
+.github/
+Dockerfile.ci
+
+# 其他不需要的目录
+android/app/build/
+android/.gradle/
+resources/
+electron/dist/

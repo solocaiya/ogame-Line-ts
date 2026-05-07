@@ -1,0 +1,102 @@
+apply plugin: 'com.android.application'
+
+// 从 package.json 读取版本号
+def packageJsonFile = file('../../package.json')
+def packageJsonText = packageJsonFile.text
+// 使用正则提取版本号
+def versionMatcher = packageJsonText =~ /"version"\s*:\s*"([^"]+)"/
+def appVersionName = versionMatcher ? versionMatcher[0][1] : "1.0.0"
+// 将版本号转换为 versionCode，例如 "1.5.5" -> 1*10000 + 5*100 + 5 = 10505
+def versionParts = appVersionName.split('\\.')
+def appVersionCode = versionParts[0].toInteger() * 10000 + versionParts[1].toInteger() * 100 + versionParts[2].toInteger()
+
+android {
+    namespace = "games.wenzi.ogame"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "games.wenzi.ogame"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode appVersionCode
+        versionName appVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+
+    // 按 ABI 拆分 APK (arm64-v8a, armeabi-v7a, x86_64)
+    splits {
+        abi {
+            enable true
+            reset()
+            include "arm64-v8a", "armeabi-v7a", "x86_64"
+            universalApk false
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storePassword 'ogame123'
+            keyAlias 'ogame'
+            keyPassword 'ogame123'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    // 为每个 ABI 设置不同的 versionCode
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            def abiVersionCode = [
+                "armeabi-v7a": 1,
+                "arm64-v8a": 2,
+                "x86_64": 3
+            ]
+            def abi = output.getFilter(com.android.build.OutputFile.ABI)
+            if (abi != null) {
+                output.versionCodeOverride = abiVersionCode[abi] * 1000 + defaultConfig.versionCode
+                output.outputFileName = "OGame-Vue-Ts-${abi}.apk"
+            }
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

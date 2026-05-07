@@ -1,0 +1,38 @@
+# CI 构建专用的 dockerignore
+# 只保留构建产物和必要的配置文件
+
+# 排除所有源代码和开发文件
+src/
+public/
+electron/
+node_modules/
+.vscode/
+.idea/
+.git/
+.github/
+
+# 排除构建工具配置
+vite.config.ts
+tsconfig*.json
+*.config.js
+*.config.ts
+package.json
+package-lock.json
+pnpm-lock.yaml
+
+# 排除其他构建产物
+pkg/
+android/
+resources/
+
+# 排除临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+*.log
+
+# 只保留以下文件：
+# - docs/ (构建产物)
+# - nginx.conf (nginx配置)
+# - Dockerfile.ci

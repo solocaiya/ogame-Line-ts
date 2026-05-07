@@ -1,0 +1,237 @@
+name: 构建多平台程序 (Go Server & Electron Client)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # 1. 构建 Go 服务端
+  build-server:
+    name: Build Server (${{ matrix.goos }}-${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            executable: OGame-Vue-Ts-server-win.exe
+          - goos: linux
+            goarch: amd64
+            executable: OGame-Vue-Ts-server-linux
+          - goos: linux
+            goarch: arm64
+            executable: OGame-Vue-Ts-server-linux-arm64
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Setup Node & Go
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Build Frontend & Server
+        run: |
+          pnpm install
+          pnpm run build
+          go mod tidy
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o ${{ matrix.executable }} main.go
+
+      - name: Upload Server Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ matrix.executable }}
+
+  # 2. 构建 Android APK (ARM64, ARMv7, x86_64)
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 使用官方 Gradle Action（内置智能缓存）
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Build Frontend
+        run: |
+          pnpm install
+          pnpm run build
+
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - name: Generate Android Icons
+        run: |
+          # 使用 ImageMagick 生成各尺寸图标
+          convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+          convert logo.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert logo.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+          convert logo.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert logo.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+          convert logo.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert logo.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          convert logo.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          convert logo.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+          # foreground 图标需要更大（108dp with 72dp safe zone）
+          convert logo.png -resize 108x108 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+          convert logo.png -resize 162x162 android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+          convert logo.png -resize 216x216 android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+          convert logo.png -resize 324x324 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert logo.png -resize 432x432 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build APK (Release)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --build-cache
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/*.apk
+
+  # 3. 构建 Electron 客户端
+  build-electron:
+    name: Build Electron (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Cache Electron Builder
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-${{ runner.os }}-
+
+      - name: Build Electron
+        run: |
+          pnpm install
+          pnpm run build:electron --${{ matrix.platform }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 【关键点】这里只上传安装包后缀，不上传文件夹
+      - name: Upload Electron Installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-${{ matrix.platform }}
+          path: |
+            pkg/*.exe
+            pkg/*.dmg
+            pkg/*.AppImage
+
+  # 4. 发布 Release
+  release:
+    needs: [build-server, build-android, build-electron]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      # 1. 下载时，不使用 merge-multiple，防止覆盖冲突
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./raw-assets
+
+      # 2. 核心步骤：手动移动文件到一个扁平目录，并强制重命名
+      - name: Flatten and Rename Assets
+        run: |
+          mkdir -p ./final-release
+
+          # 移动 Server 文件并确保名字唯一
+          cp ./raw-assets/server-windows-amd64/OGame-Vue-Ts-server-win.exe ./final-release/OGame-Vue-Ts-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/OGame-Vue-Ts-server-win.exe || true
+          cp ./raw-assets/server-linux-amd64/OGame-Vue-Ts-server-linux ./final-release/OGame-Vue-Ts-server-linux || true
+          cp ./raw-assets/server-linux-arm64/OGame-Vue-Ts-server-linux-arm64 ./final-release/OGame-Vue-Ts-server-linux-arm64 || true
+
+          # 移动 Electron 安装包 (排除 unpacked 目录)
+          find ./raw-assets/electron-* -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" \) -exec cp {} ./final-release/ \;
+
+          # 移动 Android APK
+          find ./raw-assets/android-apk -type f -name "*.apk" -exec cp {} ./final-release/ \; || true
+
+          # 检查结果
+          echo "Final assets to upload:"
+          ls -R ./final-release
+
+      # 3. 删除已存在的同名 APK 资源（避免 422 错误）
+      - name: Delete existing APK assets
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          # 获取 release 中的现有 assets 并删除 APK 文件
+          gh release view "$VERSION" --json assets -q '.assets[].name' 2>/dev/null | grep -i '\.apk$' | while read asset; do
+            echo "Deleting existing asset: $asset"
+            gh release delete-asset "$VERSION" "$asset" -y || true
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. 一次性上传，禁止重复匹配
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          # 重点：只上传这个干净目录下的所有文件，不要再写具体的通配符防止重复
+          files: ./final-release/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

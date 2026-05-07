@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="app_name">OGame Vue Ts</string>
+  <string name="title_activity_main">OGame Vue Ts</string>
+  <string name="package_name">games.wenzi.ogame</string>
+  <string name="custom_url_scheme">games.wenzi.ogame</string>
+</resources>

@@ -1,0 +1,122 @@
+{
+  "name": "ogame-vue-ts",
+  "title": "凯哥牛逼",
+  "qq": "5961866",
+  "id": "tS4YfQpzvq",
+  "author": {
+    "name": "setube",
+    "email": "18612560@qq.com"
+  },
+  "private": true,
+  "version": "1.6.5",
+  "buildDate": "2026/1/23 02:22:24",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 25121",
+    "build": "vue-tsc -b && vite build && node update-build-date.js",
+    "preview": "vite preview",
+    "build:check": "pnpm run build",
+    "build:server": "pnpm run build && go build",
+    "build:electron": "cross-env ELECTRON_BUILD=1 pnpm run build && electron-builder",
+    "build:android": "pnpm run build && npx cap sync android",
+    "build:apk": "pnpm run build:android && cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "@tanstack/vue-table": "^8.21.3",
+    "@vueuse/core": "^14.1.0",
+    "crypto-js": "^4.2.0",
+    "file-saver": "^2.0.5",
+    "finalhandler": "^2.1.1",
+    "lightningcss": "^1.30.2",
+    "lucide-vue-next": "^0.556.0",
+    "marked": "^17.0.1",
+    "motion-v": "^1.7.4",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "reka-ui": "^2.6.1",
+    "serve-static": "^2.2.0",
+    "tailwindcss": "^4.1.17",
+    "vue": "^3.5.24",
+    "vue-router": "4",
+    "vue-sonner": "^2.0.9"
+  },
+  "devDependencies": {
+    "@csstools/postcss-cascade-layers": "^5.0.2",
+    "@types/crypto-js": "^4.2.2",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^24.10.2",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cross-env": "^7.0.3",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "tailwind-merge": "^3.4.0",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "~5.9.3",
+    "vite": "npm:rolldown-vite@7.2.5",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "vite-plugin-pwa": "^1.2.0",
+    "vue-tsc": "^3.1.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@7.2.5"
+    },
+    "onlyBuiltDependencies": [
+      "electron-winstaller",
+      "esbuild",
+      "vue-demi"
+    ],
+    "ignoredBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "build": {
+    "appId": "games.wenzi.ogame",
+    "productName": "凯哥牛逼",
+    "directories": {
+      "output": "pkg"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/favicon.ico",
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "public/favicon.ico",
+      "uninstallerIcon": "public/favicon.ico",
+      "installerHeaderIcon": "public/favicon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "${productName}-mac.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "artifactName": "${productName}-linux.${ext}"
+    }
+  }
+}
