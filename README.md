@@ -119,7 +119,7 @@ pnpm preview
 ---
 
 <div align="center">
-  用 ❤️ 制作，作者：<a href="https://github.com/setube">setube</a>
+  用 ❤️ 制作，作者：<a href="https://github.com/solocaiya">setube</a>
   <br>
-  © 2025 - 保留所有权利（除 CC BY-NC 4.0 许可证授予的权利外）
+  © 2026 - 保留所有权利（除 CC BY-NC 4.0 许可证授予的权利外）
 </div>
