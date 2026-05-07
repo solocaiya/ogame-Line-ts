@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/logo.svg" alt="OGame Line TS Logo" width="128" height="128">
 
-  # OGame Vue TS
+  # OGame Line TS
 
   一个基于 Vue 3 和 TypeScript 构建的现代化 OGame 太空策略游戏。
 
