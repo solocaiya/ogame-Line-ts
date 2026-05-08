@@ -4,8 +4,8 @@
   "qq": "5961866",
   "id": "tS4YfQpzvq",
   "author": {
-    "name": "玖玖",
-    "email": "@qq.com"
+    "name": "setube",
+    "email": "18612560@qq.com"
   },
   "private": true,
   "version": "1.6.5",
@@ -60,11 +60,10 @@
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
-    "rolldown-vite": "^7.2.5",
     "tailwind-merge": "^3.4.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "~5.9.3",
-    "vite": "npm:rolldown-vite@^7.2.5",
+    "vite": "npm:rolldown-vite@7.2.5",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
     "vite-plugin-pwa": "^1.2.0",
