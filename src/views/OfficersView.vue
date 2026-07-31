@@ -7,7 +7,10 @@
         <CardHeader>
           <div class="mb-2">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-              <CardTitle class="text-sm sm:text-base lg:text-lg order-2 sm:order-1">{{ OFFICERS[officerType].name }}</CardTitle>
+              <div class="flex items-center gap-2 order-2 sm:order-1">
+                <GameItemIcon :src="OFFICERS[officerType].icon" :alt="OFFICERS[officerType].name" size="sm" />
+                <CardTitle class="text-sm sm:text-base lg:text-lg">{{ OFFICERS[officerType].name }}</CardTitle>
+              </div>
               <Badge v-if="isOfficerActive(officerType)" variant="default" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
                 {{ t('officersView.activated') }}
               </Badge>
@@ -163,6 +166,7 @@
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
   import ResourceIcon from '@/components/common/ResourceIcon.vue'
+  import GameItemIcon from '@/components/common/GameItemIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,

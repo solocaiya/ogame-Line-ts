@@ -36,12 +36,15 @@
         <CardHeader>
           <div class="mb-2">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-              <CardTitle
-                class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 order-2 sm:order-1"
-                @click="detailDialog.openBuilding(buildingType, getBuildingLevel(buildingType))"
-              >
-                {{ BUILDINGS[buildingType].name }}
-              </CardTitle>
+              <div class="flex items-center gap-2 order-2 sm:order-1">
+                <GameItemIcon :src="BUILDINGS[buildingType].icon" :alt="BUILDINGS[buildingType].name" size="sm" />
+                <CardTitle
+                  class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
+                  @click="detailDialog.openBuilding(buildingType, getBuildingLevel(buildingType))"
+                >
+                  {{ BUILDINGS[buildingType].name }}
+                </CardTitle>
+              </div>
               <Badge variant="secondary" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
                 Lv {{ getBuildingLevel(buildingType) }}
               </Badge>
@@ -198,6 +201,7 @@
   import { Badge } from '@/components/ui/badge'
   import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import CardUnlockOverlay from '@/components/common/CardUnlockOverlay.vue'
+  import GameItemIcon from '@/components/common/GameItemIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,

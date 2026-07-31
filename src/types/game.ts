@@ -62,6 +62,7 @@ export interface BuildingConfig {
   id: BuildingType
   name: string
   description: string
+  icon?: string // 图标路径
   baseCost: Resources
   baseTime: number // 基础建造时间(秒)
   costMultiplier: number // 升级成本倍数
@@ -115,6 +116,7 @@ export interface TechnologyConfig {
   id: TechnologyType
   name: string
   description: string
+  icon?: string // 图标路径
   baseCost: Resources
   baseTime: number
   costMultiplier: number
@@ -152,6 +154,7 @@ export interface DefenseConfig {
   id: DefenseType
   name: string
   description: string
+  icon?: string // 图标路径
   cost: Resources
   buildTime: number
   attack: number
@@ -186,6 +189,7 @@ export interface ShipConfig {
   id: ShipType
   name: string
   description: string
+  icon?: string // 图标路径
   cost: Resources
   buildTime: number
   cargoCapacity: number
@@ -733,6 +737,7 @@ export interface OfficerConfig {
   id: OfficerType
   name: string
   description: string
+  icon?: string // 图标路径
   cost: Resources // 招募成本
   weeklyMaintenance: Resources // 每周维护费用
   benefits: {

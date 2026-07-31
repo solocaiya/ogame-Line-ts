@@ -34,12 +34,15 @@
         <CardHeader>
           <div class="mb-2">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-              <CardTitle
-                class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 order-2 sm:order-1"
-                @click="detailDialog.openShip(shipType)"
-              >
-                {{ SHIPS[shipType].name }}
-              </CardTitle>
+              <div class="flex items-center gap-2 order-2 sm:order-1">
+                <GameItemIcon :src="SHIPS[shipType].icon" :alt="SHIPS[shipType].name" size="sm" />
+                <CardTitle
+                  class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4"
+                  @click="detailDialog.openShip(shipType)"
+                >
+                  {{ SHIPS[shipType].name }}
+                </CardTitle>
+              </div>
               <Badge variant="secondary" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
                 {{ formatNumber(planet.fleet[shipType] || 0) }}
               </Badge>
@@ -223,6 +226,7 @@
   } from '@/components/ui/alert-dialog'
   import UnlockRequirement from '@/components/common/UnlockRequirement.vue'
   import CardUnlockOverlay from '@/components/common/CardUnlockOverlay.vue'
+  import GameItemIcon from '@/components/common/GameItemIcon.vue'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
   import * as shipValidation from '@/logic/shipValidation'
   import * as publicLogic from '@/logic/publicLogic'
