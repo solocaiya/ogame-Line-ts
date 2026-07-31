@@ -1465,7 +1465,7 @@ export default {
     sections: {
       introduction: {
         title: '简介',
-        content: '本隐私协议说明了 凯哥牛逼 如何处理您的数据。我们致力于保护您的隐私，本游戏的设计完全尊重用户隐私。'
+        content: '本隐私协议说明了 无限星辰 如何处理您的数据。我们致力于保护您的隐私，本游戏的设计完全尊重用户隐私。'
       },
       dataCollection: {
         title: '数据收集',

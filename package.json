@@ -1,6 +1,6 @@
 {
   "name": "ogame-vue-ts",
-  "title": "凯哥牛逼",
+  "title": "无限星辰",
   "qq": "5961866",
   "id": "tS4YfQpzvq",
   "author": {
@@ -84,7 +84,7 @@
   },
   "build": {
     "appId": "games.wenzi.ogame",
-    "productName": "凯哥牛逼",
+    "productName": "无限星辰",
     "directories": {
       "output": "pkg"
     },
