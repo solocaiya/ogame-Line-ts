@@ -23,7 +23,7 @@ export default defineConfig(async () => {
         background_color: '#000000',
         display: 'fullscreen',
         orientation: 'any',
-        icons: [{ src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+        icons: [{ src: 'logo.png', sizes: '1024x1024', type: 'image/png', purpose: 'any' }]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3,wav,json}'],

@@ -2,7 +2,7 @@
   <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/50 p-4">
     <!-- Logo 和标题 -->
     <div class="text-center mb-8 animate-fade-in">
-      <img src="@/assets/logo.svg" alt="OGame Logo" class="w-24 h-24 mx-auto mb-4" />
+      <img src="@/assets/logo.png" alt="OGame Logo" class="w-24 h-24 mx-auto mb-4" />
       <h1 class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
         {{ pkg.title }}
       </h1>

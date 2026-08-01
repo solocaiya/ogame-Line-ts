@@ -8,7 +8,7 @@
       <!-- 标志 -->
       <SidebarHeader class="border-b">
         <div class="flex items-center justify-center p-4 group-data-[collapsible=icon]:p-2">
-          <img src="@/assets/logo.svg" class="w-10 group-data-[collapsible=icon]:w-8" />
+          <img src="@/assets/logo.png" class="w-10 group-data-[collapsible=icon]:w-8" />
           <h1 class="text-xl font-bold ml-2 group-data-[collapsible=icon]:hidden">{{ pkg.title }}</h1>
         </div>
       </SidebarHeader>
