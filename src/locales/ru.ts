@@ -2398,6 +2398,7 @@ export default {
     totalWaiting: 'Всего ожидающих',
     globalEstimate: 'Общее расч. завершение',
     cancelAll: 'Отменить все',
+    cancelHint: 'Можно отменить только первый элемент',
     resourceSummary: 'Потребность ресурсов очереди ожидания'
   }
 }

@@ -2327,6 +2327,7 @@ export default {
     totalWaiting: '총 대기중',
     globalEstimate: '전체 예상 완료',
     cancelAll: '전체 취소',
+    cancelHint: '대기열 첫 항목만 취소 가능',
     resourceSummary: '대기열 자원 요구량'
   }
 }

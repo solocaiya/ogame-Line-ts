@@ -2514,6 +2514,7 @@ export default {
     totalWaiting: 'Total Waiting',
     globalEstimate: 'Global Est. Completion',
     cancelAll: 'Cancel All',
+    cancelHint: 'Only the first item can be cancelled',
     resourceSummary: 'Waiting Queue Resource Requirements'
   }
 }

@@ -269,10 +269,10 @@
   const getTotalLoss = (report: BattleResult) => {
     const isAttacker = gameStore.player.planets.some(p => p.id === report.attackerPlanetId)
     if (isAttacker) {
-      return Object.values(report.attackerLosses).reduce((sum, c) => sum + c, 0)
+      return Object.values(report.attackerLosses || {}).reduce((sum, c) => sum + c, 0)
     }
-    const fleetLoss = Object.values(report.defenderLosses.fleet || {}).reduce((sum, c) => sum + c, 0)
-    const defenseLoss = Object.values(report.defenderLosses.defense || {}).reduce((sum, c) => sum + c, 0)
+    const fleetLoss = Object.values(report.defenderLosses?.fleet || {}).reduce((sum, c) => sum + c, 0)
+    const defenseLoss = Object.values(report.defenderLosses?.defense || {}).reduce((sum, c) => sum + c, 0)
     return fleetLoss + defenseLoss
   }
 </script>

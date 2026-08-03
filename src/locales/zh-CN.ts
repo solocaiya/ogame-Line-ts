@@ -2414,6 +2414,7 @@ export default {
     totalWaiting: '总等待中',
     globalEstimate: '全局预计完成',
     cancelAll: '全部取消',
+    cancelHint: '仅可取消队列首项',
     resourceSummary: '等待队列资源需求'
   }
 }

@@ -2500,6 +2500,7 @@ export default {
     totalWaiting: 'Total en espera',
     globalEstimate: 'Finalización est. global',
     cancelAll: 'Cancelar todo',
+    cancelHint: 'Solo se puede cancelar el primer elemento',
     resourceSummary: 'Recursos necesarios en cola de espera'
   }
 }

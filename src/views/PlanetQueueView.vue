@@ -79,12 +79,15 @@
                     :style="{ width: getProgress(item) + '%' }"
                   />
                 </div>
-                <!-- 取消按钮 -->
+                <!-- 取消按钮（仅队列首项可取消） -->
                 <div v-if="index === 0" class="mt-2 flex justify-end">
                   <Button variant="ghost" size="sm" class="text-xs text-destructive gap-1" @click="cancelActiveItem(planet.id, item.id)">
                     <X class="h-3 w-3" />
                     {{ t('queueManagement.cancel') }}
                   </Button>
+                </div>
+                <div v-else-if="index === 1 && planet.buildQueue && planet.buildQueue.length > 1" class="mt-1 text-xs text-muted-foreground text-right">
+                  {{ t('queueManagement.cancelHint') }}
                 </div>
               </div>
             </div>

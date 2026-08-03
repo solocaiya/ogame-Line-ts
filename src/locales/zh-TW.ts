@@ -2567,6 +2567,7 @@ export default {
     totalWaiting: '總等待中',
     globalEstimate: '全局預計完成',
     cancelAll: '全部取消',
+    cancelHint: '僅可取消隊列首項',
     resourceSummary: '等待佇列資源需求'
   }
 }

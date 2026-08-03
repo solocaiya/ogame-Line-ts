@@ -150,7 +150,7 @@ export function useBattleStats() {
   }
 }
 
-// 简化损失计算（用于统计，不需要精确到每个舰船的配置）
+// 损失基础估值（不含科技加成，仅用于统计展示，非精确损失值）
 const SHIP_BASE_VALUES: Record<string, number> = {
   lightFighter: 3000, heavyFighter: 6000, cruiser: 20000,
   battleship: 45000, smallCargo: 4000, largeCargo: 12000,

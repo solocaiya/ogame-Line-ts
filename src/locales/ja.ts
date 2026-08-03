@@ -2386,6 +2386,7 @@ export default {
     totalWaiting: '総待機中',
     globalEstimate: '全体推定完了',
     cancelAll: 'すべてキャンセル',
+    cancelHint: 'キューの最初の項目のみキャンセル可能',
     resourceSummary: '待機キューのリソース要件'
   }
 }

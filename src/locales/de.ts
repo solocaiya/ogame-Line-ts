@@ -2402,6 +2402,7 @@ export default {
     totalWaiting: 'Gesamt wartend',
     globalEstimate: 'Globale geschätzte Fertigstellung',
     cancelAll: 'Alle abbrechen',
+    cancelHint: 'Nur das erste Element kann abgebrochen werden',
     resourceSummary: 'Ressourcenbedarf der Warteschlange'
   }
 }
