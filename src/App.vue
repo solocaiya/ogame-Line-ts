@@ -885,6 +885,17 @@
       // 初始化或更新玩家积分
       gameStore.player.points = publicLogic.calculatePlayerPoints(gameStore.player)
 
+      // 导入数据时补发首次登录月球（如果未领取过）
+      if (!gameStore.player.firstLoginMoonGiftClaimed && gameStore.player.planets.length > 0) {
+        const homePlanet = gameStore.player.planets[0]
+        const moonPosition = { ...homePlanet.position }
+        const moonDiameter = 4500
+        const moon = planetLogic.createMoon(homePlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
+        gameStore.player.planets.push(moon)
+        gameStore.player.firstLoginMoonGiftClaimed = true
+        showFirstLoginMoonDialog.value = true
+      }
+
       return
     }
     gameStore.player = gameLogic.initializePlayer(gameStore.player.id, t('common.playerName'))
