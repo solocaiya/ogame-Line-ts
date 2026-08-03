@@ -8,11 +8,12 @@ import (
 
 // Hub manages all WebSocket client connections and message broadcasting.
 type Hub struct {
-	mu         sync.RWMutex
-	clients    map[string]*Client // playerID -> client
-	broadcast  chan []byte
-	register   chan *Client
-	unregister chan *Client
+	mu             sync.RWMutex
+	clients        map[string]*Client // playerID -> client
+	broadcast      chan []byte
+	register       chan *Client
+	unregister     chan *Client
+	allowedOrigins []string // empty = allow all (dev); set for production
 }
 
 // Message is the envelope for all WebSocket messages.
@@ -22,13 +23,15 @@ type Message struct {
 	Timestamp int64           `json:"timestamp"`
 }
 
-// NewHub creates a new Hub.
-func NewHub() *Hub {
+// NewHub creates a new Hub. allowedOrigins restricts WebSocket origins;
+// empty slice allows all (development mode).
+func NewHub(allowedOrigins []string) *Hub {
 	return &Hub{
-		clients:    make(map[string]*Client),
-		broadcast:  make(chan []byte, 256),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		clients:        make(map[string]*Client),
+		broadcast:      make(chan []byte, 256),
+		register:       make(chan *Client),
+		unregister:     make(chan *Client),
+		allowedOrigins: allowedOrigins,
 	}
 }
 

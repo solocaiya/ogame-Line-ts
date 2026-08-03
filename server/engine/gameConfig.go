@@ -127,6 +127,26 @@ var ShipDefs = map[string]ShipDef{
 	},
 }
 
+// ResearchDefs contains all research technology definitions.
+// Costs scale exponentially: floor(baseCost * costMultiplier^(level-1))
+var ResearchDefs = map[string]ResearchDef{
+	"weaponsTech":   {BaseCost: CostEntry{Metal: 800, Crystal: 200}, BaseTime: 60, CostMultiplier: 1.75},
+	"shieldingTech": {BaseCost: CostEntry{Metal: 200, Crystal: 800}, BaseTime: 60, CostMultiplier: 1.75},
+	"armorTech":     {BaseCost: CostEntry{Metal: 200, Crystal: 600}, BaseTime: 60, CostMultiplier: 1.75},
+	"energyTech":    {BaseCost: CostEntry{Crystal: 800, Deuterium: 400}, BaseTime: 60, CostMultiplier: 1.75},
+	"laserTech":     {BaseCost: CostEntry{Metal: 200, Crystal: 400}, BaseTime: 60, CostMultiplier: 1.75},
+	"ionTech":       {BaseCost: CostEntry{Metal: 1000, Crystal: 300, Deuterium: 100}, BaseTime: 120, CostMultiplier: 1.75},
+	"hyperspaceTech": {BaseCost: CostEntry{Metal: 2000, Crystal: 4000, Deuterium: 600}, BaseTime: 180, CostMultiplier: 1.75},
+	"combustionDrive": {BaseCost: CostEntry{Metal: 400, Crystal: 600, Deuterium: 150}, BaseTime: 60, CostMultiplier: 1.75},
+	"impulseDrive":    {BaseCost: CostEntry{Metal: 2000, Crystal: 4000, Deuterium: 600}, BaseTime: 120, CostMultiplier: 1.75},
+	"hyperspaceDrive": {BaseCost: CostEntry{Metal: 10000, Crystal: 20000, Deuterium: 6000}, BaseTime: 240, CostMultiplier: 1.75},
+	"espionageTech":   {BaseCost: CostEntry{Metal: 200, Crystal: 1000, Deuterium: 200}, BaseTime: 60, CostMultiplier: 1.75},
+	"computerTech":    {BaseCost: CostEntry{Crystal: 400, Deuterium: 600}, BaseTime: 60, CostMultiplier: 1.75},
+	"astrophysics":    {BaseCost: CostEntry{Metal: 4000, Crystal: 8000, Deuterium: 4000}, BaseTime: 300, CostMultiplier: 1.75},
+	"intergalacticResearchNetwork": {BaseCost: CostEntry{Metal: 240000, Crystal: 400000, Deuterium: 160000}, BaseTime: 600, CostMultiplier: 1.75},
+	"gravitonTech":    {BaseCost: CostEntry{Metal: 300000, Crystal: 300000, Deuterium: 300000}, BaseTime: 300, CostMultiplier: 3.0},
+}
+
 // DefenseDefs contains all defense definitions.
 var DefenseDefs = map[string]DefenseDef{
 	"rocketLauncher": {

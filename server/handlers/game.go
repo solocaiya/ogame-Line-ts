@@ -84,7 +84,7 @@ func (h *GameHandler) InitPlayer(c *gin.Context) {
 		Ships:         map[string]int{"smallCargo": 3, "espionageProbe": 1},
 		Defenses:      map[string]int{"rocketLauncher": 5},
 		Resources:     engine.Resources{Metal: 500, Crystal: 300, Deuterium: 100},
-		StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 0},
+		StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 5000},
 		Production:    engine.Resources{},
 		BuildingQueue: []engine.BuildingQueueItem{},
 		ResearchQueue: []engine.ResearchQueueItem{},
@@ -267,6 +267,17 @@ func (h *GameHandler) StartDefenseProduction(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "endTime": endTime})
 }
 
+// validMissionTypes is the set of allowed fleet mission types.
+var validMissionTypes = map[string]bool{
+	"attack":     true,
+	"deploy":     true,
+	"transport":  true,
+	"spy":        true,
+	"recycle":    true,
+	"colonize":   true,
+	"expedition": true,
+}
+
 // SendFleet dispatches a fleet mission.
 func (h *GameHandler) SendFleet(c *gin.Context) {
 	playerID := c.GetString("user_id")
@@ -280,6 +291,11 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !validMissionTypes[req.MissionType] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid mission type"})
 		return
 	}
 
@@ -476,26 +492,8 @@ func (h *GameHandler) StartResearch(c *gin.Context) {
 		return
 	}
 
-	// Research costs and times (simplified — based on research lab level)
-	researchCosts := map[string]engine.CostEntry{
-		"weaponsTech":   {Metal: 800, Crystal: 200, Deuterium: 0},
-		"shieldingTech": {Metal: 200, Crystal: 800, Deuterium: 0},
-		"armorTech":     {Metal: 200, Crystal: 600, Deuterium: 0},
-		"energyTech":    {Metal: 0, Crystal: 800, Deuterium: 400},
-		"laserTech":     {Metal: 200, Crystal: 400, Deuterium: 0},
-		"ionTech":       {Metal: 1000, Crystal: 300, Deuterium: 100},
-		"hyperspaceTech": {Metal: 2000, Crystal: 4000, Deuterium: 600},
-		"combustionDrive": {Metal: 400, Crystal: 600, Deuterium: 150},
-		"impulseDrive":    {Metal: 2000, Crystal: 4000, Deuterium: 600},
-		"hyperspaceDrive": {Metal: 10000, Crystal: 20000, Deuterium: 6000},
-		"espionageTech":   {Metal: 200, Crystal: 1000, Deuterium: 200},
-		"computerTech":    {Metal: 0, Crystal: 400, Deuterium: 600},
-		"astrophysics":    {Metal: 4000, Crystal: 8000, Deuterium: 4000},
-		"intergalacticResearchNetwork": {Metal: 240000, Crystal: 400000, Deuterium: 160000},
-		"gravitonTech":    {Metal: 0, Crystal: 0, Deuterium: 0}, // special
-	}
-
-	costEntry, ok := researchCosts[req.ResearchType]
+	// Look up research definition from config
+	researchDef, ok := engine.ResearchDefs[req.ResearchType]
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid research type"})
 		return
@@ -517,19 +515,20 @@ func (h *GameHandler) StartResearch(c *gin.Context) {
 		currentLevel := planet.Technologies[req.ResearchType]
 		targetLevel := currentLevel + 1
 
-		// Cost scales with level
+		// Exponential cost scaling: floor(baseCost * multiplier^(level-1))
+		cost := engine.CalculateResearchCost(researchDef.BaseCost, researchDef.CostMultiplier, targetLevel)
 		totalCost := engine.Resources{
-			Metal:     costEntry.Metal * int64(targetLevel),
-			Crystal:   costEntry.Crystal * int64(targetLevel),
-			Deuterium: costEntry.Deuterium * int64(targetLevel),
+			Metal:     cost.Metal,
+			Crystal:   cost.Crystal,
+			Deuterium: cost.Deuterium,
 		}
 
 		if !planet.Resources.CanAfford(totalCost) {
 			return fmt.Errorf("insufficient resources")
 		}
 
-		// Research time = base * level / (1 + labLevel * 0.1)
-		baseTime := 60 * targetLevel // simplified
+		// Research time = baseTime * level / (1 + labLevel * 0.1)
+		baseTime := researchDef.BaseTime * targetLevel
 		buildTime := int(float64(baseTime) / (1.0 + float64(labLevel)*0.1))
 		if buildTime < 1 {
 			buildTime = 1

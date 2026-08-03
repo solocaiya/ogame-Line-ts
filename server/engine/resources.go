@@ -69,7 +69,7 @@ func CalculateResourceProduction(planet *PlanetState, gameSpeed int) (production
 	deuteriumProd *= speed
 
 	// Dark matter: level * 100 * 1.5^level
-	darkMatterLvl := level("darkMatterMine")
+	darkMatterLvl := level("darkMatterCollector")
 	darkMatterProd := float64(darkMatterLvl) * DarkMatterBase * math.Pow(1.5, float64(darkMatterLvl))
 	darkMatterProd *= speed
 

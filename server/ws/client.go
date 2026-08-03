@@ -3,6 +3,7 @@ package ws
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,14 +18,6 @@ const (
 	sendBufSize    = 256
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for now
-	},
-}
-
 // Client represents a single WebSocket connection.
 type Client struct {
 	Hub      *Hub
@@ -34,8 +27,39 @@ type Client struct {
 	done     bool // set under Hub lock before closing Send; prevents send-on-closed-channel panics
 }
 
+// checkOrigin validates the request Origin against allowedOrigins.
+// Empty allowedOrigins permits all (development mode).
+func (h *Hub) checkOrigin(r *http.Request) bool {
+	if len(h.allowedOrigins) == 0 {
+		return true // dev mode: allow all
+	}
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true // same-origin requests (non-browser clients)
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := parsed.Host
+	if host == "" {
+		host = parsed.Path
+	}
+	for _, allowed := range h.allowedOrigins {
+		if host == allowed || origin == allowed {
+			return true
+		}
+	}
+	return false
+}
+
 // HandleWS upgrades HTTP to WebSocket and registers the client.
 func (h *Hub) HandleWS(c *gin.Context, playerID string) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     h.checkOrigin,
+	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade failed: %v", err)

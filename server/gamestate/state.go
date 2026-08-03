@@ -151,12 +151,15 @@ func (gs *GameState) EnsurePlayer(playerID string, gameSpeed int) {
 }
 
 // Tick processes all pending actions for all players.
+// Holds the write lock for the entire duration — the inner work per player
+// (resource arithmetic, queue timers, fleet time comparisons) is fast, and
+// battles only fire when fleets arrive (infrequent). This keeps the code
+// simple and correct: no data races with concurrent API reads/writes.
 func (gs *GameState) Tick() {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
 	now := time.Now().UnixMilli()
-
 	for _, player := range gs.players {
 		gs.tickPlayer(player, now)
 	}
@@ -171,32 +174,152 @@ func (gs *GameState) TickPlayer(playerID string) error {
 	if !ok {
 		return fmt.Errorf("player not found: %s", playerID)
 	}
-
 	now := time.Now().UnixMilli()
 	gs.tickPlayer(player, now)
 	return nil
 }
 
+// tickPlayer processes all pending actions for one player.
+// Called with gs.mu held (write lock).
 func (gs *GameState) tickPlayer(player *engine.PlayerState, now int64) {
+	// Update resources for all planets.
 	for _, planet := range player.Planets {
-		// Update resources
 		engine.UpdatePlanetResources(planet, now, player.GameSpeed)
-
-		// Process building queues
 		gs.processBuildingQueue(planet, now, player.GameSpeed)
-
-		// Process research queues
 		gs.processResearchQueue(planet, now, player.GameSpeed)
-
-		// Process ship queues
 		gs.processShipQueue(planet, now, player.GameSpeed)
-
-		// Process defense queues
 		gs.processDefenseQueue(planet, now, player.GameSpeed)
 	}
 
-	// Process fleet missions
-	gs.processFleetMissions(player, now)
+	// Process fleet missions.
+	for i := range player.FleetMissions {
+		mission := &player.FleetMissions[i]
+
+		if mission.Status == "outbound" && now >= mission.ArrivalTime {
+			gs.processFleetArrival(player, mission, now)
+		} else if mission.Status == "returning" && now >= mission.ReturnTime {
+			gs.processFleetReturn(player, mission, now)
+		}
+	}
+
+	// Clean up completed missions.
+	active := player.FleetMissions[:0]
+	for _, m := range player.FleetMissions {
+		if m.Status != "completed" {
+			active = append(active, m)
+		}
+	}
+	player.FleetMissions = active
+}
+
+// processFleetArrival handles a fleet mission that has arrived at its target.
+// Called with gs.mu held (write lock).
+func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *engine.FleetMission, now int64) {
+	switch mission.MissionType {
+	case "attack":
+		defenderPlanet := gs.findPlanetByCoord(mission.Target)
+		if defenderPlanet == nil {
+			mission.Status = "returning"
+			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+			break
+		}
+
+		var originPlanet *engine.PlanetState
+		for _, p := range player.Planets {
+			if p.Coordinate == mission.Origin {
+				originPlanet = p
+				break
+			}
+		}
+		if originPlanet == nil {
+			mission.Status = "returning"
+			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+			break
+		}
+
+		attackerSide := engine.BattleSide{
+			Ships:      mission.Fleet,
+			Defense:    map[string]int{},
+			WeaponTech: originPlanet.Technologies["weaponsTech"],
+			ShieldTech: originPlanet.Technologies["shieldingTech"],
+			ArmorTech:  originPlanet.Technologies["armorTech"],
+		}
+		defenderSide := engine.BattleSide{
+			Ships:             defenderPlanet.Ships,
+			Defense:           defenderPlanet.Defenses,
+			WeaponTech:        defenderPlanet.Technologies["weaponsTech"],
+			ShieldTech:        defenderPlanet.Technologies["shieldingTech"],
+			ArmorTech:         defenderPlanet.Technologies["armorTech"],
+			DefenderResources: defenderPlanet.Resources,
+		}
+
+		result := engine.SimulateBattle(attackerSide, defenderSide, 0)
+
+		mission.Fleet = result.AttackerRemaining
+		defenderPlanet.Ships = result.DefenderFleetRemaining
+		defenderPlanet.Defenses = result.DefenderDefenseRemaining
+		mission.Cargo = mission.Cargo.Add(result.Plunder)
+		defenderPlanet.Resources = defenderPlanet.Resources.Sub(result.Plunder)
+		player.DebrisField = player.DebrisField.Add(result.DebrisField)
+
+		gs.emitEvent(GameEvent{
+			Type:     "battleResult",
+			PlayerID: player.ID,
+			Data: map[string]interface{}{
+				"missionId": mission.ID,
+				"target":    mission.Target,
+				"winner":    result.Winner,
+				"rounds":    result.Rounds,
+				"plunder":   result.Plunder,
+				"debris":    result.DebrisField,
+				"remaining": result.AttackerRemaining,
+			},
+		})
+
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	case "deploy":
+		targetPlanet := gs.findPlanetByCoord(mission.Target)
+		if targetPlanet != nil {
+			for shipType, count := range mission.Fleet {
+				targetPlanet.Ships[shipType] += count
+			}
+			targetPlanet.Resources = targetPlanet.Resources.Add(mission.Cargo)
+		}
+		mission.Fleet = map[string]int{}
+		mission.Cargo = engine.Resources{}
+		mission.Status = "completed"
+
+	case "transport":
+		targetPlanet := gs.findPlanetByCoord(mission.Target)
+		if targetPlanet != nil {
+			targetPlanet.Resources = targetPlanet.Resources.Add(mission.Cargo)
+		}
+		mission.Cargo = engine.Resources{}
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	case "spy":
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	case "recycle":
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	case "colonize":
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	case "expedition":
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+
+	default:
+		mission.Status = "returning"
+		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+	}
 }
 
 func (gs *GameState) processBuildingQueue(planet *engine.PlanetState, now int64, gameSpeed int) {
@@ -290,163 +413,6 @@ func (gs *GameState) processDefenseQueue(planet *engine.PlanetState, now int64, 
 			Type: "defenseComplete",
 			Data: map[string]interface{}{"planetId": planet.ID, "type": item.Type, "count": item.Count},
 		})
-	}
-}
-
-func (gs *GameState) processFleetMissions(player *engine.PlayerState, now int64) {
-	for i := range player.FleetMissions {
-		mission := &player.FleetMissions[i]
-
-		if mission.Status == "outbound" && now >= mission.ArrivalTime {
-			// Fleet arrived at target
-			gs.processFleetArrival(player, mission, now)
-		} else if mission.Status == "returning" && now >= mission.ReturnTime {
-			// Fleet returned home
-			gs.processFleetReturn(player, mission, now)
-		}
-	}
-
-	// Clean up completed missions
-	var active []engine.FleetMission
-	for _, m := range player.FleetMissions {
-		if m.Status != "completed" {
-			active = append(active, m)
-		}
-	}
-	player.FleetMissions = active
-}
-
-func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *engine.FleetMission, now int64) {
-	switch mission.MissionType {
-	case "attack":
-		// Find target planet (defender)
-		defenderPlanet := gs.findPlanetByCoord(mission.Target)
-
-		if defenderPlanet == nil {
-			// No defender found (planet doesn't exist) — just return
-			mission.Status = "returning"
-			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-			break
-		}
-
-		// Find origin planet for tech levels
-		var originPlanet *engine.PlanetState
-		for _, p := range player.Planets {
-			if p.Coordinate == mission.Origin {
-				originPlanet = p
-				break
-			}
-		}
-		if originPlanet == nil {
-			mission.Status = "returning"
-			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-			break
-		}
-
-		// Build attacker side
-		attackerSide := engine.BattleSide{
-			Ships:      mission.Fleet,
-			Defense:    map[string]int{},
-			WeaponTech: originPlanet.Technologies["weaponsTech"],
-			ShieldTech: originPlanet.Technologies["shieldingTech"],
-			ArmorTech:  originPlanet.Technologies["armorTech"],
-		}
-
-		// Build defender side
-		defenderSide := engine.BattleSide{
-			Ships:      defenderPlanet.Ships,
-			Defense:    defenderPlanet.Defenses,
-			WeaponTech: defenderPlanet.Technologies["weaponsTech"],
-			ShieldTech: defenderPlanet.Technologies["shieldingTech"],
-			ArmorTech:  defenderPlanet.Technologies["armorTech"],
-		}
-
-		// Simulate battle
-		result := engine.SimulateBattle(attackerSide, defenderSide, 0)
-
-		// Apply battle results
-		// Update attacker fleet (remaining ships return)
-		mission.Fleet = result.AttackerRemaining
-
-		// Update defender planet (remaining ships and defenses)
-		defenderPlanet.Ships = result.DefenderFleetRemaining
-		defenderPlanet.Defenses = result.DefenderDefenseRemaining
-
-		// Apply plunder to cargo
-		mission.Cargo = mission.Cargo.Add(result.Plunder)
-
-		// Add debris field to player
-		player.DebrisField = player.DebrisField.Add(result.DebrisField)
-
-		// Emit battle event to the attacker
-		gs.emitEvent(GameEvent{
-			Type:     "battleResult",
-			PlayerID: player.ID,
-			Data: map[string]interface{}{
-				"missionId": mission.ID,
-				"target":    mission.Target,
-				"winner":    result.Winner,
-				"rounds":    result.Rounds,
-				"plunder":   result.Plunder,
-				"debris":    result.DebrisField,
-				"remaining": result.AttackerRemaining,
-			},
-		})
-
-		// Return fleet
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	case "deploy":
-		// Deploy ships + cargo to own target planet. Ships stay; no return.
-		targetPlanet := gs.findPlanetByCoord(mission.Target)
-		if targetPlanet != nil {
-			// Add ships to target
-			for shipType, count := range mission.Fleet {
-				targetPlanet.Ships[shipType] += count
-			}
-			// Add cargo to target
-			targetPlanet.Resources = targetPlanet.Resources.Add(mission.Cargo)
-		}
-		// Ships stay at target — no return flight
-		mission.Fleet = map[string]int{}
-		mission.Cargo = engine.Resources{}
-		mission.Status = "completed"
-
-	case "transport":
-		// Transfer cargo to target planet (any player's). Ships return empty.
-		targetPlanet := gs.findPlanetByCoord(mission.Target)
-		if targetPlanet != nil {
-			targetPlanet.Resources = targetPlanet.Resources.Add(mission.Cargo)
-		}
-		// Cargo delivered, ships return empty
-		mission.Cargo = engine.Resources{}
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	case "spy":
-		// Generate spy report
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	case "recycle":
-		// Collect debris field
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	case "colonize":
-		// Create new planet
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	case "expedition":
-		// Expedition logic
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
-
-	default:
-		mission.Status = "returning"
-		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 	}
 }
 

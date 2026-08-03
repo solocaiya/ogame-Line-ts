@@ -43,6 +43,17 @@ func CalculateDefenseBuildTime(baseTime int, shipyardLevel, naniteLevel int) int
 	return CalculateShipBuildTime(baseTime, shipyardLevel, naniteLevel)
 }
 
+// CalculateResearchCost returns the cost to research a technology at targetLevel.
+// Formula: floor(baseCost * costMultiplier^(targetLevel-1))
+func CalculateResearchCost(baseCost CostEntry, costMultiplier float64, targetLevel int) CostEntry {
+	multiplier := math.Pow(costMultiplier, float64(targetLevel-1))
+	return CostEntry{
+		Metal:     int64(math.Floor(float64(baseCost.Metal) * multiplier)),
+		Crystal:   int64(math.Floor(float64(baseCost.Crystal) * multiplier)),
+		Deuterium: int64(math.Floor(float64(baseCost.Deuterium) * multiplier)),
+	}
+}
+
 // CalculateUsedSpace returns total space used by buildings on a planet.
 func CalculateUsedSpace(buildings map[string]int) int {
 	total := 0

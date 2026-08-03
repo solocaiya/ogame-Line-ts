@@ -319,6 +319,12 @@ func SimulateBattle(attacker, defender BattleSide, maxRounds int) BattleResult {
 		}
 	}
 
+	// Calculate plunder (only when attacker wins)
+	var plunder Resources
+	if winner == "attacker" {
+		plunder = CalculatePlunder(defender.DefenderResources, attackerRemaining)
+	}
+
 	// Calculate debris field
 	debris := calculateDebrisField(totalAttackerLosses, totalDefenderShipLosses, totalDefenderDefenseLosses)
 
@@ -338,6 +344,7 @@ func SimulateBattle(attacker, defender BattleSide, maxRounds int) BattleResult {
 		AttackerRemaining:     attackerRemaining,
 		DefenderFleetRemaining:    defenderFleetRemaining,
 		DefenderDefenseRemaining: defenderDefenseRemaining,
+		Plunder:               plunder,
 		DebrisField:           debris,
 		MoonChance:            moonChance,
 	}
@@ -379,13 +386,12 @@ func CalculatePlunder(defenderResources Resources, attackerFleet map[string]int)
 	}
 
 	available := Resources{
-		Metal:      defenderResources.Metal / 2,
-		Crystal:    defenderResources.Crystal / 2,
-		Deuterium:  defenderResources.Deuterium / 2,
-		DarkMatter: defenderResources.DarkMatter / 2,
+		Metal:     defenderResources.Metal / 2,
+		Crystal:   defenderResources.Crystal / 2,
+		Deuterium: defenderResources.Deuterium / 2,
 	}
 
-	totalAvailable := available.Metal + available.Crystal + available.Deuterium + available.DarkMatter
+	totalAvailable := available.Metal + available.Crystal + available.Deuterium
 
 	if totalCapacity >= totalAvailable {
 		return available
@@ -397,9 +403,8 @@ func CalculatePlunder(defenderResources Resources, attackerFleet map[string]int)
 
 	ratio := float64(totalCapacity) / float64(totalAvailable)
 	return Resources{
-		Metal:      int64(float64(available.Metal) * ratio),
-		Crystal:    int64(float64(available.Crystal) * ratio),
-		Deuterium:  int64(float64(available.Deuterium) * ratio),
-		DarkMatter: int64(float64(available.DarkMatter) * ratio),
+		Metal:     int64(float64(available.Metal) * ratio),
+		Crystal:   int64(float64(available.Crystal) * ratio),
+		Deuterium: int64(float64(available.Deuterium) * ratio),
 	}
 }

@@ -40,7 +40,7 @@ func main() {
 	gs := gamestate.New()
 
 	// Initialize WebSocket hub
-	wsHub := ws.NewHub()
+	wsHub := ws.NewHub(cfg.AllowedOrigins)
 	go wsHub.Run()
 	log.Println("WebSocket hub started")
 
@@ -110,11 +110,14 @@ func main() {
 		RefreshTokenTTL: cfg.RefreshTokenTTL,
 	}
 
+	// Rate limit auth endpoints: 10 requests per minute per IP
+	loginLimiter := handlers.NewRateLimiter(10, time.Minute)
+
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-		auth.POST("/refresh", authHandler.Refresh)
+		auth.POST("/register", handlers.RateLimit(loginLimiter), authHandler.Register)
+		auth.POST("/login", handlers.RateLimit(loginLimiter), authHandler.Login)
+		auth.POST("/refresh", handlers.RateLimit(loginLimiter), authHandler.Refresh)
 		auth.GET("/me", handlers.AuthRequired(cfg.JWTSecret), authHandler.Me)
 	}
 
@@ -154,7 +157,7 @@ func main() {
 	wsGroup.Use(handlers.AuthRequired(cfg.JWTSecret))
 	{
 		wsGroup.GET("", func(c *gin.Context) {
-			playerID := c.GetString("userID")
+			playerID := c.GetString("user_id")
 			wsHub.HandleWS(c, playerID)
 		})
 	}

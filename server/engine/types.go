@@ -141,11 +141,12 @@ type CombatUnit struct {
 
 // BattleSide represents one side in a battle.
 type BattleSide struct {
-	Ships      map[string]int
-	Defense    map[string]int
-	WeaponTech int
-	ShieldTech int
-	ArmorTech  int
+	Ships            map[string]int
+	Defense          map[string]int
+	WeaponTech       int
+	ShieldTech       int
+	ArmorTech        int
+	DefenderResources Resources // only used for defender side — plunder calculation
 }
 
 // BattleResult holds the outcome of a battle.
@@ -199,4 +200,11 @@ type BuildingDef struct {
 	BaseTime       int // seconds
 	CostMultiplier float64
 	SpaceUsage     int
+}
+
+// ResearchDef holds research technology statistics.
+type ResearchDef struct {
+	BaseCost       CostEntry
+	BaseTime       int // seconds
+	CostMultiplier float64
 }
