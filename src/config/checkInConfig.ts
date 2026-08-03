@@ -22,7 +22,7 @@ export const CHECK_IN_REWARDS: CheckInReward[] = [
   },
   {
     day: 3,
-    resources: { metal: 12000, crystal: 8000, deuterium: 3000, darkMatter: 50 }
+    resources: { metal: 12000, crystal: 8000, deuterium: 4000, darkMatter: 50 }
   },
   {
     day: 4,

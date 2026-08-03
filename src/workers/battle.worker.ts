@@ -378,16 +378,17 @@ const calculatePlunder = (defenderResources: Resources, attackerFleet: Partial<F
     totalCapacity += config.cargoCapacity * count
   }
 
+  // 暗物质不可被掠夺
   const availableResources = {
     metal: Math.floor(defenderResources.metal * 0.5),
     crystal: Math.floor(defenderResources.crystal * 0.5),
     deuterium: Math.floor(defenderResources.deuterium * 0.5),
-    darkMatter: Math.floor(defenderResources.darkMatter * 0.5),
+    darkMatter: 0,
     energy: 0
   }
 
   const totalAvailable =
-    availableResources.metal + availableResources.crystal + availableResources.deuterium + availableResources.darkMatter
+    availableResources.metal + availableResources.crystal + availableResources.deuterium
 
   if (totalCapacity >= totalAvailable) {
     return availableResources
@@ -398,7 +399,7 @@ const calculatePlunder = (defenderResources: Resources, attackerFleet: Partial<F
     metal: Math.floor(availableResources.metal * ratio),
     crystal: Math.floor(availableResources.crystal * ratio),
     deuterium: Math.floor(availableResources.deuterium * ratio),
-    darkMatter: Math.floor(availableResources.darkMatter * ratio),
+    darkMatter: 0,
     energy: 0
   }
 }
