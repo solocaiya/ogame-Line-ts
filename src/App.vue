@@ -1,4 +1,5 @@
 <template>
+  <div>
   <!-- 首页：无侧边栏/头部 -->
   <RouterView v-if="isHomePage" />
 
@@ -468,6 +469,7 @@
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
+  </div>
 </template>
 
 <script setup lang="ts">

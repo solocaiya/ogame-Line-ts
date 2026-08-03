@@ -604,8 +604,8 @@
 
   // 获取单位名称（舰船或防御）
   const getUnitName = (unitType: string): string => {
-    if (SHIPS[unitType]) return SHIPS[unitType].name
-    if (DEFENSES[unitType]) return DEFENSES[unitType].name
+    if (SHIPS.value[unitType]) return SHIPS.value[unitType].name
+    if (DEFENSES.value[unitType]) return DEFENSES.value[unitType].name
     return unitType
   }
 </script>
