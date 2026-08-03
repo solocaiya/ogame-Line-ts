@@ -37,3 +37,9 @@ android/local.properties
 android/.idea
 android/*.iml
 android/app/*.iml
+
+# Server build artifacts
+server/ogame-server
+server/ogame.db
+server/ogame.db-shm
+server/ogame.db-wal
