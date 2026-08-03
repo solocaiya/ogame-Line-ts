@@ -863,6 +863,7 @@ export interface Player {
   }
   totalPlayTime?: number // 总游戏时间（秒）
   createdAt?: number // 账号创建时间戳
+  lastSaveTime?: number // 最后一次保存的时间戳（用于云端存档比较）
 }
 
 export interface NotificationSettings {

@@ -1,38 +1,46 @@
 # CI 构建专用的 dockerignore
-# 只保留构建产物和必要的配置文件
+# 保留前端构建产物 + Go API 服务器源码
 
-# 排除所有源代码和开发文件
+# 排除前端源代码（CI 使用预构建的 docs/）
 src/
 public/
+
+# 排除 Electron/Android 构建
 electron/
-node_modules/
+android/
+
+# 排除开发工具和临时文件
 .vscode/
 .idea/
 .git/
 .github/
-
-# 排除构建工具配置
-vite.config.ts
-tsconfig*.json
-*.config.js
-*.config.ts
-package.json
-package-lock.json
-pnpm-lock.yaml
-
-# 排除其他构建产物
-pkg/
-android/
-resources/
-
-# 排除临时文件
+*.swp
+*.swo
 *.tmp
 *.temp
 .DS_Store
 Thumbs.db
 *.log
 
-# 只保留以下文件：
-# - docs/ (构建产物)
+# 排除构建工具配置（不需要在运行镜像中）
+vite.config.ts
+tsconfig*.json
+*.config.js
+*.config.ts
+
+# 排除本地构建产物
+pkg/
+resources/
+
+# 排除 Go 本地构建产物和数据库文件（Docker 内会重新编译）
+server/ogame-server
+server/*.db
+server/*.db-shm
+server/*.db-wal
+
+# 保留以下文件：
+# - docs/ (前端构建产物)
 # - nginx.conf (nginx配置)
 # - Dockerfile.ci
+# - server/ (Go API 服务器源码，用于 Docker 内编译)
+# - package.json, pnpm-lock.yaml (前端依赖描述，虽然不安装但保留参考)

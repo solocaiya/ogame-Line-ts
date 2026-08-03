@@ -2416,5 +2416,21 @@ export default {
     cancelAll: '全部取消',
     cancelHint: '仅可取消队列首项',
     resourceSummary: '等待队列资源需求'
+  },
+
+  login: {
+    title: 'OGame 星际争霸',
+    subtitle: '登录账号或创建新账号',
+    login: '登录',
+    register: '注册',
+    username: '用户名',
+    usernamePlaceholder: '请输入用户名（3-20个字符）',
+    password: '密码',
+    passwordPlaceholder: '请输入密码（至少6位）',
+    confirmPassword: '确认密码',
+    confirmPasswordPlaceholder: '请再次输入密码',
+    loginButton: '登录',
+    registerButton: '注册',
+    skipAsGuest: '以游客身份继续'
   }
 }

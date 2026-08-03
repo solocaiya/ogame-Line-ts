@@ -1,7 +1,32 @@
 # GitHub Actions 构建用的 Dockerfile
 # 使用预构建的产物，不包含源代码构建过程
 
+# ============================================
+# Stage 1: Build Go API Server (从源码编译)
+# ============================================
+FROM golang:1.21-alpine AS go-builder
+
+WORKDIR /build/server
+
+# 安装 CGO 依赖（SQLite 需要）
+RUN apk add --no-cache gcc musl-dev
+
+# 复制依赖文件
+COPY server/go.mod server/go.sum ./
+RUN go config set proxy https://goproxy.cn,direct && \
+    go mod download
+
+# 复制服务器源码并编译
+COPY server/ .
+RUN CGO_ENABLED=1 GOOS=linux go build -o /ogame-api-server .
+
+# ============================================
+# Stage 2: Production (nginx + Go API)
+# ============================================
 FROM nginx:alpine
+
+# 安装 dumb-init 用于正确处理信号
+RUN apk add --no-cache dumb-init
 
 # 添加构建参数用于缓存破坏
 ARG BUILD_DATE
@@ -21,8 +46,22 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # 复制构建产物到 nginx 静态文件目录
 # 这里的 docs 目录是在 GitHub Actions 中构建生成的
-# 使用 --chown 确保正确的文件权限
 COPY --chown=nginx:nginx docs /usr/share/nginx/html
+
+# 复制 Go API 服务器二进制
+COPY --from=go-builder /ogame-api-server /usr/local/bin/ogame-api-server
+
+# 创建数据目录
+RUN mkdir -p /data
+
+# 创建启动脚本
+RUN printf '#!/bin/sh\nset -e\n/usr/local/bin/ogame-api-server -port 8081 &\nexec nginx -g "daemon off;"\n' > /start.sh && \
+    chmod +x /start.sh
+
+# SQLite 数据持久化卷
+VOLUME ["/data"]
+
+ENV DB_PATH=/data/ogame.db
 
 # 验证构建产物
 RUN ls -la /usr/share/nginx/html/ && \
@@ -31,5 +70,5 @@ RUN ls -la /usr/share/nginx/html/ && \
 # 暴露端口
 EXPOSE 80
 
-# 启动 nginx
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/start.sh"]
