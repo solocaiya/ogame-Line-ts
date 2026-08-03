@@ -560,8 +560,8 @@
     ArrowLeftRight,
     Bookmark,
     BarChart3,
-    ScrollText,
-    ListOrdered
+    ListOrdered,
+    FileText
   } from 'lucide-vue-next'
   import * as gameLogic from '@/logic/gameLogic'
   import * as planetLogic from '@/logic/planetLogic'
@@ -677,7 +677,7 @@
     { name: computed(() => t('nav.trader')), path: '/trader', icon: ArrowLeftRight },
     { name: computed(() => t('nav.bookmarks')), path: '/bookmarks', icon: Bookmark },
     { name: computed(() => t('nav.statistics')), path: '/statistics', icon: BarChart3 },
-    { name: computed(() => t('nav.battleReports')), path: '/battle-reports', icon: ScrollText },
+    { name: computed(() => t('nav.battleReports')), path: '/battle-reports', icon: FileText },
     { name: computed(() => t('nav.queueManagement')), path: '/planet-queue', icon: ListOrdered },
     { name: computed(() => t('nav.messages')), path: '/messages', icon: Mail },
     { name: computed(() => t('nav.settings')), path: '/settings', icon: Settings },

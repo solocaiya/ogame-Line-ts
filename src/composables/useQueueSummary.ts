@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import type { Planet, WaitingQueueItem, BuildQueueItem, Resources } from '@/types/game'
+import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
 
 interface PlanetQueueSummary {
   planetId: string
@@ -105,11 +106,23 @@ export function useQueueSummary() {
    */
   const waitingQueueResourceEstimate = computed<Resources>(() => {
     const total: Resources = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
-    // 简化估算：遍历所有等待队列项
     for (const planet of planets.value) {
-      for (const _item of planet.waitingBuildQueue || []) {
-        // 实际成本需要调用 calculateWaitingItemCost，这里用占位
-        // 视图层可以调用 waitingQueueLogic.calculateWaitingItemCost 获取精确值
+      for (const item of planet.waitingBuildQueue || []) {
+        const cost = waitingQueueLogic.calculateWaitingItemCost(item)
+        total.metal += cost.metal
+        total.crystal += cost.crystal
+        total.deuterium += cost.deuterium
+        total.darkMatter += cost.darkMatter || 0
+        total.energy += cost.energy || 0
+      }
+      // 研究等待队列
+      for (const item of gameStore.player.waitingResearchQueue || []) {
+        const cost = waitingQueueLogic.calculateWaitingItemCost(item)
+        total.metal += cost.metal
+        total.crystal += cost.crystal
+        total.deuterium += cost.deuterium
+        total.darkMatter += cost.darkMatter || 0
+        total.energy += cost.energy || 0
       }
     }
     return total

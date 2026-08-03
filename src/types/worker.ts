@@ -44,6 +44,8 @@ export interface BattleSimulationResult {
     fleet: Partial<Fleet>
     defense: Partial<Record<DefenseType, number>>
   }
+  attackerInitialPower?: number
+  defenderInitialPower?: number
   roundDetails: Array<{
     round: number
     attackerLosses: Partial<Fleet>

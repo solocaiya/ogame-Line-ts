@@ -733,7 +733,12 @@ export default {
     phalanxStatusReturning: '返回中',
     phalanxInsufficientDeuterium: '氘不足',
     intercepted: '被拦截',
-    defenseLosses: '防御损失'
+    defenseLosses: '防御损失',
+    // 书签
+    bookmark: '收藏',
+    unbookmark: '取消收藏',
+    addBookmark: '添加书签',
+    bookmarkAdded: '书签已添加'
   },
   messagesView: {
     title: '消息中心',
@@ -2380,7 +2385,8 @@ export default {
     shieldTech: '护盾',
     armorTech: '装甲',
     initialPower: '初始战力',
-    unitCountStart: '回合开始单位数'
+    unitCountStart: '回合开始单位数',
+    recentTrend: '最近趋势'
   },
   queueManagement: {
     title: '队列管理',
@@ -2406,6 +2412,8 @@ export default {
     running: '运行中',
     totalActive: '总进行中',
     totalWaiting: '总等待中',
-    globalEstimate: '全局预计完成'
+    globalEstimate: '全局预计完成',
+    cancelAll: '全部取消',
+    resourceSummary: '等待队列资源需求'
   }
 }

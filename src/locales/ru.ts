@@ -746,7 +746,12 @@ export default {
     phalanxReturn: 'Время возвращения',
     phalanxStatusOutbound: 'В пути',
     phalanxStatusReturning: 'Возвращается',
-    phalanxInsufficientDeuterium: 'Недостаточно дейтерия'
+    phalanxInsufficientDeuterium: 'Недостаточно дейтерия',
+    // Закладки
+    bookmark: 'Закладка',
+    unbookmark: 'Удалить закладку',
+    addBookmark: 'Добавить закладку',
+    bookmarkAdded: 'Закладка добавлена'
   },
   messagesView: {
     title: 'Сообщения',
@@ -2364,7 +2369,8 @@ export default {
     shieldTech: 'Щит',
     armorTech: 'Броня',
     initialPower: 'Начальная мощь',
-    unitCountStart: 'Юниты в начале раунда'
+    unitCountStart: 'Юниты в начале раунда',
+    recentTrend: 'Последняя тенденция'
   },
   queueManagement: {
     title: 'Управление очередью',
@@ -2390,6 +2396,8 @@ export default {
     running: 'Работает',
     totalActive: 'Всего активных',
     totalWaiting: 'Всего ожидающих',
-    globalEstimate: 'Общее расч. завершение'
+    globalEstimate: 'Общее расч. завершение',
+    cancelAll: 'Отменить все',
+    resourceSummary: 'Потребность ресурсов очереди ожидания'
   }
 }

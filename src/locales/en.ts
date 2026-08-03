@@ -747,7 +747,12 @@ export default {
     phalanxStatusReturning: 'Returning',
     phalanxInsufficientDeuterium: 'Insufficient Deuterium',
     intercepted: 'Intercepted',
-    defenseLosses: 'Defense Losses'
+    defenseLosses: 'Defense Losses',
+    // Bookmark
+    bookmark: 'Bookmark',
+    unbookmark: 'Remove Bookmark',
+    addBookmark: 'Add Bookmark',
+    bookmarkAdded: 'Bookmark added'
   },
   messagesView: {
     title: 'Messages',
@@ -2480,7 +2485,8 @@ export default {
     shieldTech: 'Shield',
     armorTech: 'Armor',
     initialPower: 'Initial Power',
-    unitCountStart: 'Units at Round Start'
+    unitCountStart: 'Units at Round Start',
+    recentTrend: 'Recent Trend'
   },
   queueManagement: {
     title: 'Queue Management',
@@ -2506,6 +2512,8 @@ export default {
     running: 'Running',
     totalActive: 'Total Active',
     totalWaiting: 'Total Waiting',
-    globalEstimate: 'Global Est. Completion'
+    globalEstimate: 'Global Est. Completion',
+    cancelAll: 'Cancel All',
+    resourceSummary: 'Waiting Queue Resource Requirements'
   }
 }

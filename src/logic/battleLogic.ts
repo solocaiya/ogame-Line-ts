@@ -96,7 +96,9 @@ export const simulateBattle = async (
       weapon: defenderWeaponTech,
       shield: defenderShieldTech,
       armor: defenderArmorTech
-    }
+    },
+    attackerInitialPower: simulationResult.attackerInitialPower,
+    defenderInitialPower: simulationResult.defenderInitialPower
   }
 
   return battleResult

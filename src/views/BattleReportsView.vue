@@ -44,6 +44,35 @@
       </Card>
     </div>
 
+    <!-- 最近战斗趋势 -->
+    <Card v-if="stats.recentTrendSummary.value.total > 0">
+      <CardContent class="p-4">
+        <div class="text-xs text-muted-foreground mb-2">{{ t('battleReports.recentTrend') }}</div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- 趋势圆点 -->
+          <div class="flex gap-1.5">
+            <div
+              v-for="(result, idx) in stats.recentTrend.value"
+              :key="idx"
+              class="w-3 h-3 rounded-full"
+              :class="{
+                'bg-green-500': result === 'win',
+                'bg-red-500': result === 'loss',
+                'bg-gray-400': result === 'draw'
+              }"
+              :title="result === 'win' ? t('battleReports.victory') : result === 'loss' ? t('battleReports.defeat') : t('battleReports.draw')"
+            />
+          </div>
+          <!-- 趋势统计 -->
+          <div class="flex gap-3 text-xs">
+            <span class="text-green-500">{{ stats.recentTrendSummary.value.wins }}{{ t('battleReports.winShort') }}</span>
+            <span class="text-red-500">{{ stats.recentTrendSummary.value.losses }}{{ t('battleReports.lossShort') }}</span>
+            <span class="text-gray-400">{{ stats.recentTrendSummary.value.draws }}{{ t('battleReports.drawShort') }}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
     <!-- 筛选栏 -->
     <Card>
       <CardContent class="p-4">

@@ -744,7 +744,12 @@ export default {
     phalanxReturn: 'Rückkehrzeit',
     phalanxStatusOutbound: 'Unterwegs',
     phalanxStatusReturning: 'Rückkehr',
-    phalanxInsufficientDeuterium: 'Unzureichend Deuterium'
+    phalanxInsufficientDeuterium: 'Unzureichend Deuterium',
+    // Lesezeichen
+    bookmark: 'Lesezeichen',
+    unbookmark: 'Lesezeichen entfernen',
+    addBookmark: 'Lesezeichen hinzufügen',
+    bookmarkAdded: 'Lesezeichen hinzugefügt'
   },
   messagesView: {
     title: 'Nachrichten',
@@ -2368,7 +2373,8 @@ export default {
     shieldTech: 'Schild',
     armorTech: 'Panzerung',
     initialPower: 'Anfangsstärke',
-    unitCountStart: 'Einheiten bei Rundenstart'
+    unitCountStart: 'Einheiten bei Rundenstart',
+    recentTrend: 'Letzte Tendenz'
   },
   queueManagement: {
     title: 'Warteschlangenverwaltung',
@@ -2394,6 +2400,8 @@ export default {
     running: 'Läuft',
     totalActive: 'Gesamt aktiv',
     totalWaiting: 'Gesamt wartend',
-    globalEstimate: 'Globale geschätzte Fertigstellung'
+    globalEstimate: 'Globale geschätzte Fertigstellung',
+    cancelAll: 'Alle abbrechen',
+    resourceSummary: 'Ressourcenbedarf der Warteschlange'
   }
 }

@@ -769,7 +769,12 @@ export default {
     phalanxStatusReturning: '帰還中',
     phalanxInsufficientDeuterium: '重氢不足',
     intercepted: '迎撃済み',
-    defenseLosses: '防衛損失'
+    defenseLosses: '防衛損失',
+    // ブックマーク
+    bookmark: 'ブックマーク',
+    unbookmark: 'ブックマーク解除',
+    addBookmark: 'ブックマーク追加',
+    bookmarkAdded: 'ブックマークが追加されました'
   },
   messagesView: {
     title: 'メッセージセンター',
@@ -2352,7 +2357,8 @@ export default {
     shieldTech: 'シールド',
     armorTech: 'アーマー',
     initialPower: '初期戦力',
-    unitCountStart: 'ラウンド開始時ユニット数'
+    unitCountStart: 'ラウンド開始時ユニット数',
+    recentTrend: '最近の傾向'
   },
   queueManagement: {
     title: 'キュー管理',
@@ -2378,6 +2384,8 @@ export default {
     running: '稼働中',
     totalActive: '総進行中',
     totalWaiting: '総待機中',
-    globalEstimate: '全体推定完了'
+    globalEstimate: '全体推定完了',
+    cancelAll: 'すべてキャンセル',
+    resourceSummary: '待機キューのリソース要件'
   }
 }

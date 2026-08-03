@@ -28,6 +28,16 @@
               <component :is="planet.queuePaused ? Play : Pause" class="h-4 w-4" />
               {{ planet.queuePaused ? t('queueManagement.resume') : t('queueManagement.pause') }}
             </Button>
+            <Button
+              v-if="planet.waitingBuildQueue && planet.waitingBuildQueue.length > 0"
+              variant="outline"
+              size="sm"
+              class="gap-2 text-destructive"
+              @click="cancelAllWaiting(planet.id)"
+            >
+              <X class="h-4 w-4" />
+              {{ t('queueManagement.cancelAll') }}
+            </Button>
           </div>
           <div class="text-sm text-muted-foreground">
             {{ t('queueManagement.active') }}: {{ planet.buildQueue?.length || 0 }} /
@@ -97,8 +107,17 @@
               <div
                 v-for="(item, index) in planet.waitingBuildQueue"
                 :key="item.id"
-                class="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors"
+                draggable="true"
+                class="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-grab active:cursor-grabbing"
+                :class="{ 'opacity-50': dragItemId === item.id, 'border-primary border-2': dragOverIndex === index && dragItemId !== item.id }"
+                @dragstart="onDragStart($event, item.id)"
+                @dragover.prevent="onDragOver($event, index)"
+                @dragend="onDragEnd(planet.id)"
+                @drop.prevent="onDrop(planet.id, index)"
               >
+                <!-- 拖拽手柄 -->
+                <GripVertical class="h-4 w-4 text-muted-foreground/50 shrink-0" />
+
                 <!-- 序号 -->
                 <span class="text-xs text-muted-foreground w-6 text-center shrink-0">{{ index + 1 }}</span>
 
@@ -207,6 +226,22 @@
             <div class="text-lg font-bold">{{ formatTimeRemaining(queueSummary.globalEstimatedCompletion.value) }}</div>
           </div>
         </div>
+
+        <!-- 等待队列资源需求汇总 -->
+        <div v-if="queueSummary.totalWaitingItems.value > 0" class="mt-4 pt-4 border-t">
+          <div class="text-xs text-muted-foreground text-center mb-2">{{ t('queueManagement.resourceSummary') }}</div>
+          <div class="flex justify-center gap-6 text-sm">
+            <span class="text-amber-600 dark:text-amber-400">
+              {{ t('resources.metal') }}: {{ formatNumber(queueSummary.waitingQueueResourceEstimate.value.metal) }}
+            </span>
+            <span class="text-cyan-500">
+              {{ t('resources.crystal') }}: {{ formatNumber(queueSummary.waitingQueueResourceEstimate.value.crystal) }}
+            </span>
+            <span class="text-green-500">
+              {{ t('resources.deuterium') }}: {{ formatNumber(queueSummary.waitingQueueResourceEstimate.value.deuterium) }}
+            </span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   </div>
@@ -224,7 +259,7 @@
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
   import { formatNumber } from '@/utils/format'
   import {
-    Moon, Globe, Clock, ListOrdered, Play, Pause, X, ChevronUp, ChevronDown
+    Moon, Globe, Clock, ListOrdered, Play, Pause, X, ChevronUp, ChevronDown, GripVertical
   } from 'lucide-vue-next'
   import type { Planet, BuildQueueItem, WaitingQueueItem } from '@/types/game'
   import { BuildingType, ShipType, DefenseType, TechnologyType } from '@/types/game'
@@ -337,5 +372,46 @@
     if (planet) {
       waitingQueueLogic.removeFromBuildWaitingQueue(planet, itemId)
     }
+  }
+
+  const cancelAllWaiting = (planetId: string) => {
+    const planet = planets.value.find(p => p.id === planetId)
+    if (planet && planet.waitingBuildQueue) {
+      const itemIds = planet.waitingBuildQueue.map(item => item.id)
+      for (const id of itemIds) {
+        waitingQueueLogic.removeFromBuildWaitingQueue(planet, id)
+      }
+    }
+  }
+
+  // 拖拽重排状态
+  const dragItemId = ref<string | null>(null)
+  const dragOverIndex = ref<number | null>(null)
+
+  const onDragStart = (_event: DragEvent, itemId: string) => {
+    dragItemId.value = itemId
+  }
+
+  const onDragOver = (_event: DragEvent, index: number) => {
+    dragOverIndex.value = index
+  }
+
+  const onDragEnd = (planetId: string) => {
+    if (dragItemId.value && dragOverIndex.value !== null) {
+      const planet = planets.value.find(p => p.id === planetId)
+      if (planet && planet.waitingBuildQueue) {
+        const fromIndex = planet.waitingBuildQueue.findIndex(item => item.id === dragItemId.value)
+        const toIndex = dragOverIndex.value
+        if (fromIndex !== -1 && fromIndex !== toIndex) {
+          waitingQueueLogic.reorderWaitingQueueItem(planet, dragItemId.value, toIndex)
+        }
+      }
+    }
+    dragItemId.value = null
+    dragOverIndex.value = null
+  }
+
+  const onDrop = (_planetId: string, _index: number) => {
+    // drop 事件由 onDragEnd 处理
   }
 </script>

@@ -737,7 +737,12 @@ export default {
     phalanxInsufficientDeuterium: 'Deuterio Insuficiente',
     intercepted: 'Interceptado',
     defenseLosses: 'Pérdidas de Defensa',
-    missileLaunched: 'Misil lanzado'
+    missileLaunched: 'Misil lanzado',
+    // Marcadores
+    bookmark: 'Marcador',
+    unbookmark: 'Eliminar marcador',
+    addBookmark: 'Agregar marcador',
+    bookmarkAdded: 'Marcador agregado'
   },
   messagesView: {
     title: 'Mensajes',
@@ -2466,7 +2471,8 @@ export default {
     shieldTech: 'Escudo',
     armorTech: 'Blindaje',
     initialPower: 'Poder inicial',
-    unitCountStart: 'Unidades al inicio de ronda'
+    unitCountStart: 'Unidades al inicio de ronda',
+    recentTrend: 'Tendencia reciente'
   },
   queueManagement: {
     title: 'Gestión de cola',
@@ -2492,6 +2498,8 @@ export default {
     running: 'En ejecución',
     totalActive: 'Total activos',
     totalWaiting: 'Total en espera',
-    globalEstimate: 'Finalización est. global'
+    globalEstimate: 'Finalización est. global',
+    cancelAll: 'Cancelar todo',
+    resourceSummary: 'Recursos necesarios en cola de espera'
   }
 }

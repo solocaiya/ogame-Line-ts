@@ -105,6 +105,33 @@ export function useBattleStats() {
     return filtered
   }
 
+  /**
+   * 最近N场战斗趋势（按时间倒序）
+   * 返回每场战斗的结果：'win' | 'loss' | 'draw'
+   */
+  const recentTrend = computed(() => {
+    const N = 10
+    const sorted = [...reports.value].sort((a, b) => b.timestamp - a.timestamp)
+    return sorted.slice(0, N).map(r => {
+      if (r.winner === 'attacker') return 'win' as const
+      if (r.winner === 'defender') return 'loss' as const
+      return 'draw' as const
+    })
+  })
+
+  /**
+   * 最近N场战斗的胜/负/平统计
+   */
+  const recentTrendSummary = computed(() => {
+    const trend = recentTrend.value
+    return {
+      wins: trend.filter(r => r === 'win').length,
+      losses: trend.filter(r => r === 'loss').length,
+      draws: trend.filter(r => r === 'draw').length,
+      total: trend.length
+    }
+  })
+
   return {
     reports,
     totalBattles,
@@ -117,7 +144,9 @@ export function useBattleStats() {
     totalDefenderLosses,
     filterByResult,
     filterByTimeRange,
-    getFilteredReports
+    getFilteredReports,
+    recentTrend,
+    recentTrendSummary
   }
 }
 

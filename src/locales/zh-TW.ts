@@ -738,7 +738,12 @@ export default {
     phalanxStatusReturning: '返回中',
     phalanxInsufficientDeuterium: '氘不足',
     intercepted: '被攔截',
-    defenseLosses: '防禦損失'
+    defenseLosses: '防禦損失',
+    // 書籤
+    bookmark: '收藏',
+    unbookmark: '取消收藏',
+    addBookmark: '添加書籤',
+    bookmarkAdded: '書籤已添加'
   },
   messagesView: {
     title: '訊息中心',
@@ -2533,7 +2538,8 @@ export default {
     shieldTech: '護盾',
     armorTech: '裝甲',
     initialPower: '初始戰力',
-    unitCountStart: '回合開始單位數'
+    unitCountStart: '回合開始單位數',
+    recentTrend: '最近趨勢'
   },
   queueManagement: {
     title: '隊列管理',
@@ -2559,6 +2565,8 @@ export default {
     running: '運行中',
     totalActive: '總進行中',
     totalWaiting: '總等待中',
-    globalEstimate: '全局預計完成'
+    globalEstimate: '全局預計完成',
+    cancelAll: '全部取消',
+    resourceSummary: '等待佇列資源需求'
   }
 }

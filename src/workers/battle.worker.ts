@@ -221,6 +221,10 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
   let attackerUnits = prepareCombatUnits(attacker, false)
   let defenderUnits = prepareCombatUnits(defender, true)
 
+  // 计算初始总战力（战斗开始前）
+  const attackerInitialPower = attackerUnits.reduce((sum, unit) => sum + unit.count * unit.attack, 0)
+  const defenderInitialPower = defenderUnits.reduce((sum, unit) => sum + unit.count * unit.attack, 0)
+
   const totalAttackerLosses: Partial<Fleet> = {}
   const totalDefenderShipLosses: Partial<Fleet> = {}
   const totalDefenderDefenseLosses: Partial<Record<DefenseType, number>> = {}
@@ -358,6 +362,8 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
       fleet: defenderShipRemaining,
       defense: defenderDefenseRemaining
     },
+    attackerInitialPower,
+    defenderInitialPower,
     roundDetails
   }
 }

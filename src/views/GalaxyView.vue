@@ -457,6 +457,22 @@
                       <p>{{ t('galaxyView.recycle') }}</p>
                     </TooltipContent>
                   </Tooltip>
+                  <Tooltip v-if="slot.planet">
+                    <TooltipTrigger as-child>
+                      <Button
+                        @click="openBookmarkDialog(slot.planet)"
+                        variant="outline"
+                        size="sm"
+                        class="h-8 w-8 p-0"
+                        :class="isPlanetBookmarked(slot.planet) ? 'text-yellow-500 border-yellow-500' : ''"
+                      >
+                        <Star class="h-3 w-3" :class="isPlanetBookmarked(slot.planet) ? 'fill-yellow-500' : ''" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{{ isPlanetBookmarked(slot.planet) ? t('galaxyView.unbookmark') : t('galaxyView.bookmark') }}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
               </div>
             </div>
@@ -729,12 +745,69 @@
                     <p>{{ t('galaxyView.recycle') }}</p>
                   </TooltipContent>
                 </Tooltip>
+                <Tooltip v-if="slot.planet">
+                  <TooltipTrigger as-child>
+                    <Button
+                      @click="openBookmarkDialog(slot.planet)"
+                      variant="outline"
+                      size="sm"
+                      class="h-8 w-8 p-0"
+                      :class="isPlanetBookmarked(slot.planet) ? 'text-yellow-500 border-yellow-500' : ''"
+                    >
+                      <Star class="h-3 w-3 sm:h-4 sm:w-4" :class="isPlanetBookmarked(slot.planet) ? 'fill-yellow-500' : ''" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{{ isPlanetBookmarked(slot.planet) ? t('galaxyView.unbookmark') : t('galaxyView.bookmark') }}</p>
+                  </TooltipContent>
+                </Tooltip>
               </TooltipProvider>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
+
+    <!-- 快速书签对话框 -->
+    <Dialog :open="bookmarkDialogOpen" @update:open="bookmarkDialogOpen = $event">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <div class="p-2 rounded-lg bg-yellow-500/10">
+              <Star class="h-5 w-5 text-yellow-500" />
+            </div>
+            {{ t('galaxyView.addBookmark') }}
+          </DialogTitle>
+          <DialogDescription v-if="bookmarkTargetPlanet" class="flex items-center gap-2 pt-1">
+            <MapPin class="h-4 w-4 text-muted-foreground" />
+            [{{ bookmarkTargetPlanet.position.galaxy }}:{{ bookmarkTargetPlanet.position.system }}:{{ bookmarkTargetPlanet.position.position }}] {{ bookmarkTargetPlanet.name }}
+          </DialogDescription>
+        </DialogHeader>
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <Label>{{ t('bookmark.category') }}</Label>
+            <Select v-model="bookmarkCategory">
+              <SelectTrigger>
+                <SelectValue :placeholder="t('bookmark.selectCategory')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="cat in BOOKMARK_CATEGORIES" :key="cat" :value="cat">
+                  {{ t(`bookmark.categories.${cat}`) }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="bookmarkDialogOpen = false">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button @click="confirmBookmark">
+            {{ t('common.confirm') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- 导弹攻击对话框 -->
     <Dialog :open="missileDialogOpen" @update:open="missileDialogOpen = $event">
@@ -988,15 +1061,23 @@
     Target,
     Navigation,
     Clock,
-    AlertTriangle
+    AlertTriangle,
+    Star
   } from 'lucide-vue-next'
   import { useRouter, useRoute } from 'vue-router'
   import * as gameLogic from '@/logic/gameLogic'
   import * as moonLogic from '@/logic/moonLogic'
   import * as oreDepositLogic from '@/logic/oreDepositLogic'
+  import {
+    addBookmark,
+    toggleBookmarkStar,
+    BOOKMARK_CATEGORIES,
+    type BookmarkCategory
+  } from '@/logic/bookmarkLogic'
   import { formatNumber, formatTime } from '@/utils/format'
   import { BuildingType, MissionType } from '@/types/game'
   import type { FleetMission, OreDeposits } from '@/types/game'
+  import { toast } from 'vue-sonner'
 
   const gameStore = useGameStore()
   const universeStore = useUniverseStore()
@@ -1021,6 +1102,66 @@
   const phalanxTargetPlanet = ref<Planet | null>(null)
   const phalanxScanResults = ref<FleetMission[]>([])
   const phalanxScanning = ref(false)
+
+  // 快速书签对话框状态
+  const bookmarkDialogOpen = ref(false)
+  const bookmarkTargetPlanet = ref<Planet | null>(null)
+  const bookmarkCategory = ref<BookmarkCategory>('planet')
+  const bookmarkStarred = ref(false)
+
+  // 获取玩家书签列表
+  const bookmarks = computed(() => gameStore.player.bookmarks || [])
+
+  // 检查星球是否已被书签标记
+  const isPlanetBookmarked = (planet: Planet): boolean => {
+    return bookmarks.value.some(
+      b =>
+        b.galaxy === planet.position.galaxy &&
+        b.system === planet.position.system &&
+        b.position === planet.position.position
+    )
+  }
+
+  // 获取星球的书签
+  const getPlanetBookmark = (planet: Planet) => {
+    return bookmarks.value.find(
+      b =>
+        b.galaxy === planet.position.galaxy &&
+        b.system === planet.position.system &&
+        b.position === planet.position.position
+    )
+  }
+
+  // 打开书签对话框
+  const openBookmarkDialog = (planet: Planet) => {
+    bookmarkTargetPlanet.value = planet
+    const existing = getPlanetBookmark(planet)
+    if (existing) {
+      // 已有书签，切换星标
+      toggleBookmarkStar(gameStore.player, existing.id)
+    } else {
+      // 新书签，打开对话框
+      bookmarkCategory.value = 'planet'
+      bookmarkDialogOpen.value = true
+    }
+  }
+
+  // 确认添加书签
+  const confirmBookmark = () => {
+    if (!bookmarkTargetPlanet.value) return
+    const planet = bookmarkTargetPlanet.value
+    addBookmark(gameStore.player, {
+      name: planet.name,
+      galaxy: planet.position.galaxy,
+      system: planet.position.system,
+      position: planet.position.position,
+      category: bookmarkCategory.value,
+      note: '',
+      color: undefined
+    })
+    bookmarkDialogOpen.value = false
+    toast.success(t('galaxy.bookmarkAdded'))
+  }
 
   const selectedGalaxy = ref(1)
   const selectedSystem = ref(1)

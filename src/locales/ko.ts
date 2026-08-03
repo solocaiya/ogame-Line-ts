@@ -724,7 +724,12 @@ export default {
     phalanxStatusReturning: '귀환 중',
     phalanxInsufficientDeuterium: '중수소 부족',
     intercepted: '요격됨',
-    defenseLosses: '방어 손실'
+    defenseLosses: '방어 손실',
+    // 북마크
+    bookmark: '북마크',
+    unbookmark: '북마크 해제',
+    addBookmark: '북마크 추가',
+    bookmarkAdded: '북마크가 추가되었습니다'
   },
   messagesView: {
     title: '메시지 센터',
@@ -2293,7 +2298,8 @@ export default {
     shieldTech: '방패',
     armorTech: '장갑',
     initialPower: '초기 전력',
-    unitCountStart: '라운드 시작 유닛 수'
+    unitCountStart: '라운드 시작 유닛 수',
+    recentTrend: '최근 추세'
   },
   queueManagement: {
     title: '대기열 관리',
@@ -2319,6 +2325,8 @@ export default {
     running: '실행중',
     totalActive: '총 진행중',
     totalWaiting: '총 대기중',
-    globalEstimate: '전체 예상 완료'
+    globalEstimate: '전체 예상 완료',
+    cancelAll: '전체 취소',
+    resourceSummary: '대기열 자원 요구량'
   }
 }
