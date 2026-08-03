@@ -71,6 +71,7 @@ export default {
     galaxy: '星系',
     diplomacy: '外交',
     achievements: '成就',
+    checkIn: '簽到',
     campaign: '戰役',
     ranking: '排行',
     messages: '訊息',
@@ -2369,5 +2370,30 @@ export default {
         epilogue_2: '你的旅程還在繼續...新的冒險在星海彼岸等待著你...'
       }
     }
+  },
+  moon: {
+    giftMoon: '禮物月球',
+    firstLoginTitle: '歡迎，指揮官！',
+    firstLoginDesc: '作為新指揮官，您獲得了一個免費的月球作為禮物！',
+    firstLoginHint: '您可以在月球上建造特殊建築，如月球基地、傳感器陣列和跳躍門。',
+    claimGift: '領取禮物'
+  },
+  checkIn: {
+    title: '每日簽到',
+    progress: '簽到進度',
+    progressDesc: '當前週期：{current}/{total} 天',
+    day: '第 {day} 天',
+    claim: '領取',
+    claimed: '已領取',
+    locked: '未解鎖',
+    claimedToday: '今日已簽到',
+    available: '可簽到',
+    rules: '簽到規則',
+    rule1: '每日簽到可領取獎勵，連續簽到獎勵遞增。',
+    rule2: '簽到週期每7天重置一次。',
+    rule3: '中斷簽到將重置週期進度。',
+    noPlanet: '未選擇星球',
+    success: '簽到成功！獲得第 {day} 天獎勵',
+    alreadyClaimed: '今日已簽到'
   }
 }

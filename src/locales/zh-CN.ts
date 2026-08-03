@@ -77,6 +77,7 @@ export default {
     galaxy: '星系',
     diplomacy: '外交',
     achievements: '成就',
+    checkIn: '签到',
     campaign: '战役',
     ranking: '排行',
     messages: '消息',
@@ -2216,5 +2217,30 @@ export default {
     // 删除相关
     deleteFailedHttp: '删除失败: HTTP {status}',
     deleteError: '删除错误: {error}'
+  },
+  moon: {
+    giftMoon: '礼物月球',
+    firstLoginTitle: '欢迎，指挥官！',
+    firstLoginDesc: '作为新指挥官，您获得了一个免费的月球作为礼物！',
+    firstLoginHint: '您可以在月球上建造特殊建筑，如月球基地、传感器阵列和跳跃门。',
+    claimGift: '领取礼物'
+  },
+  checkIn: {
+    title: '每日签到',
+    progress: '签到进度',
+    progressDesc: '当前周期：{current}/{total} 天',
+    day: '第 {day} 天',
+    claim: '领取',
+    claimed: '已领取',
+    locked: '未解锁',
+    claimedToday: '今日已签到',
+    available: '可签到',
+    rules: '签到规则',
+    rule1: '每日签到可领取奖励，连续签到奖励递增。',
+    rule2: '签到周期每7天重置一次。',
+    rule3: '中断签到将重置周期进度。',
+    noPlanet: '未选择星球',
+    success: '签到成功！获得第 {day} 天奖励',
+    alreadyClaimed: '今日已签到'
   }
 }

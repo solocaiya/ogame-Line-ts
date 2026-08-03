@@ -70,6 +70,7 @@ export default {
     galaxy: 'Galaxie',
     diplomacy: 'Diplomatie',
     achievements: 'Erfolge',
+    checkIn: 'Tägliches Einchecken',
     campaign: 'Kampagne',
     ranking: 'Rangliste',
     messages: 'Nachrichten',
@@ -2204,5 +2205,30 @@ export default {
         epilogue_2: 'Deine Reise geht weiter... Neue Abenteuer warten jenseits der Sterne...'
       }
     }
+  },
+  moon: {
+    giftMoon: 'Geschenk-Mond',
+    firstLoginTitle: 'Willkommen, Kommandant!',
+    firstLoginDesc: 'Als neuer Kommandant erhältst du einen kostenlosen Mond als Geschenk!',
+    firstLoginHint: 'Auf dem Mond kannst du spezielle Gebäude errichten: Mondbasis, Sensor-Phalanx und Sprungtor.',
+    claimGift: 'Geschenk erhalten'
+  },
+  checkIn: {
+    title: 'Tägliches Einchecken',
+    progress: 'Eincheck-Fortschritt',
+    progressDesc: 'Aktueller Zyklus: {current}/{total} Tage',
+    day: 'Tag {day}',
+    claim: 'Abholen',
+    claimed: 'Erhalten',
+    locked: 'Gesperrt',
+    claimedToday: 'Heute eingecheckt',
+    available: 'Verfügbar',
+    rules: 'Regeln',
+    rule1: 'Checke täglich ein, um Belohnungen zu erhalten. Aufeinanderfolgende Tage erhöhen die Belohnungen.',
+    rule2: 'Der Eincheck-Zyklus wird alle 7 Tage zurückgesetzt.',
+    rule3: 'Ein verpasster Tag setzt den Zyklus zurück.',
+    noPlanet: 'Kein Planet ausgewählt',
+    success: 'Einchecken erfolgreich! Tag {day} Belohnung erhalten',
+    alreadyClaimed: 'Heute bereits eingecheckt'
   }
 }

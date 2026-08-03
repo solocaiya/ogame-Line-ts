@@ -76,6 +76,7 @@ export default {
     galaxy: 'Galaxy',
     diplomacy: 'Diplomacy',
     achievements: 'Achievements',
+    checkIn: 'Check-In',
     campaign: 'Campaign',
     ranking: 'Ranking',
     messages: 'Messages',
@@ -2316,5 +2317,30 @@ export default {
     // Delete
     deleteFailedHttp: 'Delete failed: HTTP {status}',
     deleteError: 'Delete error: {error}'
+  },
+  moon: {
+    giftMoon: 'Gift Moon',
+    firstLoginTitle: 'Welcome, Commander!',
+    firstLoginDesc: 'As a new commander, you have received a free moon as a gift!',
+    firstLoginHint: 'You can build special buildings on the moon, such as Lunar Base, Sensor Phalanx, and Jump Gate.',
+    claimGift: 'Claim Gift'
+  },
+  checkIn: {
+    title: 'Daily Check-In',
+    progress: 'Check-In Progress',
+    progressDesc: 'Current cycle: {current}/{total} days',
+    day: 'Day {day}',
+    claim: 'Claim',
+    claimed: 'Claimed',
+    locked: 'Locked',
+    claimedToday: 'Checked In Today',
+    available: 'Available',
+    rules: 'Rules',
+    rule1: 'Check in daily to claim rewards. Rewards increase each consecutive day.',
+    rule2: 'The check-in cycle resets every 7 days.',
+    rule3: 'Missing a day will reset the cycle progress.',
+    noPlanet: 'No planet selected',
+    success: 'Check-in successful! Received Day {day} reward',
+    alreadyClaimed: 'Already checked in today'
   }
 }

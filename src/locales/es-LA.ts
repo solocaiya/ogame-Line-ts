@@ -69,6 +69,7 @@ export default {
     galaxy: 'Galaxia',
     diplomacy: 'Diplomacia',
     achievements: 'Logros',
+    checkIn: 'Registro Diario',
     campaign: 'Campaña',
     ranking: 'Clasificación',
     messages: 'Mensajes',
@@ -2302,5 +2303,30 @@ export default {
     notConfigured: 'WebDAV no configurado',
     invalidUrl: 'URL de WebDAV inválida',
     timeout: 'Tiempo de conexión agotado'
+  },
+  moon: {
+    giftMoon: 'Luna de Regalo',
+    firstLoginTitle: '¡Bienvenido, Comandante!',
+    firstLoginDesc: '¡Como nuevo comandante, has recibido una luna gratis como regalo!',
+    firstLoginHint: 'Puedes construir edificios especiales en la luna: Base Lunar, Falange Sensor y Portal de Salto.',
+    claimGift: 'Reclamar Regalo'
+  },
+  checkIn: {
+    title: 'Registro Diario',
+    progress: 'Progreso de Registro',
+    progressDesc: 'Ciclo actual: {current}/{total} días',
+    day: 'Día {day}',
+    claim: 'Reclamar',
+    claimed: 'Reclamado',
+    locked: 'Bloqueado',
+    claimedToday: 'Registrado hoy',
+    available: 'Disponible',
+    rules: 'Reglas',
+    rule1: 'Regístrate diariamente para recibir recompensas. Los días consecutivos aumentan las recompensas.',
+    rule2: 'El ciclo de registro se reinicia cada 7 días.',
+    rule3: 'Saltarse un día reinicia el progreso del ciclo.',
+    noPlanet: 'Ningún planeta seleccionado',
+    success: '¡Registro exitoso! Recompensa del día {day} recibida',
+    alreadyClaimed: 'Ya te registraste hoy'
   }
 }

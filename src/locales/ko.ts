@@ -70,6 +70,7 @@ export default {
     galaxy: '은하계',
     diplomacy: '외교',
     achievements: '업적',
+    checkIn: '체크인',
     campaign: '캠페인',
     ranking: '랭킹',
     messages: '메시지',
@@ -2129,5 +2130,30 @@ export default {
         epilogue_2: '당신의 여정은 계속된다... 새로운 모험이 별 너머에서 기다리고 있다...'
       }
     }
+  },
+  moon: {
+    giftMoon: '선물 달',
+    firstLoginTitle: '환영합니다, 사령관!',
+    firstLoginDesc: '새로운 사령관에게 무료 달을 선물로 드립니다!',
+    firstLoginHint: '달에는 달 기지, 센서 팔랑크스, 점프 게이트와 같은 특수 건물을 건설할 수 있습니다.',
+    claimGift: '선물 받기'
+  },
+  checkIn: {
+    title: '일일 체크인',
+    progress: '체크인 진행',
+    progressDesc: '현재 주기: {current}/{total}일',
+    day: '{day}일차',
+    claim: '받기',
+    claimed: '수령 완료',
+    locked: '잠김',
+    claimedToday: '오늘 체크인 완료',
+    available: '체크인 가능',
+    rules: '규칙',
+    rule1: '매일 체크인하여 보상을 받으세요. 연속 체크인 시 보상이 증가합니다.',
+    rule2: '체크인 주기는 7일마다 초기화됩니다.',
+    rule3: '체크인을 건너뛰면 주기가 초기화됩니다.',
+    noPlanet: '행성이 선택되지 않았습니다',
+    success: '체크인 성공! {day}일차 보상 획득',
+    alreadyClaimed: '오늘 이미 체크인했습니다'
   }
 }

@@ -827,6 +827,11 @@ export interface Player {
   // 战役系统
   campaignProgress?: PlayerCampaignProgress // 战役进度
   questNotifications?: QuestNotification[] // 任务通知
+  // 7日签到系统
+  checkInHistory?: number[] // 签到时间戳数组（每个元素代表一天的签到时间）
+  lastCheckInDate?: string // 最后签到日期（ISO格式，用于快速判断今天是否已签到）
+  // 首次登录月球礼物
+  firstLoginMoonGiftClaimed?: boolean // 是否已领取首次登录月球礼物
 }
 
 export interface NotificationSettings {

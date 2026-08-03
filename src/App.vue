@@ -410,6 +410,7 @@
     <DetailDialog />
     <!-- 更新弹窗 -->
     <UpdateDialog v-model:open="showUpdateDialog" :version-info="updateInfo" />
+    <FirstLoginMoonGiftDialog v-model:open="showFirstLoginMoonDialog" />
     <!-- 弱引导提示系统 -->
     <HintToast />
     <!-- Toast 通知 -->
@@ -515,6 +516,7 @@
   } from '@/components/ui/alert-dialog'
   import DetailDialog from '@/components/dialogs/DetailDialog.vue'
   import UpdateDialog from '@/components/dialogs/UpdateDialog.vue'
+  import FirstLoginMoonGiftDialog from '@/components/dialogs/FirstLoginMoonGiftDialog.vue'
   import HintToast from '@/components/notifications/HintToast.vue'
   import BackToTop from '@/components/common/BackToTop.vue'
   import Sonner from '@/components/ui/sonner/Sonner.vue'
@@ -548,7 +550,8 @@
     Pencil,
     Trophy,
     Crown,
-    Scroll
+    Scroll,
+    CalendarCheck
   } from 'lucide-vue-next'
   import * as gameLogic from '@/logic/gameLogic'
   import * as planetLogic from '@/logic/planetLogic'
@@ -594,6 +597,8 @@
   // 更新弹窗状态
   const showUpdateDialog = ref(false)
   const updateInfo = ref<VersionInfo | null>(null)
+  // 首次登录月球礼物弹窗
+  const showFirstLoginMoonDialog = ref(false)
   // 所有可用的语言选项
   const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'es-LA', 'ko', 'ja']
   // 侧边栏状态（不持久化，根据屏幕尺寸初始化）
@@ -656,6 +661,7 @@
     { name: computed(() => t('nav.galaxy')), path: '/galaxy', icon: Globe },
     { name: computed(() => t('nav.diplomacy')), path: '/diplomacy', icon: Handshake },
     { name: computed(() => t('nav.achievements')), path: '/achievements', icon: Trophy },
+    { name: computed(() => t('nav.checkIn')), path: '/checkin', icon: CalendarCheck },
     { name: computed(() => t('nav.campaign')), path: '/campaign', icon: Scroll },
     { name: computed(() => t('nav.ranking')), path: '/ranking', icon: Crown },
     { name: computed(() => t('nav.messages')), path: '/messages', icon: Mail },
@@ -889,6 +895,18 @@
     generateNPCPlanets()
     // 初始化玩家积分
     gameStore.player.points = publicLogic.calculatePlayerPoints(gameStore.player)
+
+    // 首次登录赠送月球
+    if (!gameStore.player.firstLoginMoonGiftClaimed) {
+      const moonPosition = { ...initialPlanet.position }
+      const moonDiameter = 4500 // 固定直径
+      const moon = planetLogic.createMoon(initialPlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
+      gameStore.player.planets.push(moon)
+      gameStore.player.firstLoginMoonGiftClaimed = true
+
+      // 显示首次登录月球礼物弹窗
+      showFirstLoginMoonDialog.value = true
+    }
   }
 
   const generateNPCPlanets = () => {

@@ -71,6 +71,7 @@ export default {
     diplomacy: '外交',
     campaign: 'キャンペーン',
     achievements: '実績',
+    checkIn: 'チェックイン',
     ranking: 'ランキング',
     messages: 'メッセージ',
     settings: '設定',
@@ -2188,5 +2189,30 @@ export default {
         epilogue_2: 'あなたの旅は続く...新たな冒険が星の彼方で待っている...'
       }
     }
+  },
+  moon: {
+    giftMoon: 'ギフトムーン',
+    firstLoginTitle: 'ようこそ、司令官！',
+    firstLoginDesc: '新しい司令官として、無料の月をプレゼントしました！',
+    firstLoginHint: '月には特殊な建物（月面基地、センサーフェランクス、ジャンプゲート）を建設できます。',
+    claimGift: 'プレゼントを受け取る'
+  },
+  checkIn: {
+    title: 'デイリーチェックイン',
+    progress: 'チェックイン進捗',
+    progressDesc: '現在のサイクル：{current}/{total} 日',
+    day: '{day} 日目',
+    claim: '受け取る',
+    claimed: '受取済み',
+    locked: '未解放',
+    claimedToday: '本日チェックイン済み',
+    available: 'チェックイン可能',
+    rules: 'ルール',
+    rule1: '毎日チェックインして報酬を受け取りましょう。連続日数で報酬が増加します。',
+    rule2: 'チェックインサイクルは7日ごとにリセットされます。',
+    rule3: 'チェックインを中断するとサイクルがリセットされます。',
+    noPlanet: '惑星が選択されていません',
+    success: 'チェックイン成功！{day} 日目の報酬を獲得',
+    alreadyClaimed: '本日すでにチェックイン済みです'
   }
 }
