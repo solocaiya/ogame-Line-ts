@@ -27,12 +27,12 @@
         class="relative overflow-hidden"
         :class="{
           'ring-2 ring-primary': index + 1 === currentDay && canCheckIn,
-          'opacity-60': index + 1 < currentDay || (index + 1 > currentDay && !canCheckIn),
+          'opacity-60': isDayClaimed(gameStore.player, reward.day) || index + 1 > currentDay,
           'bg-gradient-to-br from-primary/10 to-primary/5': index + 1 === currentDay && canCheckIn
         }"
       >
         <!-- 完成标记 -->
-        <div v-if="index + 1 < currentDay || (index + 1 === currentDay && !canCheckIn)" class="absolute top-2 right-2">
+        <div v-if="isDayClaimed(gameStore.player, reward.day)" class="absolute top-2 right-2">
           <CheckCircle class="h-5 w-5 text-green-500" />
         </div>
 
@@ -79,7 +79,7 @@
             <Gift class="mr-2 h-4 w-4" />
             {{ t('checkIn.claim') }}
           </Button>
-          <div v-else-if="index + 1 < currentDay || (index + 1 === currentDay && !canCheckIn)" class="text-xs text-center text-muted-foreground mt-2">
+          <div v-else-if="isDayClaimed(gameStore.player, reward.day)" class="text-xs text-center text-muted-foreground mt-2">
             {{ t('checkIn.claimed') }}
           </div>
           <div v-else class="text-xs text-center text-muted-foreground mt-2">
@@ -118,6 +118,7 @@
     canCheckInToday,
     getCurrentCheckInDay,
     getCheckInProgress,
+    isDayClaimed,
     claimCheckIn
   } from '@/logic/checkInLogic'
   import { toast } from 'vue-sonner'

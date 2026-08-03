@@ -1,0 +1,7 @@
+allowBuilds:
+  electron: false
+  electron-winstaller: false
+  esbuild: false
+  sharp: false
+  vue-demi: false
+blockExoticSubdeps: false

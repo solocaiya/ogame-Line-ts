@@ -83,6 +83,14 @@ export const claimCheckIn = (player: Player, planet: Planet): { success: boolean
 }
 
 /**
+ * 判断指定天数是否已领取（基于签到历史长度）
+ */
+export const isDayClaimed = (player: Player, day: number): boolean => {
+  const history = player.checkInHistory || []
+  return history.length >= day
+}
+
+/**
  * 重置签到周期（完成7天后自动重置）
  */
 export const resetCheckInCycle = (player: Player): void => {
