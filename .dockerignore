@@ -29,3 +29,9 @@ android/app/build/
 android/.gradle/
 resources/
 electron/dist/
+
+# Go 构建产物（Docker 内会重新编译）
+server/ogame-server
+server/*.db
+server/*.db-shm
+server/*.db-wal

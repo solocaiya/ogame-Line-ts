@@ -111,6 +111,15 @@ export default defineConfig(async () => {
       }
     },
     // 优化依赖预构建
-    optimizeDeps: { include: ['vue', 'vue-router', 'pinia', 'reka-ui', '@vueuse/core', 'lucide-vue-next', 'crypto-js', 'file-saver'] }
+    optimizeDeps: { include: ['vue', 'vue-router', 'pinia', 'reka-ui', '@vueuse/core', 'lucide-vue-next', 'crypto-js', 'file-saver'] },
+    // API 代理：开发模式下转发 /api 请求到 Go 服务器
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8081',
+          changeOrigin: true
+        }
+      }
+    }
   }
 })

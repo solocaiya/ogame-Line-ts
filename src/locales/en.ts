@@ -2516,5 +2516,21 @@ export default {
     cancelAll: 'Cancel All',
     cancelHint: 'Only the first item can be cancelled',
     resourceSummary: 'Waiting Queue Resource Requirements'
+  },
+
+  login: {
+    title: 'OGame',
+    subtitle: 'Sign in or create an account',
+    login: 'Login',
+    register: 'Register',
+    username: 'Username',
+    usernamePlaceholder: 'Enter username (3-20 characters)',
+    password: 'Password',
+    passwordPlaceholder: 'Enter password (min 6 characters)',
+    confirmPassword: 'Confirm Password',
+    confirmPasswordPlaceholder: 'Enter password again',
+    loginButton: 'Sign In',
+    registerButton: 'Create Account',
+    skipAsGuest: 'Continue as Guest'
   }
 }

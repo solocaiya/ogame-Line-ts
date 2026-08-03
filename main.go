@@ -8,6 +8,8 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -42,8 +44,31 @@ func main() {
 
 	fileServer := http.FileServer(http.FS(distFS))
 
-	// 自定义路由处理：支持静态文件和 SPA (单页应用) 回退
+	// --- API 反向代理 ---
+	// 将 /api/ 请求代理到 Go API 服务器（默认端口 8081）
+	apiProxyURL := os.Getenv("API_SERVER_URL")
+	if apiProxyURL == "" {
+		apiProxyURL = "http://127.0.0.1:8081"
+	}
+	apiTarget, _ := url.Parse(apiProxyURL)
+	apiProxy := httputil.NewSingleHostReverseProxy(apiTarget)
+
+	// 自定义代理错误处理（API 服务器未启动时返回友好提示）
+	apiProxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		fmt.Fprintf(w, `{"error":"API server unavailable: %s"}`, err.Error())
+	}
+
+	// --- 路由分发 ---
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// /api/ 请求走反向代理
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			apiProxy.ServeHTTP(w, r)
+			return
+		}
+
+		// 其他请求走静态文件服务
 		// 移除路径前缀的斜杠
 		path := strings.TrimPrefix(r.URL.Path, "/")
 
@@ -92,8 +117,10 @@ func main() {
 	} else {
 		fmt.Printf("运行模式: 自动分配端口\n")
 	}
+	fmt.Printf("API 代理: %s/api/ → %s\n", localUrl, apiProxyURL)
 	fmt.Println("=======================================")
 	fmt.Println("提示: 请勿关闭此控制台窗口，否则服务将停止。")
+	fmt.Println("提示: API 功能需要单独启动 API 服务器 (server/ogame-server -port 8081)")
 	fmt.Println("--- 实时访问日志 ---")
 
 	// --- 5. 自动打开浏览器并启动服务 ---

@@ -478,6 +478,9 @@
   import { useGameStore } from '@/stores/gameStore'
   import { useUniverseStore } from '@/stores/universeStore'
   import { useNPCStore } from '@/stores/npcStore'
+  import { useAuthStore } from '@/stores/authStore'
+  import { apiService } from '@/services/apiService'
+  import { wsService } from '@/services/wsService'
   import { useTheme } from '@/composables/useTheme'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
@@ -594,6 +597,8 @@
   const gameStore = useGameStore()
   const universeStore = useUniverseStore()
   const npcStore = useNPCStore()
+  const authStore = useAuthStore()
+  authStore.init() // register token-sync callback with apiService
   const { isDark } = useTheme()
   const { t } = useI18n()
   const { BUILDINGS, TECHNOLOGIES } = useGameConfig()
@@ -626,7 +631,10 @@
   const gameLoop = ref<ReturnType<typeof setInterval> | null>(null)
   const pointsUpdateInterval = ref<ReturnType<typeof setInterval> | null>(null)
   const konamiCleanup = ref<(() => void) | null>(null)
-  const versionCheckInterval = ref<ReturnType<typeof setInterval> | null>(null) // 重命名星球相关状态
+  const versionCheckInterval = ref<ReturnType<typeof setInterval> | null>(null)
+  const cloudSaveInterval = ref<ReturnType<typeof setInterval> | null>(null) // 云端自动存档定时器
+  const cloudSaveLoading = ref(false) // 云端存档加载中
+  // 重命名星球相关状态
   const renameDialogOpen = ref(false)
   const renamingPlanetId = ref<string | null>(null)
   const newPlanetName = ref('')
@@ -943,6 +951,97 @@
       if (universeStore.planets[key]) continue
       const npcPlanet = planetLogic.createNPCPlanet(i, position, t('planet.planetPrefix'))
       universeStore.planets[key] = npcPlanet
+    }
+  }
+
+  // --- 云端存档 ---
+
+  /**
+   * 尝试从服务器加载云端存档
+   * 如果服务器有数据且比本地新，则替换本地 store
+   */
+  const tryCloudLoad = async () => {
+    if (!authStore.isLoggedIn) return
+
+    cloudSaveLoading.value = true
+    try {
+      const saveData = await apiService.loadGame()
+      if (saveData && saveData.gameData) {
+        // 解析服务器数据
+        const serverGameData = JSON.parse(saveData.gameData)
+        const serverNpcData = saveData.npcData ? JSON.parse(saveData.npcData) : null
+        const serverUniverseData = saveData.universeData ? JSON.parse(saveData.universeData) : null
+
+        // 比较时间戳：如果服务器数据比本地新，则替换
+        const serverTime = new Date(saveData.savedAt).getTime()
+        const localTime = gameStore.player.lastSaveTime || 0
+
+        if (serverTime > localTime || gameStore.player.planets.length === 0) {
+          // 服务器数据更新或本地无数据，用服务器数据替换
+          gameStore.$patch(serverGameData)
+          if (serverNpcData) npcStore.$patch(serverNpcData)
+          if (serverUniverseData) universeStore.$patch(serverUniverseData)
+          console.log('[CloudSave] 已从服务器加载存档，保存时间:', saveData.savedAt)
+        } else {
+          // 本地数据更新，上传到服务器
+          await saveToCloud()
+          console.log('[CloudSave] 本地数据更新，已上传到服务器')
+        }
+      }
+    } catch (e: any) {
+      // 404 = 新注册用户，没有存档，正常情况
+      if (e.message && !e.message.includes('404')) {
+        console.warn('[CloudSave] 加载云端存档失败:', e.message)
+      }
+      // 首次登录或无存档，将本地数据上传
+      if (gameStore.player.planets.length > 0) {
+        try {
+          await saveToCloud()
+        } catch {
+          // 忽略上传失败
+        }
+      }
+    } finally {
+      cloudSaveLoading.value = false
+    }
+  }
+
+  /**
+   * 将当前游戏数据保存到服务器
+   */
+  const saveToCloud = async () => {
+    if (!authStore.isLoggedIn) return
+
+    try {
+      const gameData = JSON.stringify(gameStore.$state)
+      const npcData = JSON.stringify(npcStore.$state)
+      const universeData = JSON.stringify(universeStore.$state)
+      await apiService.saveGame(gameData, npcData, universeData)
+      gameStore.player.lastSaveTime = Date.now()
+    } catch (e: any) {
+      console.warn('[CloudSave] 保存失败:', e.message)
+    }
+  }
+
+  /**
+   * 启动云端自动存档（每 60 秒）
+   */
+  const startCloudAutoSave = () => {
+    stopCloudAutoSave()
+    cloudSaveInterval.value = setInterval(() => {
+      if (authStore.isLoggedIn) {
+        saveToCloud()
+      }
+    }, 60 * 1000)
+  }
+
+  /**
+   * 停止云端自动存档
+   */
+  const stopCloudAutoSave = () => {
+    if (cloudSaveInterval.value) {
+      clearInterval(cloudSaveInterval.value)
+      cloudSaveInterval.value = null
     }
   }
 
@@ -2435,6 +2534,96 @@
   )
 
   // 初始化游戏
+  // WebSocket 事件处理
+  const setupWebSocket = () => {
+    // 建筑完成通知
+    wsService.on('buildingComplete', (data) => {
+      const buildingName = data.building || 'building'
+      toast.success(`Building complete: ${buildingName} → Lv.${data.level}`)
+      gameStore.applyServerEvent('buildingComplete', data)
+    })
+
+    // 研究完成通知
+    wsService.on('researchComplete', (data) => {
+      toast.success(`Research complete: ${data.type} → Lv.${data.level}`)
+      gameStore.applyServerEvent('researchComplete', data)
+    })
+
+    // 舰船/防御生产完成通知
+    wsService.on('shipComplete', (data) => {
+      toast.success(`Ship production complete: ${data.type} ×${data.count}`)
+      gameStore.syncFromServer()
+    })
+
+    wsService.on('defenseComplete', (data) => {
+      toast.success(`Defense production complete: ${data.type} ×${data.count}`)
+      gameStore.syncFromServer()
+    })
+
+    // 战斗结果通知
+    wsService.on('battleResult', (data) => {
+      const winner = data.winner === 'attacker' ? 'Victory!' : data.winner === 'defender' ? 'Defeat' : 'Draw'
+      const plunder = data.plunder || {}
+      const plunderText = [plunder.metal, plunder.crystal, plunder.deuterium].filter(Boolean).join(' / ')
+      toast.info(`Battle result: ${winner}${plunderText ? ` — Plunder: ${plunderText}` : ''}`)
+      gameStore.applyServerEvent('battleResult', data)
+    })
+
+    // 舰队到达通知
+    wsService.on('fleetArrived', (data) => {
+      toast.info(`Fleet arrived at ${data.target}`)
+      gameStore.applyServerEvent('fleetArrived', data)
+    })
+
+    // 舰队返回通知
+    wsService.on('fleetReturned', (data) => {
+      toast.info(`Fleet returned to ${data.origin}`)
+      gameStore.applyServerEvent('fleetReturned', data)
+    })
+
+    // 连接状态
+    wsService.on('connected', () => {
+      console.log('[App] WebSocket connected')
+      // Sync full state on connect
+      gameStore.syncFromServer()
+    })
+
+    wsService.on('disconnected', () => {
+      console.log('[App] WebSocket disconnected')
+    })
+  }
+
+  const connectWebSocket = () => {
+    if (!wsService.connected) {
+      wsService.connect()
+    }
+  }
+
+  const disconnectWebSocket = () => {
+    wsService.disconnect()
+  }
+
+  // Refresh game state from server (delegates to store)
+  const refreshGameState = async () => {
+    if (!authStore.isLoggedIn) return
+    await gameStore.syncFromServer()
+  }
+
+  // 监听登录状态变化：登录后加载云端存档，连接 WebSocket；登出后停止自动存档，断开 WebSocket
+  watch(() => authStore.isLoggedIn, async (loggedIn) => {
+    if (loggedIn) {
+      // 登录成功，加载服务器存档
+      await tryCloudLoad()
+      startCloudAutoSave()
+      // 连接 WebSocket
+      connectWebSocket()
+    } else {
+      // 登出，停止自动存档，断开 WebSocket
+      stopCloudAutoSave()
+      disconnectWebSocket()
+    }
+  })
+
   onMounted(async () => {
     try {
       // 如果是首次访问（没有星球数据），使用浏览器语言自动检测
@@ -2443,6 +2632,21 @@
         gameStore.locale = detectBrowserLocale()
       }
       await initGame()
+
+      // 云端存档：如果有 token 但没 user，先获取用户信息
+      if (authStore.accessToken && !authStore.user) {
+        await authStore.fetchUser()
+      }
+      // 如果已登录，尝试从服务器加载存档，连接 WebSocket
+      if (authStore.isLoggedIn) {
+        await tryCloudLoad()
+        startCloudAutoSave()
+        connectWebSocket()
+      }
+
+      // 初始化 WebSocket 事件监听（只调用一次）
+      setupWebSocket()
+
       // 启动游戏循环
       startGameLoop()
       // 启动积分更新定时器
@@ -2524,6 +2728,8 @@
     if (pointsUpdateInterval.value) clearInterval(pointsUpdateInterval.value)
     if (konamiCleanup.value) konamiCleanup.value()
     if (versionCheckInterval.value) clearInterval(versionCheckInterval.value)
+    stopCloudAutoSave()
+    disconnectWebSocket()
     // 移除队列取消事件监听
     window.removeEventListener('cancel-build', handleCancelBuildEvent as EventListener)
     window.removeEventListener('cancel-research', handleCancelResearchEvent as EventListener)

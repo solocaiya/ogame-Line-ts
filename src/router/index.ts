@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/gameStore'
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true } },
     { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
     { path: '/overview', name: 'overview', component: () => import('@/views/OverviewView.vue') },
     { path: '/buildings', name: 'buildings', component: () => import('@/views/BuildingsView.vue') },
@@ -34,6 +35,12 @@ const router = createRouter({
 // 路由守卫：检查隐私协议同意状态
 router.beforeEach((to, _from, next) => {
   const gameStore = useGameStore()
+
+  // 公开页面（登录等）始终可访问
+  if (to.meta.public) {
+    next()
+    return
+  }
 
   // 已同意隐私协议
   if (gameStore.player.privacyAgreed) {
