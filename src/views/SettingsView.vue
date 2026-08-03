@@ -440,7 +440,7 @@
   import WebDAVFileListDialog from '@/components/settings/WebDAVFileListDialog.vue'
   import { useHints } from '@/composables/useHints'
   import { uploadToWebDAV, downloadFromWebDAV } from '@/services/webdavService'
-  import { playSound, SoundType } from '@/logic/soundManager'
+  import { playSound, SoundType, playBgm, pauseBgm, setBgmVolume } from '@/logic/soundManager'
 
   const { t } = useI18n()
   const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
@@ -891,9 +891,16 @@
   }
   const updateMusicEnabled = (val: boolean) => {
     gameStore.player.musicEnabled = val
+    if (val) {
+      playBgm()
+    } else {
+      pauseBgm()
+    }
   }
   const updateMusicVolume = (e: Event) => {
-    gameStore.player.musicVolume = parseFloat((e.target as HTMLInputElement).value)
+    const vol = parseFloat((e.target as HTMLInputElement).value)
+    gameStore.player.musicVolume = vol
+    setBgmVolume(vol)
   }
   const testSound = () => {
     playSound(SoundType.CLICK, { enabled: true, volume: gameStore.player.soundVolume ?? 0.5 })

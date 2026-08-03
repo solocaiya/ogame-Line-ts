@@ -119,6 +119,86 @@ const soundPlayers: Record<SoundType, (volume: number) => void> = {
   }
 }
 
+// 背景音乐（BGM）
+let bgmAudio: HTMLAudioElement | null = null
+let bgmVolume = 0.3
+let bgmEnabled = false
+let bgmSourceUrl = ''
+
+/**
+ * 设置背景音乐源
+ * @param url - 音频文件 URL（支持 mp3/ogg/wav）
+ */
+export const setBgmSource = (url: string) => {
+  bgmSourceUrl = url
+  if (bgmAudio) {
+    bgmAudio.src = url
+    bgmAudio.load()
+    if (bgmEnabled) {
+      bgmAudio.play().catch(() => {})
+    }
+  }
+}
+
+/**
+ * 播放背景音乐
+ */
+export const playBgm = () => {
+  if (typeof window === 'undefined') return
+  if (!bgmAudio) {
+    bgmAudio = new Audio()
+    bgmAudio.loop = true
+    bgmAudio.volume = bgmVolume
+    if (bgmSourceUrl) {
+      bgmAudio.src = bgmSourceUrl
+    }
+  }
+  bgmEnabled = true
+  bgmAudio.play().catch(() => {
+    // 浏览器可能阻止自动播放，需用户交互后重试
+  })
+}
+
+/**
+ * 暂停背景音乐
+ */
+export const pauseBgm = () => {
+  bgmEnabled = false
+  if (bgmAudio) {
+    bgmAudio.pause()
+  }
+}
+
+/**
+ * 切换背景音乐播放/暂停
+ */
+export const toggleBgm = () => {
+  if (bgmEnabled) {
+    pauseBgm()
+  } else {
+    playBgm()
+  }
+}
+
+/**
+ * 设置背景音乐音量 (0-1)
+ */
+export const setBgmVolume = (vol: number) => {
+  bgmVolume = Math.max(0, Math.min(1, vol))
+  if (bgmAudio) {
+    bgmAudio.volume = bgmVolume
+  }
+}
+
+/**
+ * 获取背景音乐状态
+ */
+export const getBgmState = () => ({
+  playing: bgmEnabled,
+  volume: bgmVolume,
+  source: bgmSourceUrl
+})
+
 /**
  * 播放音效
  */
