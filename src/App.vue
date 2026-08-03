@@ -349,7 +349,7 @@
 
         <!-- 内容区域 -->
         <main class="flex-1">
-          <Transition name="page" mode="out-in">
+          <Transition name="page">
             <div :key="$route.fullPath" class="h-full">
               <!-- 背景动画开启时 -->
               <template v-if="gameStore.player.backgroundEnabled">

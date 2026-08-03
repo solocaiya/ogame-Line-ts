@@ -790,7 +790,7 @@
               <SelectTrigger>
                 <SelectValue :placeholder="t('bookmark.selectCategory')" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent :modal="false">
                 <SelectItem v-for="cat in BOOKMARK_CATEGORIES" :key="cat" :value="cat">
                   {{ t(`bookmark.categories.${cat}`) }}
                 </SelectItem>
