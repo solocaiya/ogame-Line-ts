@@ -415,6 +415,8 @@
     <HintToast />
     <!-- Toast 通知 -->
     <Sonner position="top-center" />
+    <!-- 新手引导 -->
+    <TutorialOverlay />
     <!-- 重命名星球对话框 -->
     <Dialog v-model:open="renameDialogOpen">
       <DialogContent class="sm:max-w-md">
@@ -520,6 +522,7 @@
   import HintToast from '@/components/notifications/HintToast.vue'
   import BackToTop from '@/components/common/BackToTop.vue'
   import Sonner from '@/components/ui/sonner/Sonner.vue'
+  import TutorialOverlay from '@/components/TutorialOverlay.vue'
   import { MissionType, BuildingType, TechnologyType, DiplomaticEventType, ShipType, DefenseType } from '@/types/game'
   import type { FleetMission, NPC, MissileAttack } from '@/types/game'
   import { DIPLOMATIC_CONFIG } from '@/config/gameConfig'
@@ -551,7 +554,12 @@
     Trophy,
     Crown,
     Scroll,
-    CalendarCheck
+    CalendarCheck,
+    ArrowLeftRight,
+    Bookmark,
+    BarChart3,
+    ScrollText,
+    ListOrdered
   } from 'lucide-vue-next'
   import * as gameLogic from '@/logic/gameLogic'
   import * as planetLogic from '@/logic/planetLogic'
@@ -664,6 +672,11 @@
     { name: computed(() => t('nav.checkIn')), path: '/checkin', icon: CalendarCheck },
     { name: computed(() => t('nav.campaign')), path: '/campaign', icon: Scroll },
     { name: computed(() => t('nav.ranking')), path: '/ranking', icon: Crown },
+    { name: computed(() => t('nav.trader')), path: '/trader', icon: ArrowLeftRight },
+    { name: computed(() => t('nav.bookmarks')), path: '/bookmarks', icon: Bookmark },
+    { name: computed(() => t('nav.statistics')), path: '/statistics', icon: BarChart3 },
+    { name: computed(() => t('nav.battleReports')), path: '/battle-reports', icon: ScrollText },
+    { name: computed(() => t('nav.queueManagement')), path: '/planet-queue', icon: ListOrdered },
     { name: computed(() => t('nav.messages')), path: '/messages', icon: Mail },
     { name: computed(() => t('nav.settings')), path: '/settings', icon: Settings },
     // GM菜单在启用GM模式时显示

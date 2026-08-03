@@ -92,6 +92,62 @@
             </p>
           </div>
 
+          <!-- 科技等级 -->
+          <div v-if="report.attackerTechs || report.defenderTechs" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="report.attackerTechs" class="p-3 bg-muted/50 rounded-lg border">
+              <div class="flex items-center gap-2 mb-2">
+                <Sword class="h-4 w-4" />
+                <span class="text-sm font-medium">{{ t('battleReports.attackerTechs') }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.weaponTech') }}</div>
+                  <div class="font-bold text-base">{{ report.attackerTechs.weapon }}</div>
+                </div>
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.shieldTech') }}</div>
+                  <div class="font-bold text-base">{{ report.attackerTechs.shield }}</div>
+                </div>
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.armorTech') }}</div>
+                  <div class="font-bold text-base">{{ report.attackerTechs.armor }}</div>
+                </div>
+              </div>
+            </div>
+            <div v-if="report.defenderTechs" class="p-3 bg-muted/50 rounded-lg border">
+              <div class="flex items-center gap-2 mb-2">
+                <ShieldIcon class="h-4 w-4" />
+                <span class="text-sm font-medium">{{ t('battleReports.defenderTechs') }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.weaponTech') }}</div>
+                  <div class="font-bold text-base">{{ report.defenderTechs.weapon }}</div>
+                </div>
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.shieldTech') }}</div>
+                  <div class="font-bold text-base">{{ report.defenderTechs.shield }}</div>
+                </div>
+                <div class="text-center p-2 bg-background rounded border">
+                  <div class="text-muted-foreground">{{ t('battleReports.armorTech') }}</div>
+                  <div class="font-bold text-base">{{ report.defenderTechs.armor }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 初始战力 -->
+          <div v-if="report.attackerInitialPower || report.defenderInitialPower" class="grid grid-cols-2 gap-4">
+            <div class="p-3 bg-muted/50 rounded-lg border text-center">
+              <div class="text-xs text-muted-foreground">{{ t('battleReports.initialPower') }}</div>
+              <div class="text-lg font-bold">{{ formatNumber(report.attackerInitialPower || 0) }}</div>
+            </div>
+            <div class="p-3 bg-muted/50 rounded-lg border text-center">
+              <div class="text-xs text-muted-foreground">{{ t('battleReports.initialPower') }}</div>
+              <div class="text-lg font-bold">{{ formatNumber(report.defenderInitialPower || 0) }}</div>
+            </div>
+          </div>
+
           <!-- 损失对比 -->
           <div class="space-y-3">
             <h4 class="font-semibold text-sm">{{ t('messagesView.losses') }}</h4>
@@ -335,6 +391,28 @@
                     </TooltipProvider>
                   </div>
 
+                  <!-- 本回合开始时单位数 -->
+                  <div v-if="detail.attackerUnitCount || detail.defenderUnitCount" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div v-if="detail.attackerUnitCount" class="p-2 bg-muted/30 rounded border text-xs">
+                      <p class="font-medium mb-1">{{ t('battleReports.unitCountStart') }} - {{ t('simulatorView.attacker') }}</p>
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="(count, unitType) in detail.attackerUnitCount" :key="unitType" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-background rounded border">
+                          <span class="text-muted-foreground">{{ getUnitName(unitType) }}</span>
+                          <span class="font-medium">{{ count }}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div v-if="detail.defenderUnitCount" class="p-2 bg-muted/30 rounded border text-xs">
+                      <p class="font-medium mb-1">{{ t('battleReports.unitCountStart') }} - {{ t('simulatorView.defender') }}</p>
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="(count, unitType) in detail.defenderUnitCount" :key="unitType" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-background rounded border">
+                          <span class="text-muted-foreground">{{ getUnitName(unitType) }}</span>
+                          <span class="font-medium">{{ count }}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <!-- 攻击方本回合损失 -->
                     <div class="bg-muted/50 rounded-lg p-3 border">
@@ -522,5 +600,12 @@
     const fleetCount = Object.values(remaining.fleet || {}).reduce((sum, count) => sum + count, 0)
     const defenseCount = Object.values(remaining.defense || {}).reduce((sum, count) => sum + count, 0)
     return fleetCount + defenseCount
+  }
+
+  // 获取单位名称（舰船或防御）
+  const getUnitName = (unitType: string): string => {
+    if (SHIPS[unitType]) return SHIPS[unitType].name
+    if (DEFENSES[unitType]) return DEFENSES[unitType].name
+    return unitType
   }
 </script>

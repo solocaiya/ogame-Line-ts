@@ -201,6 +201,19 @@ const executeRound = (
 }
 
 /**
+ * 记录当前回合各兵种数量
+ */
+const getUnitCounts = (units: CombatUnit[]): Record<string, number> => {
+  const counts: Record<string, number> = {}
+  for (const unit of units) {
+    if (unit.count > 0) {
+      counts[unit.type] = unit.count
+    }
+  }
+  return counts
+}
+
+/**
  * 模拟完整战斗
  */
 const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxRounds: number = 6): BattleSimulationResult => {
@@ -220,6 +233,8 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
     }
     attackerRemainingPower: number
     defenderRemainingPower: number
+    attackerUnitCount?: Record<string, number>
+    defenderUnitCount?: Record<string, number>
   }> = []
 
   let rounds = 0
@@ -232,6 +247,10 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
 
     rounds++
 
+    // 记录本回合开始时各兵种数量
+    const attackerUnitCount = getUnitCounts(attackerUnits)
+    const defenderUnitCount = getUnitCounts(defenderUnits)
+
     const roundResult = executeRound(attackerUnits, defenderUnits)
 
     // 保存当前回合详情
@@ -243,7 +262,9 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
         defense: { ...roundResult.defenderLosses.defense }
       },
       attackerRemainingPower: roundResult.attackerRemainingPower,
-      defenderRemainingPower: roundResult.defenderRemainingPower
+      defenderRemainingPower: roundResult.defenderRemainingPower,
+      attackerUnitCount,
+      defenderUnitCount
     })
 
     // 累计损失

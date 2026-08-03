@@ -544,6 +544,53 @@ export const processAllWaitingQueues = (player: Player, _now: number): { execute
 }
 
 /**
+ * 上移等待队列项优先级
+ */
+export const moveWaitingQueueItemUp = (planet: Planet, itemId: string): boolean => {
+  if (!planet.waitingBuildQueue) return false
+  const index = planet.waitingBuildQueue.findIndex(q => q.id === itemId)
+  if (index <= 0) return false
+  const queue = planet.waitingBuildQueue
+  const temp = queue[index - 1]!.priority
+  queue[index - 1]!.priority = queue[index]!.priority
+  queue[index]!.priority = temp
+  queue.sort((a, b) => a.priority - b.priority)
+  return true
+}
+
+/**
+ * 下移等待队列项优先级
+ */
+export const moveWaitingQueueItemDown = (planet: Planet, itemId: string): boolean => {
+  if (!planet.waitingBuildQueue) return false
+  const index = planet.waitingBuildQueue.findIndex(q => q.id === itemId)
+  if (index === -1 || index >= planet.waitingBuildQueue.length - 1) return false
+  const queue = planet.waitingBuildQueue
+  const temp = queue[index + 1]!.priority
+  queue[index + 1]!.priority = queue[index]!.priority
+  queue[index]!.priority = temp
+  queue.sort((a, b) => a.priority - b.priority)
+  return true
+}
+
+/**
+ * 重排等待队列项到指定位置
+ */
+export const reorderWaitingQueueItem = (planet: Planet, itemId: string, newIndex: number): boolean => {
+  if (!planet.waitingBuildQueue) return false
+  const queue = planet.waitingBuildQueue
+  const oldIndex = queue.findIndex(q => q.id === itemId)
+  if (oldIndex === -1) return false
+  const [item] = queue.splice(oldIndex, 1)
+  if (!item) return false
+  const clampedIndex = Math.max(0, Math.min(newIndex, queue.length))
+  queue.splice(clampedIndex, 0, item)
+  // 重新分配优先级
+  queue.forEach((q, i) => { q.priority = i + 1 })
+  return true
+}
+
+/**
  * 获取等待队列项的显示名称
  */
 export const getWaitingItemName = (item: WaitingQueueItem): string => {

@@ -267,6 +267,50 @@
       </CardContent>
     </Card>
 
+    <!-- 音效设置 -->
+    <Card>
+      <CardHeader>
+        <CardTitle>{{ t('sound.title') }}</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <!-- 音效开关 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('sound.soundEnabled') }}</h3>
+          </div>
+          <Switch :checked="gameStore.player.soundEnabled ?? true" @update:checked="updateSoundEnabled" />
+        </div>
+        <!-- 音效音量 -->
+        <div v-if="gameStore.player.soundEnabled !== false" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <Label class="text-sm">{{ t('sound.soundVolume') }}</Label>
+            <span class="text-sm text-muted-foreground">{{ Math.round((gameStore.player.soundVolume ?? 0.5) * 100) }}%</span>
+          </div>
+          <input type="range" min="0" max="1" step="0.05" :value="gameStore.player.soundVolume ?? 0.5" @input="updateSoundVolume" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+        </div>
+        <!-- 音乐开关 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('sound.musicEnabled') }}</h3>
+          </div>
+          <Switch :checked="gameStore.player.musicEnabled ?? false" @update:checked="updateMusicEnabled" />
+        </div>
+        <!-- 音乐音量 -->
+        <div v-if="gameStore.player.musicEnabled" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <Label class="text-sm">{{ t('sound.musicVolume') }}</Label>
+            <span class="text-sm text-muted-foreground">{{ Math.round((gameStore.player.musicVolume ?? 0.3) * 100) }}%</span>
+          </div>
+          <input type="range" min="0" max="1" step="0.05" :value="gameStore.player.musicVolume ?? 0.3" @input="updateMusicVolume" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+        </div>
+        <!-- 测试音效按钮 -->
+        <Button variant="outline" class="w-full" @click="testSound">
+          <Volume2 class="mr-2 h-4 w-4" />
+          {{ t('sound.testSound') }}
+        </Button>
+      </CardContent>
+    </Card>
+
     <!-- 关于 -->
     <Card>
       <CardHeader>
@@ -379,7 +423,8 @@
     Cloud,
     CloudUpload,
     CloudDownload,
-    Settings2
+    Settings2,
+    Volume2
   } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
@@ -395,6 +440,7 @@
   import WebDAVFileListDialog from '@/components/settings/WebDAVFileListDialog.vue'
   import { useHints } from '@/composables/useHints'
   import { uploadToWebDAV, downloadFromWebDAV } from '@/services/webdavService'
+  import { playSound, SoundType } from '@/logic/soundManager'
 
   const { t } = useI18n()
   const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
@@ -834,6 +880,23 @@
   // 更新背景设置
   const updateBackgroundSetting = (val: boolean) => {
     gameStore.player.backgroundEnabled = val
+  }
+
+  // 音效设置
+  const updateSoundEnabled = (val: boolean) => {
+    gameStore.player.soundEnabled = val
+  }
+  const updateSoundVolume = (e: Event) => {
+    gameStore.player.soundVolume = parseFloat((e.target as HTMLInputElement).value)
+  }
+  const updateMusicEnabled = (val: boolean) => {
+    gameStore.player.musicEnabled = val
+  }
+  const updateMusicVolume = (e: Event) => {
+    gameStore.player.musicVolume = parseFloat((e.target as HTMLInputElement).value)
+  }
+  const testSound = () => {
+    playSound(SoundType.CLICK, { enabled: true, volume: gameStore.player.soundVolume ?? 0.5 })
   }
 
   // WebDAV 上传

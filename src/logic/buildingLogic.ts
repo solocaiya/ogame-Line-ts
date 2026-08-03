@@ -176,6 +176,11 @@ export const completeBuildQueue = (
   onPointsEarned?: (points: number, type: 'building' | 'ship' | 'defense', itemType: string, level?: number, quantity?: number) => void,
   onCompleted?: (type: 'building' | 'ship' | 'defense' | 'demolish', itemType: string, level?: number, quantity?: number) => void
 ): void => {
+  // 队列暂停时跳过处理
+  if (planet.queuePaused) {
+    return
+  }
+
   planet.buildQueue = planet.buildQueue.filter(item => {
     if (now >= item.endTime) {
       // 建造完成

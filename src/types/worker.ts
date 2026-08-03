@@ -53,6 +53,8 @@ export interface BattleSimulationResult {
     }
     attackerRemainingPower: number
     defenderRemainingPower: number
+    attackerUnitCount?: Record<string, number>
+    defenderUnitCount?: Record<string, number>
   }>
 }
 

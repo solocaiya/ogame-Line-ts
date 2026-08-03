@@ -75,6 +75,22 @@ export const useGameStore = defineStore('game', {
 
       const permission = await Notification.requestPermission()
       return permission === 'granted'
+    },
+    toggleQueuePaused(planetId: string) {
+      const planet = this.player.planets.find(p => p.id === planetId)
+      if (planet) {
+        planet.queuePaused = !planet.queuePaused
+      }
+    },
+    cancelBuildQueueItem(planetId: string, itemId: string) {
+      const planet = this.player.planets.find(p => p.id === planetId)
+      if (planet && planet.buildQueue.length > 0) {
+        // 只能取消第一个（当前正在建造的）
+        const firstItem = planet.buildQueue[0]
+        if (firstItem.id === itemId) {
+          planet.buildQueue.shift()
+        }
+      }
     }
   },
   getters: {

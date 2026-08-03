@@ -86,7 +86,17 @@ export const simulateBattle = async (
     attackerRemaining: simulationResult.attackerRemaining,
     defenderRemaining: simulationResult.defenderRemaining,
     roundDetails: simulationResult.roundDetails,
-    moonChance
+    moonChance,
+    attackerTechs: {
+      weapon: attackerWeaponTech,
+      shield: attackerShieldTech,
+      armor: attackerArmorTech
+    },
+    defenderTechs: {
+      weapon: defenderWeaponTech,
+      shield: defenderShieldTech,
+      armor: defenderArmorTech
+    }
   }
 
   return battleResult

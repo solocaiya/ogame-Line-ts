@@ -417,8 +417,15 @@ export interface BattleResult {
     }
     attackerRemainingPower: number
     defenderRemainingPower: number
+    attackerUnitCount?: Record<string, number>
+    defenderUnitCount?: Record<string, number>
   }>
   moonChance?: number // 月球生成概率
+  // 详细战报增强
+  attackerTechs?: { weapon: number; shield: number; armor: number }
+  defenderTechs?: { weapon: number; shield: number; armor: number }
+  attackerInitialPower?: number
+  defenderInitialPower?: number
 }
 
 // 间谍报告
@@ -710,6 +717,7 @@ export interface Planet {
   jumpGateLastUsed?: number // 跳跃门上次使用时间戳(ms)，用于冷却计算
   oreDeposits?: OreDeposits // 矿脉储量（可选，用于向后兼容）
   temperature?: { min: number; max: number } // 星球温度范围（摄氏度），影响太阳能卫星和重氢产量
+  queuePaused?: boolean // 队列暂停状态
 }
 
 // 月球特殊配置
@@ -832,6 +840,29 @@ export interface Player {
   lastCheckInDate?: string // 最后签到日期（ISO格式，用于快速判断今天是否已签到）
   // 首次登录月球礼物
   firstLoginMoonGiftClaimed?: boolean // 是否已领取首次登录月球礼物
+  // 资源交易所
+  tradeHistory?: import('@/logic/traderLogic').TradeRecord[] // 交易历史记录
+  // 备注书签
+  bookmarks?: import('@/logic/bookmarkLogic').Bookmark[] // 书签列表
+  // 音效设置
+  soundEnabled?: boolean // 是否启用音效（默认true）
+  musicEnabled?: boolean // 是否启用背景音乐（默认false）
+  soundVolume?: number // 音效音量 0-1（默认0.7）
+  musicVolume?: number // 音乐音量 0-1（默认0.5）
+  // 新手引导
+  tutorialCompleted?: boolean // 是否已完成新手引导
+  // 数据统计
+  statistics?: {
+    totalMetalProduced?: number
+    totalCrystalProduced?: number
+    totalDeuteriumProduced?: number
+    totalDarkMatterEarned?: number
+    totalFleetDispatches?: number
+    totalBattlesWon?: number
+    totalBattlesLost?: number
+  }
+  totalPlayTime?: number // 总游戏时间（秒）
+  createdAt?: number // 账号创建时间戳
 }
 
 export interface NotificationSettings {
