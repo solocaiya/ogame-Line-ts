@@ -115,15 +115,15 @@ export function useQueueSummary() {
         total.darkMatter += cost.darkMatter || 0
         total.energy += cost.energy || 0
       }
-      // 研究等待队列
-      for (const item of gameStore.player.waitingResearchQueue || []) {
-        const cost = waitingQueueLogic.calculateWaitingItemCost(item)
-        total.metal += cost.metal
-        total.crystal += cost.crystal
-        total.deuterium += cost.deuterium
-        total.darkMatter += cost.darkMatter || 0
-        total.energy += cost.energy || 0
-      }
+    }
+    // 研究等待队列（跨星球，只计算一次）
+    for (const item of gameStore.player.waitingResearchQueue || []) {
+      const cost = waitingQueueLogic.calculateWaitingItemCost(item)
+      total.metal += cost.metal
+      total.crystal += cost.crystal
+      total.deuterium += cost.deuterium
+      total.darkMatter += cost.darkMatter || 0
+      total.energy += cost.energy || 0
     }
     return total
   })
