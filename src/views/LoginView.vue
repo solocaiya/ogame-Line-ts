@@ -94,6 +94,41 @@
         </div>
       </CardContent>
     </Card>
+
+    <!-- 隐私协议同意弹窗（登录成功后） -->
+    <AlertDialog v-model:open="showAgreementDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('home.privacyAgreement') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('home.privacyAgreementDesc') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div class="my-4 max-h-48 overflow-y-auto text-sm text-muted-foreground border rounded-lg p-3">
+          <p>{{ t('privacy.sections.introduction.content') }}</p>
+          <p class="mt-2">{{ t('privacy.sections.dataCollection.content') }}</p>
+          <p class="mt-2">{{ t('privacy.sections.thirdParty.content') }}</p>
+        </div>
+        <div class="flex items-center gap-2 mb-4">
+          <Checkbox id="privacy-agree" v-model="privacyAgreed" />
+          <label for="privacy-agree" class="text-sm cursor-pointer">
+            {{ t('home.agreeToPrivacy') }}
+            <Button variant="link" class="p-0 h-auto text-sm" @click.prevent="showPrivacyDialog = true">
+              {{ t('home.viewFullPolicy') }}
+            </Button>
+          </label>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="privacyAgreed = false; showAgreementDialog = false">{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction :disabled="!privacyAgreed" @click="confirmPrivacy">
+            {{ t('home.agreeAndStart') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- 隐私协议全文弹窗 -->
+    <PrivacyDialog v-model:open="showPrivacyDialog" />
   </div>
 </template>
 
@@ -112,7 +147,19 @@ import CardContent from '@/components/ui/card/CardContent.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Rocket, AlertCircle, Loader2 } from 'lucide-vue-next'
+import PrivacyDialog from '@/components/dialogs/PrivacyDialog.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -123,6 +170,9 @@ const mode = ref<'login' | 'register'>('login')
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const showAgreementDialog = ref(false)
+const showPrivacyDialog = ref(false)
+const privacyAgreed = ref(false)
 
 const isValid = computed(() => {
   if (username.value.length < 3) return false
@@ -145,21 +195,34 @@ async function handleSubmit() {
     } else {
       await authStore.register(username.value, password.value)
     }
-    // 登录成功，清除游客标记并跳转到总览
+    // 登录成功，清除游客标记
     localStorage.removeItem('guest_mode')
-    router.push('/overview')
+    // 检查隐私协议
+    if (gameStore.player.privacyAgreed) {
+      router.push('/overview')
+    } else {
+      showAgreementDialog.value = true
+    }
   } catch {
     // 错误已在 authStore.error 中
   }
 }
 
-function skipLogin() {
-  // 游客模式：标记为游客，直接进入游戏（不登录服务器）
-  localStorage.setItem('guest_mode', 'true')
-  if (!gameStore.player.privacyAgreed) {
-    router.push('/')
-  } else {
+function confirmPrivacy() {
+  if (privacyAgreed.value) {
+    gameStore.player.privacyAgreed = true
+    showAgreementDialog.value = false
     router.push('/overview')
+  }
+}
+
+function skipLogin() {
+  // 游客模式
+  localStorage.setItem('guest_mode', 'true')
+  if (gameStore.player.privacyAgreed) {
+    router.push('/overview')
+  } else {
+    showAgreementDialog.value = true
   }
 }
 

@@ -73,15 +73,8 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  // 未同意隐私协议
-  // 允许访问首页（用于显示隐私协议同意弹窗）
-  if (to.path === '/') {
-    next()
-    return
-  }
-
-  // 未同意隐私协议且访问其他页面，重定向到首页
-  next('/')
+  // 未同意隐私协议 → 去登录页处理（登录成功后弹出隐私协议）
+  next('/login')
 })
 
 export default router

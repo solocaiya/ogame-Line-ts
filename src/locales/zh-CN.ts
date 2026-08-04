@@ -6,7 +6,8 @@ export default {
     privacyAgreementDesc: '开始游戏前，请阅读并同意我们的隐私协议。',
     agreeToPrivacy: '我已阅读并同意',
     viewFullPolicy: '查看完整协议',
-    agreeAndStart: '同意并开始'
+    agreeAndStart: '同意并开始',
+    loginRegister: '登录 / 注册'
   },
   common: {
     confirm: '确认',

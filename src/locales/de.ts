@@ -6,7 +6,8 @@ export default {
     privacyAgreementDesc: 'Bitte lesen und akzeptieren Sie unsere Datenschutzrichtlinie, bevor Sie das Spiel starten.',
     agreeToPrivacy: 'Ich habe gelesen und stimme zu',
     viewFullPolicy: 'Vollständige Richtlinie anzeigen',
-    agreeAndStart: 'Zustimmen & Starten'
+    agreeAndStart: 'Zustimmen & Starten',
+    loginRegister: 'Anmelden / Registrieren'
   },
   common: {
     confirm: 'Bestätigen',
