@@ -86,7 +86,8 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
+                      <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                      <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-0.5">
                           <span class="truncate font-medium text-sm">{{ p.name }}</span>
@@ -110,7 +111,7 @@
             <Popover>
               <PopoverTrigger as-child>
                 <Button variant="outline" class="w-full border-yellow-400 dark:border-yellow-600">
-                  <Globe class="h-4 w-4 mr-2" />
+                  <span class="text-base mr-1">🪐</span>
                   {{ highlightedNpc.name }} ({{ highlightedNpc.planets.length }})
                 </Button>
               </PopoverTrigger>
@@ -134,7 +135,8 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
+                      <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                      <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                       <div class="flex-1 min-w-0">
                         <div class="truncate font-medium text-sm mb-0.5">{{ p.name }}</div>
                         <div class="text-[11px] text-muted-foreground">
@@ -205,6 +207,7 @@
                   <div v-if="slot.planet" class="space-y-1">
                     <!-- 第一行：名称、坐标、状态、残骸 -->
                     <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+                      <img v-if="slot.planet.icon" :src="slot.planet.icon" class="w-6 h-6 rounded-full shrink-0 object-cover" />
                       <h3 class="font-semibold text-sm truncate">
                         {{ isMyPlanet(slot.planet) ? slot.planet.name : getNpcPlanetDisplayName(slot.planet) }}
                       </h3>
@@ -489,6 +492,7 @@
                 <div v-if="slot.planet" class="space-y-1">
                   <!-- PC端：标题和徽章 -->
                   <div class="flex items-center gap-2 flex-wrap">
+                    <img v-if="slot.planet.icon" :src="slot.planet.icon" class="w-7 h-7 rounded-full shrink-0 object-cover" />
                     <h3 class="font-semibold text-base">
                       {{ isMyPlanet(slot.planet) ? slot.planet.name : getNpcPlanetDisplayName(slot.planet) }}
                     </h3>
@@ -1051,7 +1055,6 @@
     Rocket,
     Recycle,
     Gift,
-    Globe,
     Bomb,
     Moon,
     Radar,

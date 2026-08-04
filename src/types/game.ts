@@ -718,6 +718,7 @@ export interface Planet {
   oreDeposits?: OreDeposits // 矿脉储量（可选，用于向后兼容）
   temperature?: { min: number; max: number } // 星球温度范围（摄氏度），影响太阳能卫星和重氢产量
   queuePaused?: boolean // 队列暂停状态
+  icon?: string // 星球图标（emoji），创建时随机分配
 }
 
 // 月球特殊配置

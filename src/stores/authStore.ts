@@ -60,11 +60,10 @@ export const useAuthStore = defineStore('auth', {
       if (!this.accessToken) return
       try {
         this.user = await apiService.getMe()
-      } catch (e: any) {
-        // Only logout on auth failure — network errors should not wipe the session
-        if (e?.message?.includes('401') || e?.message?.includes('invalid') || e?.message?.includes('expired')) {
-          this.logout()
-        }
+      } catch {
+        // /auth/me 失败意味着 token 无效或网络异常，统一登出
+        // apiService 在 refresh 失败时已清除 token，这里只需清理 user 状态
+        this.logout()
       }
     },
 

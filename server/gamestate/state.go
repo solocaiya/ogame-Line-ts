@@ -1,6 +1,7 @@
 package gamestate
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -17,18 +18,38 @@ type GameEvent struct {
 	Data     interface{} `json:"data"`
 }
 
+// Notification represents an in-app notification for a player.
+type Notification struct {
+	ID        string      `json:"id"`
+	Type      string      `json:"type"`
+	Message   string      `json:"message"`
+	Data      interface{} `json:"data,omitempty"`
+	CreatedAt int64       `json:"createdAt"`
+	Read      bool        `json:"read"`
+}
+
 // GameState manages the authoritative server-side game state.
 type GameState struct {
-	mu           sync.RWMutex
-	players      map[string]*engine.PlayerState // playerID -> state
-	eventHandler atomic.Value                    // stores func(event GameEvent); read lock-free
+	mu          sync.RWMutex
+	players     map[string]*engine.PlayerState // playerID -> state
+	eventHandler atomic.Value                   // stores func(event GameEvent); read lock-free
+	coordIndex  map[string]*engine.PlanetState  // "g:s:p" -> planet pointer for O(1) lookup
+	activePlayers map[string]time.Time          // playerID -> last active time
+	db          *sql.DB                         // reference for notifications/battle replays
 }
 
 // New creates a new GameState.
 func New() *GameState {
 	return &GameState{
-		players: make(map[string]*engine.PlayerState),
+		players:       make(map[string]*engine.PlayerState),
+		coordIndex:    make(map[string]*engine.PlanetState),
+		activePlayers: make(map[string]time.Time),
 	}
+}
+
+// SetDB sets the database reference for notifications and battle replay persistence.
+func (gs *GameState) SetDB(db *sql.DB) {
+	gs.db = db
 }
 
 // SetEventHandler sets a callback for game events (e.g., broadcast to WebSocket).
@@ -74,18 +95,34 @@ func (gs *GameState) MarshalPlayer(playerID string) (json.RawMessage, bool) {
 	return json.RawMessage(data), true
 }
 
-// SetPlayer stores a player's state.
+// SetPlayer stores a player's state and rebuilds their coordinate index entries.
 func (gs *GameState) SetPlayer(playerID string, state *engine.PlayerState) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
+	// Remove old coord index entries for this player
+	if old, ok := gs.players[playerID]; ok {
+		for _, p := range old.Planets {
+			delete(gs.coordIndex, gs.coordKey(p.Coordinate))
+		}
+	}
 	gs.players[playerID] = state
+	// Add new coord index entries
+	for _, planet := range state.Planets {
+		gs.coordIndex[gs.coordKey(planet.Coordinate)] = planet
+	}
 }
 
-// RemovePlayer removes a player's state.
+// RemovePlayer removes a player's state and their coordinate index entries.
 func (gs *GameState) RemovePlayer(playerID string) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
+	if p, ok := gs.players[playerID]; ok {
+		for _, planet := range p.Planets {
+			delete(gs.coordIndex, gs.coordKey(planet.Coordinate))
+		}
+	}
 	delete(gs.players, playerID)
+	delete(gs.activePlayers, playerID)
 }
 
 // GetPlanet returns a specific planet's state (read-only copy).
@@ -140,27 +177,76 @@ func (gs *GameState) EnsurePlayer(playerID string, gameSpeed int) {
 	defer gs.mu.Unlock()
 	if _, ok := gs.players[playerID]; !ok {
 		gs.players[playerID] = &engine.PlayerState{
-			ID:        playerID,
-			UserID:    playerID,
-			Planets:   make(map[string]*engine.PlanetState),
-			Moons:     make(map[string]string),
-			GameSpeed: gameSpeed,
+			ID:          playerID,
+			UserID:      playerID,
+			Planets:     make(map[string]*engine.PlanetState),
+			Moons:       make(map[string]string),
+			GameSpeed:   gameSpeed,
 			DebrisField: engine.Resources{},
 		}
 	}
 }
 
-// Tick processes all pending actions for all players.
-// Holds the write lock for the entire duration — the inner work per player
-// (resource arithmetic, queue timers, fleet time comparisons) is fast, and
-// battles only fire when fleets arrive (infrequent). This keeps the code
-// simple and correct: no data races with concurrent API reads/writes.
+// MarkActive records that a player is currently active (e.g., WebSocket connected).
+func (gs *GameState) MarkActive(playerID string) {
+	gs.mu.Lock()
+	gs.activePlayers[playerID] = time.Now()
+	gs.mu.Unlock()
+}
+
+// MarkInactive removes a player's active status (e.g., WebSocket disconnected).
+func (gs *GameState) MarkInactive(playerID string) {
+	gs.mu.Lock()
+	delete(gs.activePlayers, playerID)
+	gs.mu.Unlock()
+}
+
+// IsActive returns whether a player is currently connected/active.
+func (gs *GameState) IsActive(playerID string) bool {
+	gs.mu.RLock()
+	_, ok := gs.activePlayers[playerID]
+	gs.mu.RUnlock()
+	return ok
+}
+
+// queueNotification sends a WS event to active players, or stores a DB
+// notification for offline players so they see it on next login.
+func (gs *GameState) queueNotification(playerID, notifType, message string, data interface{}) {
+	if gs.IsActive(playerID) {
+		gs.emitEvent(GameEvent{Type: notifType, PlayerID: playerID, Data: data})
+		return
+	}
+	if gs.db == nil {
+		return
+	}
+	notif := Notification{
+		ID:        fmt.Sprintf("n_%d_%s", time.Now().UnixNano(), playerID[:min(8, len(playerID))]),
+		Type:      notifType,
+		Message:   message,
+		Data:      data,
+		CreatedAt: time.Now().UnixMilli(),
+		Read:      false,
+	}
+	jsonData, _ := json.Marshal(data)
+	gs.db.Exec(`INSERT INTO notifications (id, player_id, type, message, data, created_at, read)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		notif.ID, playerID, notifType, message, string(jsonData), notif.CreatedAt, false)
+}
+
+// Tick processes all pending actions for active players only.
+// Inactive players skip the tick loop — their resources are still calculated
+// correctly via time-diff when they next query (UpdatePlanetResources uses LastUpdate).
 func (gs *GameState) Tick() {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
 	now := time.Now().UnixMilli()
-	for _, player := range gs.players {
+	cutoff := time.Now().Add(-5 * time.Minute)
+	for id, player := range gs.players {
+		lastActive, isActive := gs.activePlayers[id]
+		if !isActive || lastActive.Before(cutoff) {
+			continue
+		}
 		gs.tickPlayer(player, now)
 	}
 }
@@ -262,6 +348,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		defenderPlanet.Resources = defenderPlanet.Resources.Sub(result.Plunder)
 		player.DebrisField = player.DebrisField.Add(result.DebrisField)
 
+		// Emit battle result to attacker
 		gs.emitEvent(GameEvent{
 			Type:     "battleResult",
 			PlayerID: player.ID,
@@ -275,6 +362,23 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 				"remaining": result.AttackerRemaining,
 			},
 		})
+
+		// Persist battle replay
+		gs.saveBattleReplay(player.ID, mission, result, now)
+
+		// Notify defender (WS if online, DB notification if offline)
+		defenderID := gs.findPlayerIDByPlanet(defenderPlanet.ID)
+		if defenderID != "" {
+			gs.queueNotification(defenderID, "battleIncoming",
+				fmt.Sprintf("Your planet at [%d:%d:%d] was attacked!",
+					defenderPlanet.Coordinate.Galaxy, defenderPlanet.Coordinate.System, defenderPlanet.Coordinate.Position),
+				map[string]interface{}{
+					"winner":    result.Winner,
+					"rounds":    result.Rounds,
+					"planetId":  defenderPlanet.ID,
+					"remaining": result.AttackerRemaining,
+				})
+		}
 
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
@@ -301,6 +405,17 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
 	case "spy":
+		// Notify target if online
+		targetPlanet := gs.findPlanetByCoord(mission.Target)
+		if targetPlanet != nil {
+			defenderID := gs.findPlayerIDByPlanet(targetPlanet.ID)
+			if defenderID != "" {
+				gs.queueNotification(defenderID, "espionageDetected",
+					fmt.Sprintf("Espionage activity detected near [%d:%d:%d]!",
+						targetPlanet.Coordinate.Galaxy, targetPlanet.Coordinate.System, targetPlanet.Coordinate.Position),
+					map[string]interface{}{"planetId": targetPlanet.ID})
+			}
+		}
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
@@ -320,6 +435,34 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 	}
+}
+
+// saveBattleReplay persists a battle result to the database.
+func (gs *GameState) saveBattleReplay(attackerID string, mission *engine.FleetMission, result engine.BattleResult, timestamp int64) {
+	if gs.db == nil {
+		return
+	}
+	replayData, err := json.Marshal(result)
+	if err != nil {
+		return
+	}
+	replayID := fmt.Sprintf("replay_%d_%s", timestamp, mission.ID)
+	gs.db.Exec(`INSERT INTO battle_replays (id, attacker_id, target_coord, result_data, created_at)
+		VALUES (?, ?, ?, ?, ?)`,
+		replayID, attackerID,
+		fmt.Sprintf("%d:%d:%d", mission.Target.Galaxy, mission.Target.System, mission.Target.Position),
+		string(replayData), timestamp)
+}
+
+// findPlayerIDByPlanet finds which player owns a given planet ID.
+// Called with gs.mu held.
+func (gs *GameState) findPlayerIDByPlanet(planetID string) string {
+	for playerID, p := range gs.players {
+		if _, ok := p.Planets[planetID]; ok {
+			return playerID
+		}
+	}
+	return ""
 }
 
 func (gs *GameState) processBuildingQueue(planet *engine.PlanetState, now int64, gameSpeed int) {
@@ -416,16 +559,14 @@ func (gs *GameState) processDefenseQueue(planet *engine.PlanetState, now int64, 
 	}
 }
 
-// findPlanetByCoord searches all players' planets for a matching coordinate.
+// coordKey converts a coordinate to a map key string for the coordinate index.
+func (gs *GameState) coordKey(c engine.Coordinate) string {
+	return fmt.Sprintf("%d:%d:%d", c.Galaxy, c.System, c.Position)
+}
+
+// findPlanetByCoord looks up a planet by coordinate using the O(1) index.
 func (gs *GameState) findPlanetByCoord(coord engine.Coordinate) *engine.PlanetState {
-	for _, p := range gs.players {
-		for _, planet := range p.Planets {
-			if planet.Coordinate == coord {
-				return planet
-			}
-		}
-	}
-	return nil
+	return gs.coordIndex[gs.coordKey(coord)]
 }
 
 func (gs *GameState) processFleetReturn(player *engine.PlayerState, mission *engine.FleetMission, now int64) {

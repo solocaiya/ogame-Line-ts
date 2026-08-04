@@ -194,7 +194,7 @@
   const gameStore = useGameStore()
   const { t } = useI18n()
 
-  const planets = computed(() => gameStore.planets)
+  const planets = computed(() => gameStore.planets || [])
 
   const stats = computed(() => calculateStatistics(gameStore.player, planets.value))
 

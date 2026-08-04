@@ -27,6 +27,7 @@ func Init(dbPath string) error {
 
 func migrate() error {
 	migrations := []string{
+		// Core tables
 		`CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			username TEXT UNIQUE NOT NULL,
@@ -45,22 +46,49 @@ func migrate() error {
 			saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 		)`,
-		`CREATE INDEX IF NOT EXISTS idx_player_saves_user_id ON player_saves(user_id)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_player_saves_user_slot ON player_saves(user_id, save_slot)`,
-		`CREATE TABLE IF NOT EXISTS leaderboard (
-			user_id TEXT PRIMARY KEY,
-			username TEXT,
-			total_points INTEGER DEFAULT 0,
-			fleet_points INTEGER DEFAULT 0,
-			research_points INTEGER DEFAULT 0,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-		)`,
 		`CREATE TABLE IF NOT EXISTS player_game_states (
 			player_id TEXT PRIMARY KEY,
 			state_data TEXT NOT NULL,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
+		`CREATE TABLE IF NOT EXISTS leaderboard (
+			user_id TEXT PRIMARY KEY,
+			username TEXT,
+			total_points INTEGER DEFAULT 0,
+			economy_points INTEGER DEFAULT 0,
+			military_points INTEGER DEFAULT 0,
+			research_points INTEGER DEFAULT 0,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		)`,
+
+		// Battle replays — stores battle results for history/replay
+		`CREATE TABLE IF NOT EXISTS battle_replays (
+			id TEXT PRIMARY KEY,
+			attacker_id TEXT NOT NULL,
+			target_coord TEXT NOT NULL,
+			result_data TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		// Notifications — queued for offline players, delivered on login
+		`CREATE TABLE IF NOT EXISTS notifications (
+			id TEXT PRIMARY KEY,
+			player_id TEXT NOT NULL,
+			type TEXT NOT NULL,
+			message TEXT NOT NULL,
+			data TEXT,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			read BOOLEAN DEFAULT 0
+		)`,
+
+		// Indexes for query performance
+		`CREATE INDEX IF NOT EXISTS idx_player_saves_user_id ON player_saves(user_id)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_player_saves_user_slot ON player_saves(user_id, save_slot)`,
+		`CREATE INDEX IF NOT EXISTS idx_leaderboard_points ON leaderboard(total_points DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_player_game_states_updated ON player_game_states(updated_at)`,
+		`CREATE INDEX IF NOT EXISTS idx_battle_replays_attacker ON battle_replays(attacker_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_notifications_player ON notifications(player_id, created_at DESC)`,
 	}
 
 	for _, m := range migrations {

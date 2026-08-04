@@ -6,7 +6,8 @@ export default {
     privacyAgreementDesc: 'Пожалуйста, прочитайте и примите нашу политику конфиденциальности перед началом игры.',
     agreeToPrivacy: 'Я прочитал и согласен с',
     viewFullPolicy: 'Просмотреть полную политику',
-    agreeAndStart: 'Согласиться и начать'
+    agreeAndStart: 'Согласиться и начать',
+    loginRegister: 'Войти / Регистрация'
   },
   common: {
     confirm: 'Подтвердить',

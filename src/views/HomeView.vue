@@ -9,11 +9,11 @@
       <p class="text-muted-foreground mt-2 text-sm sm:text-base">{{ t('home.subtitle') }}</p>
     </div>
 
-    <!-- 开始游戏按钮 -->
+    <!-- 登录/注册按钮 -->
     <div class="flex flex-col gap-4 w-full max-w-xs mb-8">
-      <Button size="lg" class="w-full text-lg h-14" @click="handleStartGame">
-        <Rocket class="mr-2 h-5 w-5" />
-        {{ t('home.startGame') }}
+      <Button size="lg" class="w-full text-lg h-14" @click="goToLogin">
+        <LogIn class="mr-2 h-5 w-5" />
+        {{ t('home.loginRegister') }}
       </Button>
     </div>
 
@@ -52,92 +52,44 @@
 
     <!-- 隐私协议弹窗 -->
     <PrivacyDialog v-model:open="showPrivacyDialog" />
-
-    <!-- 隐私协议同意确认弹窗（开始游戏时） -->
-    <AlertDialog v-model:open="showAgreementDialog">
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{{ t('home.privacyAgreement') }}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {{ t('home.privacyAgreementDesc') }}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div class="my-4 max-h-48 overflow-y-auto text-sm text-muted-foreground border rounded-lg p-3">
-          <p>{{ t('privacy.sections.introduction.content') }}</p>
-          <p class="mt-2">{{ t('privacy.sections.dataCollection.content') }}</p>
-          <p class="mt-2">{{ t('privacy.sections.thirdParty.content') }}</p>
-        </div>
-        <div class="flex items-center gap-2 mb-4">
-          <Checkbox id="privacy-agree" v-model="privacyAgreed" />
-          <label for="privacy-agree" class="text-sm cursor-pointer">
-            {{ t('home.agreeToPrivacy') }}
-            <Button variant="link" class="p-0 h-auto text-sm" @click.prevent="showPrivacyDialog = true">
-              {{ t('home.viewFullPolicy') }}
-            </Button>
-          </label>
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel @click="privacyAgreed = false">{{ t('common.cancel') }}</AlertDialogCancel>
-          <AlertDialogAction :disabled="!privacyAgreed" @click="confirmStartGame">
-            {{ t('home.agreeAndStart') }}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { useGameStore } from '@/stores/gameStore'
+  import { useAuthStore } from '@/stores/authStore'
   import { useI18n } from '@/composables/useI18n'
   import { localeNames, type Locale } from '@/locales'
   import { Button } from '@/components/ui/button'
   import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-  import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle
-  } from '@/components/ui/alert-dialog'
-  import { Checkbox } from '@/components/ui/checkbox'
-  import { Rocket, Languages, Shield } from 'lucide-vue-next'
+  import { LogIn, Languages, Shield } from 'lucide-vue-next'
   import PrivacyDialog from '@/components/dialogs/PrivacyDialog.vue'
   import pkg from '../../package.json'
 
   const router = useRouter()
   const gameStore = useGameStore()
+  const authStore = useAuthStore()
   const { t } = useI18n()
 
   const showPrivacyDialog = ref(false)
-  const showAgreementDialog = ref(false)
-  const privacyAgreed = ref(false)
 
   const availableLocales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'ko', 'ja']
 
-  // 处理开始游戏
-  const handleStartGame = () => {
-    // 如果已经同意过，直接进入总览页面
-    if (gameStore.player.privacyAgreed) {
-      router.push('/overview')
-    } else {
-      // 显示同意弹窗
-      showAgreementDialog.value = true
+  // 已登录且同意隐私协议 → 自动跳转游戏
+  onMounted(() => {
+    const isGuest = localStorage.getItem('guest_mode') === 'true'
+    if (authStore.accessToken || isGuest) {
+      if (gameStore.player.privacyAgreed) {
+        router.replace('/overview')
+      }
+      // 未同意隐私协议则留在首页，等用户从登录页回来后处理
     }
-  }
+  })
 
-  // 确认开始游戏
-  const confirmStartGame = () => {
-    if (privacyAgreed.value) {
-      gameStore.player.privacyAgreed = true
-      showAgreementDialog.value = false
-      router.push('/overview')
-    }
+  const goToLogin = () => {
+    router.push('/login')
   }
 </script>
 

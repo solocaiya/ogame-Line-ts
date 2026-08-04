@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -32,13 +33,31 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫：检查隐私协议同意状态
+// 路由守卫：检查登录状态和隐私协议同意状态
 router.beforeEach((to, _from, next) => {
   const gameStore = useGameStore()
+  const authStore = useAuthStore()
 
   // 公开页面（登录等）始终可访问
   if (to.meta.public) {
     next()
+    return
+  }
+
+  // 是否已认证（登录或游客模式）
+  // 用 accessToken 判断而非 isLoggedIn，避免 fetchUser 未完成时的竞态条件
+  const isAuthenticated = !!authStore.accessToken
+  const isGuest = localStorage.getItem('guest_mode') === 'true'
+  const hasAccess = isAuthenticated || isGuest
+
+  if (!hasAccess) {
+    // 首页允许访问（用于显示登录入口）
+    if (to.path === '/') {
+      next()
+      return
+    }
+    // 其他页面重定向到登录页
+    next('/login')
     return
   }
 
@@ -54,15 +73,8 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  // 未同意隐私协议
-  // 允许访问首页（用于显示隐私协议同意弹窗）
-  if (to.path === '/') {
-    next()
-    return
-  }
-
-  // 未同意隐私协议且访问其他页面，重定向到首页
-  next('/')
+  // 未同意隐私协议 → 去登录页处理（登录成功后弹出隐私协议）
+  next('/login')
 })
 
 export default router

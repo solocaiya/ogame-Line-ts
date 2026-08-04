@@ -27,7 +27,8 @@
                   class="w-full justify-between h-auto px-3 py-2.5 border-2 hover:bg-accent hover:border-primary transition-colors"
                 >
                   <div class="flex items-start gap-2.5 flex-1 min-w-0">
-                    <Globe class="h-5 w-5 shrink-0 mt-0.5 text-primary" />
+                    <img v-if="planet.icon" :src="planet.icon" class="w-6 h-6 rounded-full shrink-0 mt-0.5 object-cover" />
+                    <span v-else class="text-lg shrink-0 mt-0.5">🪐</span>
                     <div class="flex-1 min-w-0 text-left">
                       <div class="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
                         {{ t('planet.currentPlanet') }}
@@ -60,7 +61,8 @@
                         size="sm"
                       >
                         <div class="flex items-start gap-2 w-full min-w-0">
-                          <Globe class="h-4 w-4 shrink-0 mt-0.5" :class="p.id === planet.id ? 'text-primary' : ''" />
+                          <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                          <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                           <div class="flex-1 min-w-0 text-left">
                             <div class="flex items-center gap-1.5 mb-0.5">
                               <span class="truncate font-medium text-sm">
@@ -349,7 +351,7 @@
 
         <!-- 内容区域 -->
         <main class="flex-1">
-          <Transition name="page">
+          <Transition name="page" mode="out-in">
             <div :key="$route.fullPath" class="h-full">
               <!-- 背景动画开启时 -->
               <template v-if="gameStore.player.backgroundEnabled">
@@ -417,7 +419,7 @@
     <!-- Toast 通知 -->
     <Sonner position="top-center" />
     <!-- 新手引导 -->
-    <TutorialOverlay />
+    <TutorialOverlay ref="tutorialRef" />
     <!-- 重命名星球对话框 -->
     <Dialog v-model:open="renameDialogOpen">
       <DialogContent class="sm:max-w-md">
@@ -614,6 +616,12 @@
   const updateInfo = ref<VersionInfo | null>(null)
   // 首次登录月球礼物弹窗
   const showFirstLoginMoonDialog = ref(false)
+  // TutorialOverlay 组件引用（用于判断引导是否进行中）
+  const tutorialRef = ref<InstanceType<typeof TutorialOverlay> | null>(null)
+  // 月球礼物弹窗待显示（初始化时未登录，登录后弹出）
+  let pendingMoonGiftDialog = false
+  // 月球礼物弹窗等待新手引导结束后弹出
+  const pendingMoonGiftDialogAfterTutorial = ref(false)
   // 所有可用的语言选项
   const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'es-LA', 'ko', 'ja']
   // 侧边栏状态（不持久化，根据屏幕尺寸初始化）
@@ -653,7 +661,10 @@
   }
 
   // 判断是否为首页
-  const isHomePage = computed(() => router.currentRoute.value.path === '/')
+  const isHomePage = computed(() => {
+  const path = router.currentRoute.value.path
+  return path === '/' || path === '/login'
+})
 
   // 定义 planet computed（需要在 watch 之前定义）
   const planet = computed(() => gameStore.currentPlanet)
@@ -916,7 +927,13 @@
         const moon = planetLogic.createMoon(homePlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
         gameStore.player.planets.push(moon)
         gameStore.player.firstLoginMoonGiftClaimed = true
-        showFirstLoginMoonDialog.value = true
+        if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
+          showFirstLoginMoonDialog.value = true
+        } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+          pendingMoonGiftDialogAfterTutorial.value = true
+        } else {
+          pendingMoonGiftDialog = true
+        }
       }
 
       return
@@ -939,7 +956,16 @@
       gameStore.player.firstLoginMoonGiftClaimed = true
 
       // 显示首次登录月球礼物弹窗
-      showFirstLoginMoonDialog.value = true
+      // 需要等待：1) 登录完成  2) 新手引导结束
+      // 否则弹窗会被引导遮罩覆盖
+      if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
+        showFirstLoginMoonDialog.value = true
+      } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+        // 已登录但引导未完成，等引导结束后弹出
+        pendingMoonGiftDialogAfterTutorial.value = true
+      } else {
+        pendingMoonGiftDialog = true
+      }
     }
   }
 
@@ -967,25 +993,32 @@
     try {
       const saveData = await apiService.loadGame()
       if (saveData && saveData.gameData) {
-        // 解析服务器数据
-        const serverGameData = JSON.parse(saveData.gameData)
-        const serverNpcData = saveData.npcData ? JSON.parse(saveData.npcData) : null
-        const serverUniverseData = saveData.universeData ? JSON.parse(saveData.universeData) : null
+        // 解析服务器数据（每个 JSON.parse 独立捕获，防止损坏数据导致整体失败）
+        let serverGameData: any = null
+        let serverNpcData: any = null
+        let serverUniverseData: any = null
+        try { serverGameData = JSON.parse(saveData.gameData) } catch { console.warn('[CloudSave] gameData 解析失败，忽略') }
+        if (saveData.npcData) { try { serverNpcData = JSON.parse(saveData.npcData) } catch { console.warn('[CloudSave] npcData 解析失败，忽略') } }
+        if (saveData.universeData) { try { serverUniverseData = JSON.parse(saveData.universeData) } catch { console.warn('[CloudSave] universeData 解析失败，忽略') } }
 
-        // 比较时间戳：如果服务器数据比本地新，则替换
-        const serverTime = new Date(saveData.savedAt).getTime()
-        const localTime = gameStore.player.lastSaveTime || 0
-
-        if (serverTime > localTime || gameStore.player.planets.length === 0) {
-          // 服务器数据更新或本地无数据，用服务器数据替换
-          gameStore.$patch(serverGameData)
-          if (serverNpcData) npcStore.$patch(serverNpcData)
-          if (serverUniverseData) universeStore.$patch(serverUniverseData)
-          console.log('[CloudSave] 已从服务器加载存档，保存时间:', saveData.savedAt)
+        if (!serverGameData) {
+          console.warn('[CloudSave] 服务器 gameData 无效，跳过云端加载')
         } else {
-          // 本地数据更新，上传到服务器
-          await saveToCloud()
-          console.log('[CloudSave] 本地数据更新，已上传到服务器')
+          // 比较时间戳：如果服务器数据比本地新，则替换
+          const serverTime = new Date(saveData.savedAt).getTime()
+          const localTime = gameStore.player.lastSaveTime || 0
+
+          if (serverTime > localTime || gameStore.player.planets.length === 0) {
+            // 服务器数据更新或本地无数据，用服务器数据替换
+            gameStore.$patch(serverGameData)
+            if (serverNpcData) npcStore.$patch(serverNpcData)
+            if (serverUniverseData) universeStore.$patch(serverUniverseData)
+            console.log('[CloudSave] 已从服务器加载存档，保存时间:', saveData.savedAt)
+          } else {
+            // 本地数据更新，上传到服务器
+            await saveToCloud()
+            console.log('[CloudSave] 本地数据更新，已上传到服务器')
+          }
         }
       }
     } catch (e: any) {
@@ -2617,10 +2650,28 @@
       startCloudAutoSave()
       // 连接 WebSocket
       connectWebSocket()
+      // 如果初始化时已授予月球礼物但未弹窗（当时未登录），现在弹出
+      // 但如果新手引导正在进行中，等引导结束后再弹出（避免被引导遮罩覆盖）
+      if (pendingMoonGiftDialog) {
+        pendingMoonGiftDialog = false
+        if (tutorialRef.value?.isActive) {
+          pendingMoonGiftDialogAfterTutorial.value = true
+        } else {
+          showFirstLoginMoonDialog.value = true
+        }
+      }
     } else {
       // 登出，停止自动存档，断开 WebSocket
       stopCloudAutoSave()
       disconnectWebSocket()
+    }
+  })
+
+  // 监听新手引导结束，弹出等待中的月球礼物弹窗
+  watch(() => tutorialRef.value?.isActive, (active, wasActive) => {
+    if (wasActive === true && active === false && pendingMoonGiftDialogAfterTutorial.value) {
+      pendingMoonGiftDialogAfterTutorial.value = false
+      showFirstLoginMoonDialog.value = true
     }
   })
 
