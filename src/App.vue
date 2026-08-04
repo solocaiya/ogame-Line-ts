@@ -662,9 +662,9 @@
 
   // 判断是否为首页
   const isHomePage = computed(() => {
-  const path = router.currentRoute.value.path
-  return path === '/' || path === '/login'
-})
+    const path = router.currentRoute.value.path
+    return path === '/' || path === '/login'
+  })
 
   // 定义 planet computed（需要在 watch 之前定义）
   const planet = computed(() => gameStore.currentPlanet)
