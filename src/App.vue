@@ -614,6 +614,8 @@
   const updateInfo = ref<VersionInfo | null>(null)
   // 首次登录月球礼物弹窗
   const showFirstLoginMoonDialog = ref(false)
+  // 月球礼物弹窗待显示（初始化时未登录，登录后弹出）
+  let pendingMoonGiftDialog = false
   // 所有可用的语言选项
   const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'es-LA', 'ko', 'ja']
   // 侧边栏状态（不持久化，根据屏幕尺寸初始化）
@@ -653,7 +655,10 @@
   }
 
   // 判断是否为首页
-  const isHomePage = computed(() => router.currentRoute.value.path === '/')
+  const isHomePage = computed(() => {
+  const path = router.currentRoute.value.path
+  return path === '/' || path === '/login'
+})
 
   // 定义 planet computed（需要在 watch 之前定义）
   const planet = computed(() => gameStore.currentPlanet)
@@ -916,7 +921,11 @@
         const moon = planetLogic.createMoon(homePlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
         gameStore.player.planets.push(moon)
         gameStore.player.firstLoginMoonGiftClaimed = true
-        showFirstLoginMoonDialog.value = true
+        if (authStore.isLoggedIn) {
+          showFirstLoginMoonDialog.value = true
+        } else {
+          pendingMoonGiftDialog = true
+        }
       }
 
       return
@@ -938,8 +947,12 @@
       gameStore.player.planets.push(moon)
       gameStore.player.firstLoginMoonGiftClaimed = true
 
-      // 显示首次登录月球礼物弹窗
-      showFirstLoginMoonDialog.value = true
+      // 显示首次登录月球礼物弹窗（仅在已登录时，否则等登录后弹出）
+      if (authStore.isLoggedIn) {
+        showFirstLoginMoonDialog.value = true
+      } else {
+        pendingMoonGiftDialog = true
+      }
     }
   }
 
@@ -2624,6 +2637,11 @@
       startCloudAutoSave()
       // 连接 WebSocket
       connectWebSocket()
+      // 如果初始化时已授予月球礼物但未弹窗（当时未登录），现在弹出
+      if (pendingMoonGiftDialog) {
+        pendingMoonGiftDialog = false
+        showFirstLoginMoonDialog.value = true
+      }
     } else {
       // 登出，停止自动存档，断开 WebSocket
       stopCloudAutoSave()
