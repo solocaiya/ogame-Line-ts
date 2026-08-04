@@ -77,7 +77,7 @@ export const createInitialPlanet = (playerId: string, planetName: string = 'Home
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: false,
-    icon: getPlanetIconByPosition(initialPlanet.position.position)
+    icon: getPlanetIconByPosition(1) // 初始星球固定位置1:1:1
   }
 
   // 初始化建筑等级
@@ -151,7 +151,7 @@ export const createNPCPlanet = (
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: false,
-    icon: getPlanetIconByPosition(npcPlanet.position.position)
+    icon: getPlanetIconByPosition(position.position)
   }
 
   // 初始化所有建筑等级为0
