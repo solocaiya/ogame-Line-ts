@@ -111,7 +111,8 @@
             <Popover>
               <PopoverTrigger as-child>
                 <Button variant="outline" class="w-full border-yellow-400 dark:border-yellow-600">
-                  <span class="text-base mr-1">🪐</span>
+                  <img v-if="highlightedNpc.planets[0]?.icon" :src="highlightedNpc.planets[0].icon" class="w-5 h-5 rounded-full mr-1 object-cover" />
+                  <span v-else class="text-base mr-1">🪐</span>
                   {{ highlightedNpc.name }} ({{ highlightedNpc.planets.length }})
                 </Button>
               </PopoverTrigger>
