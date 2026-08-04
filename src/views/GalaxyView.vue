@@ -207,6 +207,7 @@
                   <div v-if="slot.planet" class="space-y-1">
                     <!-- 第一行：名称、坐标、状态、残骸 -->
                     <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+                      <img v-if="slot.planet.icon" :src="slot.planet.icon" class="w-6 h-6 rounded-full shrink-0 object-cover" />
                       <h3 class="font-semibold text-sm truncate">
                         {{ isMyPlanet(slot.planet) ? slot.planet.name : getNpcPlanetDisplayName(slot.planet) }}
                       </h3>
@@ -491,6 +492,7 @@
                 <div v-if="slot.planet" class="space-y-1">
                   <!-- PC端：标题和徽章 -->
                   <div class="flex items-center gap-2 flex-wrap">
+                    <img v-if="slot.planet.icon" :src="slot.planet.icon" class="w-7 h-7 rounded-full shrink-0 object-cover" />
                     <h3 class="font-semibold text-base">
                       {{ isMyPlanet(slot.planet) ? slot.planet.name : getNpcPlanetDisplayName(slot.planet) }}
                     </h3>

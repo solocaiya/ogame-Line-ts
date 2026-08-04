@@ -1,32 +1,60 @@
 <template>
   <div v-if="planet" class="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-    <!-- 星球信息 -->
-    <div class="text-center">
-      <h1 class="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center justify-center gap-2">
-        {{ planet.name }}
-        <Badge v-if="planet.isMoon" variant="secondary">{{ t('planet.moon') }}</Badge>
-      </h1>
-      <p class="text-xs sm:text-sm text-muted-foreground">
-        {{ t('planet.position') }}: [{{ planet.position.galaxy }}:{{ planet.position.system }}:{{ planet.position.position }}]
-      </p>
-      <!-- 温度信息 -->
-      <p v-if="planet.temperature && !planet.isMoon" class="text-xs sm:text-sm text-muted-foreground">
-        {{ t('planet.temperature') }}: {{ planet.temperature.min }}°C {{ t('common.to') }} {{ planet.temperature.max }}°C
-      </p>
-      <!-- 月球信息 -->
-      <div v-if="!planet.isMoon && moon" class="mt-2">
-        <Button @click="switchToMoon" variant="outline" size="sm">
-          {{ t('planet.switchToMoon') }}
-        </Button>
-      </div>
-      <div v-if="planet.isMoon" class="mt-2">
-        <Button @click="switchToParentPlanet" variant="outline" size="sm">{{ t('planet.backToPlanet') }}</Button>
-      </div>
-      <!-- 放弃殖民地按钮 -->
-      <div v-if="canShowAbandonButton" class="mt-4">
-        <Button @click="showAbandonDialog = true" variant="destructive" size="sm">
-          {{ t('planet.abandonColony') }}
-        </Button>
+    <!-- 星球横幅横幅 - 横向背景图 + 叠加信息 -->
+    <div class="relative w-full h-40 sm:h-48 rounded-xl overflow-hidden shadow-lg">
+      <!-- 背景：星球图片 -->
+      <img
+        v-if="planet.icon"
+        :src="planet.icon"
+        :alt="planet.name"
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <!-- 渐变遮罩 -->
+      <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+
+      <!-- 叠加信息 -->
+      <div class="relative z-10 flex items-center h-full px-4 sm:px-6">
+        <div class="flex-1 min-w-0">
+          <!-- 星球名称 -->
+          <h1 class="text-xl sm:text-2xl font-bold text-white truncate flex items-center gap-2">
+            {{ planet.name }}
+            <Badge v-if="planet.isMoon" variant="secondary" class="text-xs">{{ t('planet.moon') }}</Badge>
+          </h1>
+
+          <!-- 坐标 -->
+          <p class="text-xs sm:text-sm text-gray-300 mt-1">
+            📍 [{{ planet.position.galaxy }}:{{ planet.position.system }}:{{ planet.position.position }}]
+          </p>
+
+          <!-- 温度 & 直径 -->
+          <div class="flex items-center gap-3 sm:gap-4 mt-1.5 text-xs sm:text-sm text-gray-300">
+            <span v-if="planet.temperature && !planet.isMoon">
+              🌡️ {{ planet.temperature.min }}°C ~ {{ planet.temperature.max }}°C
+            </span>
+            <span v-if="planet.diameter">
+              📏 {{ formatNumber(planet.diameter) }} km
+            </span>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex items-center gap-2 mt-3">
+            <Button v-if="!planet.isMoon && moon" @click="switchToMoon" variant="secondary" size="sm" class="text-xs h-7">
+              {{ t('planet.switchToMoon') }}
+            </Button>
+            <Button v-if="planet.isMoon" @click="switchToParentPlanet" variant="secondary" size="sm" class="text-xs h-7">
+              {{ t('planet.backToPlanet') }}
+            </Button>
+            <Button
+              v-if="canShowAbandonButton"
+              @click="showAbandonDialog = true"
+              variant="destructive"
+              size="sm"
+              class="text-xs h-7"
+            >
+              {{ t('planet.abandonColony') }}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
 
