@@ -91,7 +91,7 @@ class ApiService {
         })
         if (retryRes.ok) return retryRes.json()
         const err = await retryRes.json().catch(() => ({ error: 'request failed' }))
-        throw new Error(err.error || 'request failed')
+        throw new Error(err.error || `HTTP ${retryRes.status}`)
       }
       // 刷新失败，清除 token
       this.clearTokens()

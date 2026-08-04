@@ -967,25 +967,32 @@
     try {
       const saveData = await apiService.loadGame()
       if (saveData && saveData.gameData) {
-        // 解析服务器数据
-        const serverGameData = JSON.parse(saveData.gameData)
-        const serverNpcData = saveData.npcData ? JSON.parse(saveData.npcData) : null
-        const serverUniverseData = saveData.universeData ? JSON.parse(saveData.universeData) : null
+        // 解析服务器数据（每个 JSON.parse 独立捕获，防止损坏数据导致整体失败）
+        let serverGameData: any = null
+        let serverNpcData: any = null
+        let serverUniverseData: any = null
+        try { serverGameData = JSON.parse(saveData.gameData) } catch { console.warn('[CloudSave] gameData 解析失败，忽略') }
+        if (saveData.npcData) { try { serverNpcData = JSON.parse(saveData.npcData) } catch { console.warn('[CloudSave] npcData 解析失败，忽略') } }
+        if (saveData.universeData) { try { serverUniverseData = JSON.parse(saveData.universeData) } catch { console.warn('[CloudSave] universeData 解析失败，忽略') } }
 
-        // 比较时间戳：如果服务器数据比本地新，则替换
-        const serverTime = new Date(saveData.savedAt).getTime()
-        const localTime = gameStore.player.lastSaveTime || 0
-
-        if (serverTime > localTime || gameStore.player.planets.length === 0) {
-          // 服务器数据更新或本地无数据，用服务器数据替换
-          gameStore.$patch(serverGameData)
-          if (serverNpcData) npcStore.$patch(serverNpcData)
-          if (serverUniverseData) universeStore.$patch(serverUniverseData)
-          console.log('[CloudSave] 已从服务器加载存档，保存时间:', saveData.savedAt)
+        if (!serverGameData) {
+          console.warn('[CloudSave] 服务器 gameData 无效，跳过云端加载')
         } else {
-          // 本地数据更新，上传到服务器
-          await saveToCloud()
-          console.log('[CloudSave] 本地数据更新，已上传到服务器')
+          // 比较时间戳：如果服务器数据比本地新，则替换
+          const serverTime = new Date(saveData.savedAt).getTime()
+          const localTime = gameStore.player.lastSaveTime || 0
+
+          if (serverTime > localTime || gameStore.player.planets.length === 0) {
+            // 服务器数据更新或本地无数据，用服务器数据替换
+            gameStore.$patch(serverGameData)
+            if (serverNpcData) npcStore.$patch(serverNpcData)
+            if (serverUniverseData) universeStore.$patch(serverUniverseData)
+            console.log('[CloudSave] 已从服务器加载存档，保存时间:', saveData.savedAt)
+          } else {
+            // 本地数据更新，上传到服务器
+            await saveToCloud()
+            console.log('[CloudSave] 本地数据更新，已上传到服务器')
+          }
         }
       }
     } catch (e: any) {
