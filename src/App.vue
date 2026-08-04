@@ -419,7 +419,7 @@
     <!-- Toast 通知 -->
     <Sonner position="top-center" />
     <!-- 新手引导 -->
-    <TutorialOverlay />
+    <TutorialOverlay ref="tutorialRef" />
     <!-- 重命名星球对话框 -->
     <Dialog v-model:open="renameDialogOpen">
       <DialogContent class="sm:max-w-md">
@@ -616,8 +616,12 @@
   const updateInfo = ref<VersionInfo | null>(null)
   // 首次登录月球礼物弹窗
   const showFirstLoginMoonDialog = ref(false)
+  // TutorialOverlay 组件引用（用于判断引导是否进行中）
+  const tutorialRef = ref<InstanceType<typeof TutorialOverlay> | null>(null)
   // 月球礼物弹窗待显示（初始化时未登录，登录后弹出）
   let pendingMoonGiftDialog = false
+  // 月球礼物弹窗等待新手引导结束后弹出
+  const pendingMoonGiftDialogAfterTutorial = ref(false)
   // 所有可用的语言选项
   const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'es-LA', 'ko', 'ja']
   // 侧边栏状态（不持久化，根据屏幕尺寸初始化）
@@ -923,8 +927,10 @@
         const moon = planetLogic.createMoon(homePlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
         gameStore.player.planets.push(moon)
         gameStore.player.firstLoginMoonGiftClaimed = true
-        if (authStore.isLoggedIn) {
+        if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
           showFirstLoginMoonDialog.value = true
+        } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+          pendingMoonGiftDialogAfterTutorial.value = true
         } else {
           pendingMoonGiftDialog = true
         }
@@ -949,9 +955,14 @@
       gameStore.player.planets.push(moon)
       gameStore.player.firstLoginMoonGiftClaimed = true
 
-      // 显示首次登录月球礼物弹窗（仅在已登录时，否则等登录后弹出）
-      if (authStore.isLoggedIn) {
+      // 显示首次登录月球礼物弹窗
+      // 需要等待：1) 登录完成  2) 新手引导结束
+      // 否则弹窗会被引导遮罩覆盖
+      if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
         showFirstLoginMoonDialog.value = true
+      } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+        // 已登录但引导未完成，等引导结束后弹出
+        pendingMoonGiftDialogAfterTutorial.value = true
       } else {
         pendingMoonGiftDialog = true
       }
@@ -2640,14 +2651,27 @@
       // 连接 WebSocket
       connectWebSocket()
       // 如果初始化时已授予月球礼物但未弹窗（当时未登录），现在弹出
+      // 但如果新手引导正在进行中，等引导结束后再弹出（避免被引导遮罩覆盖）
       if (pendingMoonGiftDialog) {
         pendingMoonGiftDialog = false
-        showFirstLoginMoonDialog.value = true
+        if (tutorialRef.value?.isActive) {
+          pendingMoonGiftDialogAfterTutorial.value = true
+        } else {
+          showFirstLoginMoonDialog.value = true
+        }
       }
     } else {
       // 登出，停止自动存档，断开 WebSocket
       stopCloudAutoSave()
       disconnectWebSocket()
+    }
+  })
+
+  // 监听新手引导结束，弹出等待中的月球礼物弹窗
+  watch(() => tutorialRef.value?.isActive, (active, wasActive) => {
+    if (wasActive === true && active === false && pendingMoonGiftDialogAfterTutorial.value) {
+      pendingMoonGiftDialogAfterTutorial.value = false
+      showFirstLoginMoonDialog.value = true
     }
   })
 
