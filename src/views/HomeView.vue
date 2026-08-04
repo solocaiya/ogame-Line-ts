@@ -124,8 +124,9 @@
 
   // 处理开始游戏
   const handleStartGame = () => {
-    // 先检查登录状态
-    if (!authStore.isLoggedIn) {
+    // 检查登录状态（登录或游客模式都可以进入）
+    const isGuest = localStorage.getItem('guest_mode') === 'true'
+    if (!authStore.accessToken && !isGuest) {
       router.push('/login')
       return
     }

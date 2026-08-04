@@ -145,7 +145,8 @@ async function handleSubmit() {
     } else {
       await authStore.register(username.value, password.value)
     }
-    // 登录成功后跳转到总览
+    // 登录成功，清除游客标记并跳转到总览
+    localStorage.removeItem('guest_mode')
     router.push('/overview')
   } catch {
     // 错误已在 authStore.error 中
@@ -153,7 +154,8 @@ async function handleSubmit() {
 }
 
 function skipLogin() {
-  // 游客模式：直接进入游戏（不登录服务器）
+  // 游客模式：标记为游客，直接进入游戏（不登录服务器）
+  localStorage.setItem('guest_mode', 'true')
   if (!gameStore.player.privacyAgreed) {
     router.push('/')
   } else {
