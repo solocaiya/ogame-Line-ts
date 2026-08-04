@@ -91,6 +91,7 @@
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useGameStore } from '@/stores/gameStore'
+  import { useAuthStore } from '@/stores/authStore'
   import { useI18n } from '@/composables/useI18n'
   import { localeNames, type Locale } from '@/locales'
   import { Button } from '@/components/ui/button'
@@ -112,6 +113,7 @@
 
   const router = useRouter()
   const gameStore = useGameStore()
+  const authStore = useAuthStore()
   const { t } = useI18n()
 
   const showPrivacyDialog = ref(false)
@@ -122,6 +124,11 @@
 
   // 处理开始游戏
   const handleStartGame = () => {
+    // 先检查登录状态
+    if (!authStore.isLoggedIn) {
+      router.push('/login')
+      return
+    }
     // 如果已经同意过，直接进入总览页面
     if (gameStore.player.privacyAgreed) {
       router.push('/overview')

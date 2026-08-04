@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -32,13 +33,26 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫：检查隐私协议同意状态
+// 路由守卫：检查登录状态和隐私协议同意状态
 router.beforeEach((to, _from, next) => {
   const gameStore = useGameStore()
+  const authStore = useAuthStore()
 
   // 公开页面（登录等）始终可访问
   if (to.meta.public) {
     next()
+    return
+  }
+
+  // 检查登录状态
+  if (!authStore.isLoggedIn) {
+    // 首页允许访问（用于显示登录入口）
+    if (to.path === '/') {
+      next()
+      return
+    }
+    // 其他页面重定向到登录页
+    next('/login')
     return
   }
 
