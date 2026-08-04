@@ -27,7 +27,8 @@
                   class="w-full justify-between h-auto px-3 py-2.5 border-2 hover:bg-accent hover:border-primary transition-colors"
                 >
                   <div class="flex items-start gap-2.5 flex-1 min-w-0">
-                    <span class="text-lg shrink-0 mt-0.5">{{ planet.icon || '🪐' }}</span>
+                    <img v-if="planet.icon" :src="planet.icon" class="w-6 h-6 rounded-full shrink-0 mt-0.5 object-cover" />
+                    <span v-else class="text-lg shrink-0 mt-0.5">🪐</span>
                     <div class="flex-1 min-w-0 text-left">
                       <div class="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
                         {{ t('planet.currentPlanet') }}
@@ -60,7 +61,8 @@
                         size="sm"
                       >
                         <div class="flex items-start gap-2 w-full min-w-0">
-                          <span class="text-base shrink-0 mt-0.5">{{ p.icon || '🪐' }}</span>
+                          <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                          <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                           <div class="flex-1 min-w-0 text-left">
                             <div class="flex items-center gap-1.5 mb-0.5">
                               <span class="truncate font-medium text-sm">

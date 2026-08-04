@@ -86,7 +86,8 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <span class="text-base shrink-0 mt-0.5">{{ p.icon || '🪐' }}</span>
+                      <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                      <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-0.5">
                           <span class="truncate font-medium text-sm">{{ p.name }}</span>
@@ -134,7 +135,8 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <span class="text-base shrink-0 mt-0.5">{{ p.icon || '🪐' }}</span>
+                      <img v-if="p.icon" :src="p.icon" class="w-5 h-5 rounded-full shrink-0 mt-0.5 object-cover" />
+                      <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                       <div class="flex-1 min-w-0">
                         <div class="truncate font-medium text-sm mb-0.5">{{ p.name }}</div>
                         <div class="text-[11px] text-muted-foreground">

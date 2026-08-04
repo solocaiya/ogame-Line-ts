@@ -4,11 +4,25 @@ import { MOON_CONFIG, PLANET_CONFIG, FLEET_STORAGE_CONFIG } from '@/config/gameC
 import { generateId } from '@/utils/id'
 import * as oreDepositLogic from './oreDepositLogic'
 
-// 星球图标池（创建时随机分配）
-const PLANET_ICONS = ['🌍', '🌎', '🌏', '🪐', '🌑', '🌕', '⭐', '💫', '🔮', '💎', '🌐', '☄️']
-const MOON_ICONS = ['🌙', '🌑', '🌕']
+// 星球图标池（按温度区域分配图片路径）
+const PLANET_ICONS_BY_ZONE: Record<string, string[]> = {
+  hot: ['/assets/planets/planet_hot_01.png', '/assets/planets/planet_hot_02.png', '/assets/planets/planet_hot_03.png'],
+  warm: ['/assets/planets/planet_warm_01.png', '/assets/planets/planet_warm_02.png'],
+  habitable: ['/assets/planets/planet_habitable_01.png', '/assets/planets/planet_habitable_02.png', '/assets/planets/planet_habitable_03.png', '/assets/planets/planet_habitable_04.png'],
+  cold: ['/assets/planets/planet_cold_01.png', '/assets/planets/planet_cold_02.png', '/assets/planets/planet_cold_03.png'],
+  frozen: ['/assets/planets/planet_frozen_01.png', '/assets/planets/planet_frozen_02.png', '/assets/planets/planet_frozen_03.png']
+}
+const MOON_ICONS = ['/assets/planets/moon_01.png', '/assets/planets/moon_02.png', '/assets/planets/moon_03.png']
 
 const randomIcon = (pool: string[]) => pool[Math.floor(Math.random() * pool.length)]
+
+const getPlanetIconByPosition = (position: number): string => {
+  if (position <= 3) return randomIcon(PLANET_ICONS_BY_ZONE.hot)
+  if (position <= 5) return randomIcon(PLANET_ICONS_BY_ZONE.warm)
+  if (position <= 9) return randomIcon(PLANET_ICONS_BY_ZONE.habitable)
+  if (position <= 12) return randomIcon(PLANET_ICONS_BY_ZONE.cold)
+  return randomIcon(PLANET_ICONS_BY_ZONE.frozen)
+}
 
 /**
  * 创建初始星球
@@ -63,7 +77,7 @@ export const createInitialPlanet = (playerId: string, planetName: string = 'Home
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: false,
-    icon: randomIcon(PLANET_ICONS)
+    icon: getPlanetIconByPosition(initialPlanet.position.position)
   }
 
   // 初始化建筑等级
@@ -137,7 +151,7 @@ export const createNPCPlanet = (
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: false,
-    icon: randomIcon(PLANET_ICONS)
+    icon: getPlanetIconByPosition(npcPlanet.position.position)
   }
 
   // 初始化所有建筑等级为0
@@ -234,7 +248,7 @@ export const createMoon = (
     isMoon: true,
     parentPlanetId: parentPlanet.id,
     diameter: diameter || MOON_CONFIG.minDiameter, // 月球直径(km)
-    icon: randomIcon(MOON_ICONS)
+    icon: randomIcon(MOON_ICONS) // 月球图片随机分配
   }
 
   // 初始化建筑等级
