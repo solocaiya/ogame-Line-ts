@@ -35,6 +35,15 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+type GuestRequest struct {
+	DeviceID string `json:"device_id" binding:"required"`
+}
+
+type BindRequest struct {
+	Username string `json:"username" binding:"required,min=3,max=20"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
 type AuthResponse struct {
 	AccessToken  string       `json:"access_token"`
 	RefreshToken string       `json:"refresh_token"`
@@ -61,12 +70,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		CreatedAt:    time.Now(),
 		LastLogin:    time.Now(),
 		IsActive:     true,
+		IsGuest:      false,
 	}
 
 	_, err = database.DB.Exec(
-		`INSERT INTO users (id, username, password_hash, created_at, last_login, is_active)
-		 VALUES (?, ?, ?, ?, ?, ?)`,
-		user.ID, user.Username, user.PasswordHash, user.CreatedAt, user.LastLogin, user.IsActive,
+		`INSERT INTO users (id, username, password_hash, created_at, last_login, is_active, is_guest)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		user.ID, user.Username, user.PasswordHash, user.CreatedAt, user.LastLogin, user.IsActive, user.IsGuest,
 	)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
@@ -94,9 +104,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	var user models.User
 	err := database.DB.QueryRow(
-		`SELECT id, username, password_hash, created_at, last_login, is_active
+		`SELECT id, username, password_hash, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
 		 FROM users WHERE username = ?`, req.Username,
-	).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.CreatedAt, &user.LastLogin, &user.IsActive)
+	).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
@@ -188,9 +198,9 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 	var user models.User
 	err := database.DB.QueryRow(
-		`SELECT id, username, created_at, last_login, is_active
+		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
 		 FROM users WHERE id = ?`, userID,
-	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive)
+	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -198,6 +208,170 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+
+// Guest creates a guest account bound to a device ID.
+// If a guest already exists for this device, it returns tokens for the existing account.
+func (h *AuthHandler) Guest(c *gin.Context) {
+	var req GuestRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: " + err.Error()})
+		return
+	}
+
+	// Check if guest already exists for this device
+	var user models.User
+	err := database.DB.QueryRow(
+		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		 FROM users WHERE device_id = ? AND is_guest = 1`, req.DeviceID,
+	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+
+	if err == nil {
+		// Existing guest — update last login and return tokens
+		database.DB.Exec(`UPDATE users SET last_login = ? WHERE id = ?`, time.Now(), user.ID)
+		tokens, err := h.generateTokens(user.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate tokens"})
+			return
+		}
+		c.JSON(http.StatusOK, AuthResponse{
+			AccessToken:  tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			User:         user,
+		})
+		return
+	}
+
+	if err != sql.ErrNoRows {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+
+	// Create new guest account
+	user = models.User{
+		ID:       uuid.New().String(),
+		Username: "guest_" + uuid.New().String()[:8],
+		CreatedAt: time.Now(),
+		LastLogin: time.Now(),
+		IsActive: true,
+		IsGuest:  true,
+		DeviceID: req.DeviceID,
+	}
+
+	_, err = database.DB.Exec(
+		`INSERT INTO users (id, username, password_hash, created_at, last_login, is_active, is_guest, device_id)
+		 VALUES (?, ?, '', ?, ?, ?, ?, ?)`,
+		user.ID, user.Username, user.CreatedAt, user.LastLogin, user.IsActive, user.IsGuest, user.DeviceID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create guest account"})
+		return
+	}
+
+	tokens, err := h.generateTokens(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate tokens"})
+		return
+	}
+	c.JSON(http.StatusCreated, AuthResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+		User:         user,
+	})
+}
+
+// Bind upgrades a guest account to a registered account by setting username + password.
+// Returns 409 if the account is already bound (not a guest).
+func (h *AuthHandler) Bind(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	var req BindRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: " + err.Error()})
+		return
+	}
+
+	// Check if user is a guest
+	var isGuest bool
+	var deviceID string
+	err := database.DB.QueryRow(
+		`SELECT is_guest, COALESCE(device_id, '') FROM users WHERE id = ?`, userID,
+	).Scan(&isGuest, &deviceID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	if !isGuest {
+		c.JSON(http.StatusConflict, gin.H{"error": "account already bound", "already_bound": true})
+		return
+	}
+
+	// Check if username is taken
+	var exists int
+	err = database.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE username = ?`, req.Username).Scan(&exists)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	if exists > 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+		return
+	}
+
+	// Update user: set real username + password, clear guest flag
+	_, err = database.DB.Exec(
+		`UPDATE users SET username = ?, password_hash = ?, is_guest = 0 WHERE id = ?`,
+		req.Username, string(hash), userID,
+	)
+	if err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
+		return
+	}
+
+	// Return updated user with fresh tokens
+	var user models.User
+	database.DB.QueryRow(
+		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		 FROM users WHERE id = ?`, userID,
+	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+
+	tokens, err := h.generateTokens(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate tokens"})
+		return
+	}
+	c.JSON(http.StatusOK, AuthResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+		User:         user,
+	})
+}
+
+// Bound returns whether the current user is a guest and whether they have bound an account.
+func (h *AuthHandler) Bound(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	var isGuest bool
+	var username string
+	err := database.DB.QueryRow(
+		`SELECT is_guest, username FROM users WHERE id = ?`, userID,
+	).Scan(&isGuest, &username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"is_guest":     isGuest,
+		"is_bound":     !isGuest,
+		"username":     username,
+	})
 }
 
 type tokenPair struct {

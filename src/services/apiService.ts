@@ -16,6 +16,8 @@ interface UserInfo {
   created_at: string
   last_login: string
   is_active: boolean
+  is_guest: boolean
+  device_id?: string
 }
 
 interface SaveGameRequest {
@@ -161,6 +163,22 @@ class ApiService {
     const data = await this.request<AuthResponse>('POST', '/auth/login', { username, password })
     this.setTokens(data.access_token, data.refresh_token)
     return data
+  }
+
+  async guest(deviceId: string): Promise<AuthResponse> {
+    const data = await this.request<AuthResponse>('POST', '/auth/guest', { device_id: deviceId })
+    this.setTokens(data.access_token, data.refresh_token)
+    return data
+  }
+
+  async bindAccount(username: string, password: string): Promise<AuthResponse> {
+    const data = await this.request<AuthResponse>('POST', '/auth/bind', { username, password })
+    this.setTokens(data.access_token, data.refresh_token)
+    return data
+  }
+
+  async checkBound(): Promise<{ is_guest: boolean; is_bound: boolean; username: string }> {
+    return this.request('GET', '/auth/bound')
   }
 
   async getMe(): Promise<UserInfo> {

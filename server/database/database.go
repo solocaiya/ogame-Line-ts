@@ -89,6 +89,11 @@ func migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_player_game_states_updated ON player_game_states(updated_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_battle_replays_attacker ON battle_replays(attacker_id, created_at DESC)`,
 		`CREATE INDEX IF NOT EXISTS idx_notifications_player ON notifications(player_id, created_at DESC)`,
+
+		// Migration: add guest support columns to users (safe to run on existing DBs)
+		`ALTER TABLE users ADD COLUMN is_guest BOOLEAN DEFAULT 0`,
+		`ALTER TABLE users ADD COLUMN device_id TEXT DEFAULT ''`,
+		`CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id)`,
 	}
 
 	for _, m := range migrations {

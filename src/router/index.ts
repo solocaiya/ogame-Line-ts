@@ -44,11 +44,8 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  // 是否已认证（登录或游客模式）
-  // 用 accessToken 判断而非 isLoggedIn，避免 fetchUser 未完成时的竞态条件
-  const isAuthenticated = !!authStore.accessToken
-  const isGuest = localStorage.getItem('guest_mode') === 'true'
-  const hasAccess = isAuthenticated || isGuest
+  // 是否已认证（登录或游客均有 token）
+  const hasAccess = !!authStore.accessToken
 
   if (!hasAccess) {
     // 首页允许访问（用于显示登录入口）

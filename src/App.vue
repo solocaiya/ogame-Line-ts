@@ -662,9 +662,9 @@
 
   // 判断是否为首页
   const isHomePage = computed(() => {
-  const path = router.currentRoute.value.path
-  return path === '/' || path === '/login'
-})
+    const path = router.currentRoute.value.path
+    return path === '/' || path === '/login'
+  })
 
   // 定义 planet computed（需要在 watch 之前定义）
   const planet = computed(() => gameStore.currentPlanet)
@@ -927,9 +927,9 @@
         const moon = planetLogic.createMoon(homePlanet, moonPosition, gameStore.player.id, t('moon.giftMoon'), moonDiameter)
         gameStore.player.planets.push(moon)
         gameStore.player.firstLoginMoonGiftClaimed = true
-        if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
+        if (gameStore.player.tutorialCompleted) {
           showFirstLoginMoonDialog.value = true
-        } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+        } else if (!gameStore.player.tutorialCompleted) {
           pendingMoonGiftDialogAfterTutorial.value = true
         } else {
           pendingMoonGiftDialog = true
@@ -958,9 +958,9 @@
       // 显示首次登录月球礼物弹窗
       // 需要等待：1) 登录完成  2) 新手引导结束
       // 否则弹窗会被引导遮罩覆盖
-      if (authStore.isLoggedIn && gameStore.player.tutorialCompleted) {
+      if (gameStore.player.tutorialCompleted) {
         showFirstLoginMoonDialog.value = true
-      } else if (authStore.isLoggedIn && !gameStore.player.tutorialCompleted) {
+      } else if (!gameStore.player.tutorialCompleted) {
         // 已登录但引导未完成，等引导结束后弹出
         pendingMoonGiftDialogAfterTutorial.value = true
       } else {
@@ -987,7 +987,7 @@
    * 如果服务器有数据且比本地新，则替换本地 store
    */
   const tryCloudLoad = async () => {
-    if (!authStore.isLoggedIn) return
+    if (!authStore.accessToken) return
 
     cloudSaveLoading.value = true
     try {
@@ -1043,7 +1043,7 @@
    * 将当前游戏数据保存到服务器
    */
   const saveToCloud = async () => {
-    if (!authStore.isLoggedIn) return
+    if (!authStore.accessToken) return
 
     try {
       const gameData = JSON.stringify(gameStore.$state)
@@ -1062,7 +1062,7 @@
   const startCloudAutoSave = () => {
     stopCloudAutoSave()
     cloudSaveInterval.value = setInterval(() => {
-      if (authStore.isLoggedIn) {
+      if (authStore.accessToken) {
         saveToCloud()
       }
     }, 60 * 1000)
@@ -2638,12 +2638,12 @@
 
   // Refresh game state from server (delegates to store)
   const refreshGameState = async () => {
-    if (!authStore.isLoggedIn) return
+    if (!authStore.accessToken) return
     await gameStore.syncFromServer()
   }
 
   // 监听登录状态变化：登录后加载云端存档，连接 WebSocket；登出后停止自动存档，断开 WebSocket
-  watch(() => authStore.isLoggedIn, async (loggedIn) => {
+  watch(() => !!authStore.accessToken, async (loggedIn) => {
     if (loggedIn) {
       // 登录成功，加载服务器存档
       await tryCloudLoad()
@@ -2688,8 +2688,8 @@
       if (authStore.accessToken && !authStore.user) {
         await authStore.fetchUser()
       }
-      // 如果已登录，尝试从服务器加载存档，连接 WebSocket
-      if (authStore.isLoggedIn) {
+      // 如果已认证（登录或游客），尝试从服务器加载存档，连接 WebSocket
+      if (authStore.accessToken) {
         await tryCloudLoad()
         startCloudAutoSave()
         connectWebSocket()

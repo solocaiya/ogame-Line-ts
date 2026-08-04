@@ -4,6 +4,56 @@
       <h1 class="text-2xl font-bold">{{ t('nav.settings') }}</h1>
     </div>
 
+    <!-- 账号（仅游客模式显示） -->
+    <Card v-if="authStore.isGuest">
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <User class="h-4 w-4" />
+          绑定账号
+        </CardTitle>
+        <CardDescription>
+          您当前以游客身份游玩，绑定账号后可通过用户名密码登录，换设备也不丢失进度。
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div v-if="bindSuccess" class="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
+          账号绑定成功！您的游客进度已关联到新账号。
+        </div>
+        <form v-else @submit.prevent="handleBindAccount" class="space-y-3">
+          <div class="space-y-2">
+            <Label for="bind-username">用户名</Label>
+            <Input
+              id="bind-username"
+              v-model="bindUsername"
+              placeholder="请输入用户名（至少3个字符）"
+              :disabled="bindLoading"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="space-y-2">
+            <Label for="bind-password">密码</Label>
+            <Input
+              id="bind-password"
+              v-model="bindPassword"
+              type="password"
+              placeholder="请输入密码（至少6个字符）"
+              :disabled="bindLoading"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <div v-if="bindError" class="p-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+            {{ bindError }}
+          </div>
+          <Button type="submit" class="w-full" :disabled="bindLoading">
+            <RefreshCw v-if="bindLoading" class="mr-2 h-4 w-4 animate-spin" />
+            绑定账号
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+
     <!-- 数据管理 -->
     <Card>
       <CardHeader>
@@ -393,11 +443,13 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useGameStore } from '@/stores/gameStore'
+  import { useAuthStore } from '@/stores/authStore'
   import { useI18n } from '@/composables/useI18n'
   import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
   import { Button } from '@/components/ui/button'
   import { Switch } from '@/components/ui/switch'
   import { Label } from '@/components/ui/label'
+  import { Input } from '@/components/ui/input'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -424,7 +476,8 @@
     CloudUpload,
     CloudDownload,
     Settings2,
-    Volume2
+    Volume2,
+    User
   } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
@@ -445,6 +498,47 @@
   const { t } = useI18n()
   const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
   const gameStore = useGameStore()
+  const authStore = useAuthStore()
+
+  // --- 账号绑定（游客模式） ---
+  const bindUsername = ref('')
+  const bindPassword = ref('')
+  const bindLoading = ref(false)
+  const bindError = ref('')
+  const bindSuccess = ref(false)
+
+  async function handleBindAccount() {
+    if (bindUsername.value.length < 3 || bindPassword.value.length < 6) {
+      bindError.value = '用户名至少3个字符，密码至少6个字符'
+      return
+    }
+    bindLoading.value = true
+    bindError.value = ''
+    bindSuccess.value = false
+    try {
+      await authStore.bindAccount(bindUsername.value, bindPassword.value)
+      bindSuccess.value = true
+      bindUsername.value = ''
+      bindPassword.value = ''
+      toast.success('账号绑定成功！')
+    } catch (e: any) {
+      if (e?.message?.includes('already_bound') || e?.message?.includes('已绑定')) {
+        // 已绑定 → 询问是否切换登录
+        showConfirmDialog.value = true
+        confirmTitle.value = '该设备已绑定账号'
+        confirmMessage.value = '是否切换到登录模式？'
+        confirmCallback = () => {
+          // 登出当前游客，跳转到登录页
+          authStore.logout()
+          window.location.hash = '#/login'
+        }
+      } else {
+        bindError.value = e?.message || '绑定失败'
+      }
+    } finally {
+      bindLoading.value = false
+    }
+  }
 
   const fileInputRef = ref<HTMLInputElement>()
   const isExporting = ref(false)

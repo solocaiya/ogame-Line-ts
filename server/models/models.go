@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// User represents a player account (registered or guest)
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
@@ -9,6 +10,8 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 	LastLogin    time.Time `json:"last_login"`
 	IsActive     bool      `json:"is_active"`
+	IsGuest      bool      `json:"is_guest"`
+	DeviceID     string    `json:"device_id,omitempty"`
 }
 
 type PlayerSave struct {

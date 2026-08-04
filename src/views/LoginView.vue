@@ -195,8 +195,6 @@ async function handleSubmit() {
     } else {
       await authStore.register(username.value, password.value)
     }
-    // 登录成功，清除游客标记
-    localStorage.removeItem('guest_mode')
     // 检查隐私协议
     if (gameStore.player.privacyAgreed) {
       router.push('/overview')
@@ -216,13 +214,22 @@ function confirmPrivacy() {
   }
 }
 
-function skipLogin() {
-  // 游客模式
-  localStorage.setItem('guest_mode', 'true')
-  if (gameStore.player.privacyAgreed) {
-    router.push('/overview')
-  } else {
-    showAgreementDialog.value = true
+async function skipLogin() {
+  // 游客模式 — 生成设备 ID 并调用服务端创建游客账号
+  let deviceId = localStorage.getItem('device_id')
+  if (!deviceId) {
+    deviceId = crypto.randomUUID()
+    localStorage.setItem('device_id', deviceId)
+  }
+  try {
+    await authStore.enterGuest(deviceId)
+    if (gameStore.player.privacyAgreed) {
+      router.push('/overview')
+    } else {
+      showAgreementDialog.value = true
+    }
+  } catch {
+    // 错误已在 authStore.error 中
   }
 }
 

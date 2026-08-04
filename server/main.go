@@ -145,7 +145,10 @@ func main() {
 		auth.POST("/register", handlers.RateLimit(loginLimiter), authHandler.Register)
 		auth.POST("/login", handlers.RateLimit(loginLimiter), authHandler.Login)
 		auth.POST("/refresh", handlers.RateLimit(loginLimiter), authHandler.Refresh)
+		auth.POST("/guest", handlers.RateLimit(loginLimiter), authHandler.Guest)
 		auth.GET("/me", handlers.AuthRequired(cfg.JWTSecret), authHandler.Me)
+		auth.POST("/bind", handlers.AuthRequired(cfg.JWTSecret), authHandler.Bind)
+		auth.GET("/bound", handlers.AuthRequired(cfg.JWTSecret), authHandler.Bound)
 	}
 
 	// Player save routes

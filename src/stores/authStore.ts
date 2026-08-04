@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isLoggedIn: (state) => !!state.accessToken && !!state.user,
+    isGuest: (state) => state.user?.is_guest ?? false,
     username: (state) => state.user?.username || ''
   },
 
@@ -60,10 +61,45 @@ export const useAuthStore = defineStore('auth', {
       if (!this.accessToken) return
       try {
         this.user = await apiService.getMe()
-      } catch {
-        // /auth/me 失败意味着 token 无效或网络异常，统一登出
-        // apiService 在 refresh 失败时已清除 token，这里只需清理 user 状态
-        this.logout()
+      } catch (e: any) {
+        // 区分 401（token 无效）和网络错误（如离线、超时）
+        // 只有 token 无效才登出，网络抖动保持 session
+        if (e?.message?.includes('401') || e?.status === 401 || e?.response?.status === 401) {
+          this.logout()
+        }
+        // 网络错误不清 session，让用户继续操作
+      }
+    },
+
+    async enterGuest(deviceId: string) {
+      this.loading = true
+      this.error = null
+      try {
+        const res = await apiService.guest(deviceId)
+        this.user = res.user
+        this.accessToken = res.access_token
+        this.refreshToken = res.refresh_token
+      } catch (e: any) {
+        this.error = e.message || '游客登录失败'
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async bindAccount(username: string, password: string) {
+      this.loading = true
+      this.error = null
+      try {
+        const res = await apiService.bindAccount(username, password)
+        this.user = res.user
+        this.accessToken = res.access_token
+        this.refreshToken = res.refresh_token
+      } catch (e: any) {
+        this.error = e.message || '绑定账号失败'
+        throw e
+      } finally {
+        this.loading = false
       }
     },
 
