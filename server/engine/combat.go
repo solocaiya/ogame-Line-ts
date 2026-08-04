@@ -134,36 +134,44 @@ func calculateDamage(attacker, defender *CombatUnit) (destroyed int, damagedShie
 }
 
 // executeAttack handles a single unit attacking, including rapid fire.
+// Uses iteration instead of recursion for rapid fire to avoid stack overflow
+// with high rapid-fire values (e.g. Deathstar vs Probe: RF 1250, expected depth ~1250).
 func executeAttack(attacker *CombatUnit, targets *[]CombatUnit, shipLosses, defenseLosses map[string]int) {
-	if len(*targets) == 0 {
-		return
-	}
-
-	targetIdx := rand.Intn(len(*targets))
-	target := &(*targets)[targetIdx]
-
-	destroyed, _, _ := calculateDamage(attacker, target)
-
-	if destroyed > 0 {
-		target.Count -= destroyed
-		if _, isShip := ShipDefs[target.Type]; isShip {
-			shipLosses[target.Type] += destroyed
-		} else {
-			defenseLosses[target.Type] += destroyed
+	for {
+		if len(*targets) == 0 {
+			return
 		}
-		if target.Count <= 0 {
-			*targets = append((*targets)[:targetIdx], (*targets)[targetIdx+1:]...)
-		}
-	}
 
-	// Rapid fire
-	if attacker.RapidFire != nil && len(*targets) > 0 {
-		if rf, ok := attacker.RapidFire[target.Type]; ok && rf > 1 {
-			continueChance := float64(rf-1) / float64(rf)
-			if rand.Float64() < continueChance {
-				executeAttack(attacker, targets, shipLosses, defenseLosses)
+		targetIdx := rand.Intn(len(*targets))
+		target := &(*targets)[targetIdx]
+
+		destroyed, _, _ := calculateDamage(attacker, target)
+
+		if destroyed > 0 {
+			target.Count -= destroyed
+			if _, isShip := ShipDefs[target.Type]; isShip {
+				shipLosses[target.Type] += destroyed
+			} else {
+				defenseLosses[target.Type] += destroyed
+			}
+			if target.Count <= 0 {
+				*targets = append((*targets)[:targetIdx], (*targets)[targetIdx+1:]...)
 			}
 		}
+
+		// Rapid fire: check if this attacker fires again at remaining targets
+		if attacker.RapidFire == nil || len(*targets) == 0 {
+			return
+		}
+		rf, ok := attacker.RapidFire[target.Type]
+		if !ok || rf <= 1 {
+			return
+		}
+		continueChance := float64(rf-1) / float64(rf)
+		if rand.Float64() >= continueChance {
+			return
+		}
+		// Loop continues — attacker fires again at a new random target
 	}
 }
 
