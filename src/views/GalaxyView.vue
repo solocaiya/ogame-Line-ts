@@ -86,7 +86,7 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
+                      <span class="text-base shrink-0 mt-0.5">{{ p.icon || '🪐' }}</span>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-0.5">
                           <span class="truncate font-medium text-sm">{{ p.name }}</span>
@@ -110,7 +110,7 @@
             <Popover>
               <PopoverTrigger as-child>
                 <Button variant="outline" class="w-full border-yellow-400 dark:border-yellow-600">
-                  <Globe class="h-4 w-4 mr-2" />
+                  <span class="text-base mr-1">🪐</span>
                   {{ highlightedNpc.name }} ({{ highlightedNpc.planets.length }})
                 </Button>
               </PopoverTrigger>
@@ -134,7 +134,7 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
+                      <span class="text-base shrink-0 mt-0.5">{{ p.icon || '🪐' }}</span>
                       <div class="flex-1 min-w-0">
                         <div class="truncate font-medium text-sm mb-0.5">{{ p.name }}</div>
                         <div class="text-[11px] text-muted-foreground">
@@ -1051,7 +1051,6 @@
     Rocket,
     Recycle,
     Gift,
-    Globe,
     Bomb,
     Moon,
     Radar,

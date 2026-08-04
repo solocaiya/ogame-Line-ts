@@ -4,6 +4,12 @@ import { MOON_CONFIG, PLANET_CONFIG, FLEET_STORAGE_CONFIG } from '@/config/gameC
 import { generateId } from '@/utils/id'
 import * as oreDepositLogic from './oreDepositLogic'
 
+// 星球图标池（创建时随机分配）
+const PLANET_ICONS = ['🌍', '🌎', '🌏', '🪐', '🌑', '🌕', '⭐', '💫', '🔮', '💎', '🌐', '☄️']
+const MOON_ICONS = ['🌙', '🌑', '🌕']
+
+const randomIcon = (pool: string[]) => pool[Math.floor(Math.random() * pool.length)]
+
 /**
  * 创建初始星球
  */
@@ -56,7 +62,8 @@ export const createInitialPlanet = (playerId: string, planetName: string = 'Home
     lastUpdate: Date.now(),
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
-    isMoon: false
+    isMoon: false,
+    icon: randomIcon(PLANET_ICONS)
   }
 
   // 初始化建筑等级
@@ -129,7 +136,8 @@ export const createNPCPlanet = (
     lastUpdate: Date.now(),
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
-    isMoon: false
+    isMoon: false,
+    icon: randomIcon(PLANET_ICONS)
   }
 
   // 初始化所有建筑等级为0
@@ -225,7 +233,8 @@ export const createMoon = (
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: true,
     parentPlanetId: parentPlanet.id,
-    diameter: diameter || MOON_CONFIG.minDiameter // 月球直径(km)
+    diameter: diameter || MOON_CONFIG.minDiameter, // 月球直径(km)
+    icon: randomIcon(MOON_ICONS)
   }
 
   // 初始化建筑等级
