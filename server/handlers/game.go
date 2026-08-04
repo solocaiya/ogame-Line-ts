@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"ogame-server/engine"
@@ -583,4 +585,191 @@ func (h *GameHandler) CancelResearch(c *gin.Context) {
 // generateID generates a unique ID using UUID.
 func generateID() string {
 	return uuid.New().String()
+}
+
+// GetLeaderboard handles GET /api/game/leaderboard
+func (h *GameHandler) GetLeaderboard(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	limit := 50
+	if l := c.Query("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
+	offset := 0
+	if o := c.Query("offset"); o != "" {
+		if n, err := strconv.Atoi(o); err == nil && n >= 0 {
+			offset = n
+		}
+	}
+
+	entries, err := gamestate.GetLeaderboard(h.db, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch leaderboard"})
+		return
+	}
+	if entries == nil {
+		entries = []gamestate.LeaderboardEntry{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"entries": entries,
+		"count":   len(entries),
+		"limit":   limit,
+		"offset":  offset,
+	})
+}
+
+// GetNotifications handles GET /api/game/notifications
+func (h *GameHandler) GetNotifications(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	limit := 50
+	if l := c.Query("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 200 {
+			limit = n
+		}
+	}
+
+	unreadOnly := c.Query("unread_only") == "true"
+
+	query := `SELECT id, type, message, data, created_at, read FROM notifications WHERE player_id = ?`
+	args := []interface{}{playerID}
+	if unreadOnly {
+		query += ` AND read = 0`
+	}
+	query += ` ORDER BY created_at DESC LIMIT ?`
+	args = append(args, limit)
+
+	rows, err := h.db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+	defer rows.Close()
+
+	type notifResponse struct {
+		ID        string      `json:"id"`
+		Type      string      `json:"type"`
+		Message   string      `json:"message"`
+		Data      interface{} `json:"data,omitempty"`
+		CreatedAt int64       `json:"createdAt"`
+		Read      bool        `json:"read"`
+	}
+
+	notifications := []notifResponse{}
+	for rows.Next() {
+		var n notifResponse
+		var dataStr string
+		var createdAt int64
+		if err := rows.Scan(&n.ID, &n.Type, &n.Message, &dataStr, &createdAt, &n.Read); err != nil {
+			continue
+		}
+		if dataStr != "" {
+			_ = json.Unmarshal([]byte(dataStr), &n.Data)
+		}
+		n.CreatedAt = createdAt
+		notifications = append(notifications, n)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"notifications": notifications,
+		"count":         len(notifications),
+	})
+}
+
+// MarkNotificationRead handles POST /api/game/notifications/:id/read
+func (h *GameHandler) MarkNotificationRead(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	notifID := c.Param("id")
+	if notifID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "notification id required"})
+		return
+	}
+
+	result, err := h.db.Exec(`UPDATE notifications SET read = 1 WHERE id = ? AND player_id = ?`, notifID, playerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark notification read"})
+		return
+	}
+	affected, _ := result.RowsAffected()
+	if affected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "notification not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// GetBattleReplays handles GET /api/game/battle-replays
+func (h *GameHandler) GetBattleReplays(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	limit := 20
+	if l := c.Query("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
+	offset := 0
+	if o := c.Query("offset"); o != "" {
+		if n, err := strconv.Atoi(o); err == nil && n >= 0 {
+			offset = n
+		}
+	}
+
+	rows, err := h.db.Query(`
+		SELECT id, attacker_id, target_coord, result_data, created_at
+		FROM battle_replays
+		WHERE attacker_id = ?
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`, playerID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch battle replays"})
+		return
+	}
+	defer rows.Close()
+
+	type replayResponse struct {
+		ID          string          `json:"id"`
+		AttackerID  string          `json:"attackerId"`
+		TargetCoord string          `json:"targetCoord"`
+		Result      json.RawMessage `json:"result"`
+		CreatedAt   string          `json:"createdAt"`
+	}
+
+	replays := []replayResponse{}
+	for rows.Next() {
+		var r replayResponse
+		var resultData string
+		if err := rows.Scan(&r.ID, &r.AttackerID, &r.TargetCoord, &resultData, &r.CreatedAt); err != nil {
+			continue
+		}
+		r.Result = json.RawMessage(resultData)
+		replays = append(replays, r)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"replays": replays,
+		"count":   len(replays),
+	})
 }

@@ -38,9 +38,19 @@ func main() {
 
 	// Initialize game state
 	gs := gamestate.New()
+	gs.SetDB(database.DB)
 
 	// Initialize WebSocket hub
 	wsHub := ws.NewHub(cfg.AllowedOrigins)
+
+	// Wire WS connect/disconnect to active player tracking (optimization #3)
+	wsHub.OnConnect = func(playerID string) {
+		gs.MarkActive(playerID)
+	}
+	wsHub.OnDisconnect = func(playerID string) {
+		gs.MarkInactive(playerID)
+	}
+
 	go wsHub.Run()
 	log.Println("WebSocket hub started")
 
@@ -88,6 +98,23 @@ func main() {
 		}
 	}()
 	log.Println("Periodic game state save started (30s interval)")
+
+	// Periodic leaderboard refresh (every 60 seconds)
+	go func() {
+		ticker := time.NewTicker(60 * time.Second)
+		defer ticker.Stop()
+		// Run once immediately at startup
+		gs.CalculateLeaderboard(database.DB)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				gs.CalculateLeaderboard(database.DB)
+			}
+		}
+	}()
+	log.Println("Periodic leaderboard refresh started (60s interval)")
 
 	// Setup Gin
 	gin.SetMode(gin.ReleaseMode)
@@ -150,6 +177,10 @@ func main() {
 		game.POST("/research/start", gameHandler.StartResearch)
 		game.POST("/research/cancel", gameHandler.CancelResearch)
 		game.POST("/fleet/send", gameHandler.SendFleet)
+		game.GET("/leaderboard", gameHandler.GetLeaderboard)
+		game.GET("/notifications", gameHandler.GetNotifications)
+		game.POST("/notifications/:id/read", gameHandler.MarkNotificationRead)
+		game.GET("/battle-replays", gameHandler.GetBattleReplays)
 	}
 
 	// WebSocket endpoint
