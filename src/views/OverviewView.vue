@@ -1,11 +1,11 @@
 <template>
   <div v-if="planet" class="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-    <!-- 星球横幅横幅 - 横向背景图 + 叠加信息 -->
+    <!-- 星球横幅 - 横向背景图 + 叠加信息 -->
     <div class="relative w-full h-40 sm:h-48 rounded-xl overflow-hidden shadow-lg">
-      <!-- 背景：星球图片 -->
+      <!-- 背景：横幅图片（根据温度带/月球类型选择） -->
       <img
-        v-if="planet.icon"
-        :src="planet.icon"
+        v-if="planetBanner"
+        :src="planetBanner"
         :alt="planet.name"
         class="absolute inset-0 w-full h-full object-cover"
       />
@@ -291,6 +291,19 @@
   const { t } = useI18n()
   const { SHIPS } = useGameConfig()
   const planet = computed(() => gameStore.currentPlanet)
+
+  // 根据温度带/月球类型选择横幅背景图
+  const planetBanner = computed(() => {
+    if (!planet.value) return ''
+    // 月球使用独立横幅
+    if (planet.value.isMoon) return '/assets/banners/banner_moon.png'
+    const pos = planet.value.position.position
+    if (pos <= 3) return '/assets/banners/banner_hot.png'
+    if (pos <= 5) return '/assets/banners/banner_warm.png'
+    if (pos <= 9) return '/assets/banners/banner_habitable.png'
+    if (pos <= 12) return '/assets/banners/banner_cold.png'
+    return '/assets/banners/banner_frozen.png'
+  })
 
   // 获取科技加成
   const techBonuses = computed(() => ({
