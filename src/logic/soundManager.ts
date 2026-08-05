@@ -20,6 +20,7 @@ export type SoundType = (typeof SoundType)[keyof typeof SoundType]
 
 // 音频上下文（懒加载）
 let audioContext: AudioContext | null = null
+let audioUnlocked = false
 
 const getAudioContext = (): AudioContext | null => {
   if (typeof window === 'undefined') return null
@@ -33,6 +34,44 @@ const getAudioContext = (): AudioContext | null => {
   return audioContext
 }
 
+/**
+ * 解锁音频上下文 — 必须在用户手势事件中调用
+ * 浏览器要求 AudioContext 在用户交互后才能播放
+ */
+export const unlockAudio = () => {
+  const ctx = getAudioContext()
+  if (!ctx) return
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {})
+  }
+  audioUnlocked = true
+
+  // 如果 BGM 已启用但尚未播放，现在尝试播放
+  if (bgmEnabled && !bgmPlaying) {
+    startBgmOscillators()
+  }
+}
+
+/**
+ * 初始化音频系统 — 在 App 挂载时调用
+ * 注册全局用户交互监听器以解锁 AudioContext
+ */
+export const initAudio = () => {
+  if (typeof window === 'undefined') return
+
+  // 监听首次用户交互以解锁音频
+  const unlock = () => {
+    unlockAudio()
+    // 解锁后移除监听器
+    window.removeEventListener('click', unlock)
+    window.removeEventListener('keydown', unlock)
+    window.removeEventListener('touchstart', unlock)
+  }
+  window.addEventListener('click', unlock, { once: false })
+  window.addEventListener('keydown', unlock, { once: false })
+  window.addEventListener('touchstart', unlock, { once: false })
+}
+
 // 生成简单的合成音效
 const playTone = (
   frequency: number,
@@ -42,6 +81,10 @@ const playTone = (
 ) => {
   const ctx = getAudioContext()
   if (!ctx) return
+  // 确保上下文已恢复
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {})
+  }
 
   const oscillator = ctx.createOscillator()
   const gainNode = ctx.createGain()
@@ -119,44 +162,92 @@ const soundPlayers: Record<SoundType, (volume: number) => void> = {
   }
 }
 
-// 背景音乐（BGM）
-let bgmAudio: HTMLAudioElement | null = null
-let bgmVolume = 0.3
+// ============ 背景音乐（BGM）— Web Audio API 合成环境音乐 ============
+
 let bgmEnabled = false
-let bgmSourceUrl = ''
+let bgmPlaying = false
+let bgmVolume = 0.3
+let bgmGainNode: GainNode | null = null
+let bgmOscillators: OscillatorNode[] = []
 
 /**
- * 设置背景音乐源
- * @param url - 音频文件 URL（支持 mp3/ogg/wav）
+ * 启动 BGM 振荡器 — 生成柔和的太空环境音乐
+ * 使用多个低频正弦波叠加产生氛围感
  */
-export const setBgmSource = (url: string) => {
-  bgmSourceUrl = url
-  if (bgmAudio) {
-    bgmAudio.src = url
-    bgmAudio.load()
-    if (bgmEnabled) {
-      bgmAudio.play().catch(() => {})
-    }
+const startBgmOscillators = () => {
+  const ctx = getAudioContext()
+  if (!ctx || bgmPlaying) return
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {})
   }
+
+  // 主增益节点
+  bgmGainNode = ctx.createGain()
+  bgmGainNode.gain.setValueAtTime(bgmVolume * 0.15, ctx.currentTime) // 降低基础音量
+  bgmGainNode.connect(ctx.destination)
+
+  // 环境和弦：C3 + E3 + G3 + B3 叠加，产生柔和的太空感
+  const frequencies = [130.81, 164.81, 196.00, 246.94] // C3, E3, G3, B3
+  const types: OscillatorType[] = ['sine', 'sine', 'sine', 'triangle']
+
+  frequencies.forEach((freq, i) => {
+    const osc = ctx.createOscillator()
+    const oscGain = ctx.createGain()
+
+    osc.type = types[i]
+    osc.frequency.setValueAtTime(freq, ctx.currentTime)
+
+    // 每个振荡器音量递减
+    oscGain.gain.setValueAtTime(0.3 - i * 0.05, ctx.currentTime)
+
+    // 添加缓慢的 LFO 调制，产生呼吸感
+    const lfo = ctx.createOscillator()
+    const lfoGain = ctx.createGain()
+    lfo.type = 'sine'
+    lfo.frequency.setValueAtTime(0.1 + i * 0.05, ctx.currentTime) // 非常缓慢
+    lfoGain.gain.setValueAtTime(0.1, ctx.currentTime)
+    lfo.connect(lfoGain)
+    lfoGain.connect(oscGain.gain)
+    lfo.start(ctx.currentTime)
+
+    osc.connect(oscGain)
+    oscGain.connect(bgmGainNode!)
+    osc.start(ctx.currentTime)
+
+    bgmOscillators.push(osc)
+  })
+
+  bgmPlaying = true
+}
+
+/**
+ * 停止 BGM 振荡器
+ */
+const stopBgmOscillators = () => {
+  bgmOscillators.forEach(osc => {
+    try { osc.stop() } catch { /* already stopped */ }
+  })
+  bgmOscillators = []
+  if (bgmGainNode) {
+    bgmGainNode.disconnect()
+    bgmGainNode = null
+  }
+  bgmPlaying = false
 }
 
 /**
  * 播放背景音乐
  */
 export const playBgm = () => {
-  if (typeof window === 'undefined') return
-  if (!bgmAudio) {
-    bgmAudio = new Audio()
-    bgmAudio.loop = true
-    bgmAudio.volume = bgmVolume
-    if (bgmSourceUrl) {
-      bgmAudio.src = bgmSourceUrl
-    }
-  }
   bgmEnabled = true
-  bgmAudio.play().catch(() => {
-    // 浏览器可能阻止自动播放，需用户交互后重试
-  })
+  const ctx = getAudioContext()
+  if (!ctx) return
+
+  // 如果音频已解锁，直接启动
+  if (ctx.state === 'running') {
+    startBgmOscillators()
+  }
+  // 否则等 unlockAudio() 调用时再启动
 }
 
 /**
@@ -164,9 +255,7 @@ export const playBgm = () => {
  */
 export const pauseBgm = () => {
   bgmEnabled = false
-  if (bgmAudio) {
-    bgmAudio.pause()
-  }
+  stopBgmOscillators()
 }
 
 /**
@@ -185,8 +274,11 @@ export const toggleBgm = () => {
  */
 export const setBgmVolume = (vol: number) => {
   bgmVolume = Math.max(0, Math.min(1, vol))
-  if (bgmAudio) {
-    bgmAudio.volume = bgmVolume
+  if (bgmGainNode) {
+    const ctx = getAudioContext()
+    if (ctx) {
+      bgmGainNode.gain.setValueAtTime(bgmVolume * 0.15, ctx.currentTime)
+    }
   }
 }
 
@@ -194,9 +286,9 @@ export const setBgmVolume = (vol: number) => {
  * 获取背景音乐状态
  */
 export const getBgmState = () => ({
-  playing: bgmEnabled,
+  playing: bgmPlaying,
   volume: bgmVolume,
-  source: bgmSourceUrl
+  enabled: bgmEnabled
 })
 
 /**

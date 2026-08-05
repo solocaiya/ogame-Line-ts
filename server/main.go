@@ -122,17 +122,12 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(handlers.CORS(cfg.AllowedOrigins))
 
-	// Health check
+	// Health check (for Docker HEALTHCHECK)
 	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "ok",
 			"time":   time.Now().Format(time.RFC3339),
 		})
-	})
-
-	// Health check (for Docker HEALTHCHECK)
-	r.GET("/api/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
 	})
 
 	// Auth routes

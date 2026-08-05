@@ -1009,7 +1009,7 @@
     setBgmVolume(vol)
   }
   const testSound = () => {
-    playSound(SoundType.CLICK, { enabled: true, volume: gameStore.player.soundVolume ?? 0.5 })
+    playSound(SoundType.Click, { enabled: true, volume: gameStore.player.soundVolume ?? 0.5 })
   }
 
   // WebDAV 上传

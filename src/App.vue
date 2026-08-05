@@ -583,6 +583,7 @@
   import * as oreDepositLogic from '@/logic/oreDepositLogic'
   import * as campaignLogic from '@/logic/campaignLogic'
   import { generateNPCName, countOldFormatNPCs, updateNPCName } from '@/logic/npcNameGenerator'
+  import { initAudio, playSound, SoundType, setBgmVolume, playBgm } from '@/logic/soundManager'
   import pkg from '../package.json'
   import { toast } from 'vue-sonner'
   import { migrateGameData } from '@/utils/migration'
@@ -818,6 +819,21 @@
     // 页面内 toast 通知
     if (settings.inApp) {
       toast.success(title, { description: body })
+    }
+
+    // 播放对应音效
+    if (gameStore.player.soundEnabled) {
+      if (type === 'building') {
+        playSound(SoundType.BuildingComplete, {
+          enabled: true,
+          volume: gameStore.player.soundVolume ?? 0.7
+        })
+      } else if (type === 'technology') {
+        playSound(SoundType.ResearchComplete, {
+          enabled: true,
+          volume: gameStore.player.soundVolume ?? 0.7
+        })
+      }
     }
   }
 
@@ -2708,6 +2724,15 @@
 
       // 初始化游戏（创建初始星球、检查月球礼物等）
       await initGame()
+
+      // 初始化音频系统（注册用户交互监听器以解锁 AudioContext）
+      initAudio()
+
+      // 同步 BGM 音量到 soundManager
+      if (gameStore.player.musicEnabled) {
+        setBgmVolume(gameStore.player.musicVolume ?? 0.5)
+        playBgm()
+      }
 
       // 启动云端自动保存和 WebSocket
       if (authStore.accessToken) {
