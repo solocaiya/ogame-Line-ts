@@ -1078,6 +1078,18 @@
     }
   }
 
+  /**
+   * 将本地设置同步到服务端（登录时调用，确保服务端 GameState 拿到最新设置）
+   */
+  const syncSettingsToServer = async () => {
+    if (!authStore.accessToken) return
+    try {
+      await apiService.updateSettings({ battleToFinish: gameStore.battleToFinish })
+    } catch {
+      console.warn('[Settings] 同步设置到服务端失败，将在下次登录时重试')
+    }
+  }
+
   const updateGame = async () => {
     const now = Date.now()
     if (gameStore.isPaused) return
@@ -2699,6 +2711,8 @@
       if (authStore.accessToken) {
         startCloudAutoSave()
         connectWebSocket()
+        // 将本地设置同步到服务端（解决服务端重启后设置丢失的问题）
+        syncSettingsToServer()
       }
 
       // 初始化 WebSocket 事件监听（只调用一次）
