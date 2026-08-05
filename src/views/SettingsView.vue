@@ -54,8 +54,8 @@
       </CardContent>
     </Card>
 
-    <!-- 数据管理 -->
-    <Card>
+    <!-- 数据管理（已隐藏：服务端存档替代） -->
+    <Card v-if="false">
       <CardHeader>
         <CardTitle>{{ t('settings.dataManagement') }}</CardTitle>
         <CardDescription>{{ t('settings.dataManagementDesc') }}</CardDescription>
@@ -130,8 +130,8 @@
       </CardContent>
     </Card>
 
-    <!-- 游戏设置 -->
-    <Card>
+    <!-- 游戏设置（已隐藏：服务端接管游戏逻辑） -->
+    <Card v-if="false">
       <CardHeader>
         <CardTitle>{{ t('settings.gameSettings') }}</CardTitle>
         <CardDescription>{{ t('settings.gameSettingsDesc') }}</CardDescription>

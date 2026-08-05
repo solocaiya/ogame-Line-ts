@@ -58,12 +58,12 @@
           <p class="text-muted-foreground">
             {{ t('privacy.sections.contact.content') }}
             <a
-              :href="`https://github.com/${pkg.author.name}/${pkg.name}/issues`"
+              href="https://qm.qq.com/q/5961866"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary hover:underline"
             >
-              GitHub Issues
+              QQ交流群 (5961866)
             </a>
           </p>
         </section>
