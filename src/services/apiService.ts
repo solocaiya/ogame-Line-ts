@@ -261,6 +261,16 @@ class ApiService {
     return this.request('POST', '/game/fleet/send', params)
   }
 
+  // --- Settings ---
+
+  async updateSettings(settings: { battleToFinish: boolean }): Promise<any> {
+    return this.request('PUT', '/game/settings', settings)
+  }
+
+  async getSettings(): Promise<{ settings: { battleToFinish: boolean } }> {
+    return this.request('GET', '/game/settings')
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; time: string }> {

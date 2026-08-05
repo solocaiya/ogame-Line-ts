@@ -1016,6 +1016,8 @@ export default {
     gamePauseDesc: 'ゲーム時間と資源生産を一時停止または再開',
     battleMode: '最後まで戦うモード',
     battleModeDesc: '有効にすると、勝者が決まるまで最大100ラウンドの戦闘が行われます。無効の場合は、クラシックな6ラウンドモードが使用されます',
+    battleModeEnabled: '最後まで戦うモードが有効になりました',
+    battleModeDisabled: '最後まで戦うモードが無効になりました',
     pause: '一時停止',
     resume: '再開',
     gamePaused: 'ゲームを一時停止しました',

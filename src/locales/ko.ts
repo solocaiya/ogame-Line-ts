@@ -971,6 +971,8 @@ export default {
     gamePauseDesc: '게임 시간 및 자원 생산 일시정지 또는 재개',
     battleMode: '끝까지 싸우기 모드',
     battleModeDesc: '활성화하면 승자가 결정될 때까지 최대 100라운드까지 전투가 진행됩니다. 비활성화하면 클래식 6라운드 모드가 사용됩니다',
+    battleModeEnabled: '끝까지 싸우기 모드가 활성화되었습니다',
+    battleModeDisabled: '끝까지 싸우기 모드가 비활성화되었습니다',
     pause: '일시정지',
     resume: '재개',
     gamePaused: '게임이 일시정지되었습니다',

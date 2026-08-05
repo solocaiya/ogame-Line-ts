@@ -171,6 +171,8 @@ func main() {
 	{
 		game.POST("/init", gameHandler.InitPlayer)
 		game.GET("/state", gameHandler.GetGameState)
+		game.PUT("/settings", gameHandler.UpdateSettings)
+		game.GET("/settings", gameHandler.GetSettings)
 		game.POST("/building/start", gameHandler.StartBuilding)
 		game.POST("/building/cancel", gameHandler.CancelBuilding)
 		game.POST("/ship/start", gameHandler.StartShipProduction)

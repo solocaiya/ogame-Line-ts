@@ -117,6 +117,11 @@ type FleetMission struct {
 	BattleToFinish bool          `json:"battleToFinish"` // 战斗到底模式：true=最多100回合，false=经典6回合
 }
 
+// PlayerSettings represents player-configurable game settings synced to the server.
+type PlayerSettings struct {
+	BattleToFinish bool `json:"battleToFinish"` // 战斗到底模式（100回合）
+}
+
 // PlayerState represents the full server-side state of a player.
 type PlayerState struct {
 	ID            string                  `json:"id"`
@@ -126,6 +131,7 @@ type PlayerState struct {
 	GameSpeed     int                     `json:"gameSpeed"`
 	DebrisField   Resources               `json:"debrisField"`
 	Moons         map[string]string       `json:"moons"` // planetID -> moonID
+	Settings      PlayerSettings          `json:"settings"`
 }
 
 // CombatUnit represents a unit in combat simulation.

@@ -775,3 +775,57 @@ func (h *GameHandler) GetBattleReplays(c *gin.Context) {
 		"count":   len(replays),
 	})
 }
+
+// UpdateSettings updates the player's game settings (e.g. battle mode toggle).
+func (h *GameHandler) UpdateSettings(c *gin.Context) {
+	playerID := c.GetString("user_id")
+
+	var req struct {
+		BattleToFinish bool `json:"battleToFinish"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	settings := engine.PlayerSettings{
+		BattleToFinish: req.BattleToFinish,
+	}
+
+	if err := h.gameState.UpdateSettings(playerID, settings); err != nil {
+		// Player might not be in memory yet — try loading from DB first
+		if h.db != nil {
+			if loadErr := h.gameState.LoadPlayer(h.db, playerID); loadErr == nil {
+				if updateErr := h.gameState.UpdateSettings(playerID, settings); updateErr != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update settings"})
+					return
+				}
+				c.JSON(http.StatusOK, gin.H{"message": "settings updated", "settings": settings})
+				return
+			}
+		}
+		c.JSON(http.StatusNotFound, gin.H{"error": "player not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "settings updated", "settings": settings})
+}
+
+// GetSettings returns the player's current game settings.
+func (h *GameHandler) GetSettings(c *gin.Context) {
+	playerID := c.GetString("user_id")
+
+	settings, ok := h.gameState.GetSettings(playerID)
+	if !ok && h.db != nil {
+		if err := h.gameState.LoadPlayer(h.db, playerID); err == nil {
+			settings, ok = h.gameState.GetSettings(playerID)
+		}
+	}
+	if !ok {
+		// Return defaults if player not found
+		c.JSON(http.StatusOK, gin.H{"settings": engine.PlayerSettings{BattleToFinish: false}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"settings": settings})
+}

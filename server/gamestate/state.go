@@ -187,6 +187,29 @@ func (gs *GameState) EnsurePlayer(playerID string, gameSpeed int) {
 	}
 }
 
+// UpdateSettings updates a player's settings in the authoritative game state.
+func (gs *GameState) UpdateSettings(playerID string, settings engine.PlayerSettings) error {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+	p, ok := gs.players[playerID]
+	if !ok {
+		return fmt.Errorf("player not found: %s", playerID)
+	}
+	p.Settings = settings
+	return nil
+}
+
+// GetSettings returns a player's current settings.
+func (gs *GameState) GetSettings(playerID string) (engine.PlayerSettings, bool) {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+	p, ok := gs.players[playerID]
+	if !ok {
+		return engine.PlayerSettings{}, false
+	}
+	return p.Settings, true
+}
+
 // MarkActive records that a player is currently active (e.g., WebSocket connected).
 func (gs *GameState) MarkActive(playerID string) {
 	gs.mu.Lock()
@@ -340,7 +363,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		}
 
 		maxRounds := 6
-		if mission.BattleToFinish {
+		if mission.BattleToFinish || player.Settings.BattleToFinish {
 			maxRounds = 100
 		}
 		result := engine.SimulateBattle(attackerSide, defenderSide, maxRounds)

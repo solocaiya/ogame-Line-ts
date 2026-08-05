@@ -985,6 +985,8 @@ export default {
     gamePauseDesc: '暫停或恢復遊戲時間和資源生產',
     battleMode: '戰鬥到底模式',
     battleModeDesc: '啟用後戰鬥最多進行100回合直到分出勝負，關閉則使用經典6回合模式',
+    battleModeEnabled: '戰鬥到底模式已啟用',
+    battleModeDisabled: '戰鬥到底模式已關閉',
     pause: '暫停',
     resume: '恢復',
     gamePaused: '遊戲已暫停',

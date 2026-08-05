@@ -171,7 +171,7 @@
             <h3 class="font-medium">{{ t('settings.battleMode') }}</h3>
             <p class="text-sm text-muted-foreground">{{ t('settings.battleModeDesc') }}</p>
           </div>
-          <Switch :checked="gameStore.battleToFinish" @update:checked="(val: boolean) => (gameStore.battleToFinish = val)" />
+          <Switch :checked="gameStore.battleToFinish" @update:checked="handleBattleModeToggle" />
         </div>
       </CardContent>
     </Card>
@@ -494,6 +494,7 @@
   import { useHints } from '@/composables/useHints'
   import { uploadToWebDAV, downloadFromWebDAV } from '@/services/webdavService'
   import { playSound, SoundType, playBgm, pauseBgm, setBgmVolume } from '@/logic/soundManager'
+  import { apiService } from '@/services/apiService'
 
   const { t } = useI18n()
   const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
@@ -600,6 +601,17 @@
     if (gameStore.notificationSettings) {
       const current = gameStore.notificationSettings.types[key]
       gameStore.notificationSettings.types[key] = !current
+    }
+  }
+
+  const handleBattleModeToggle = async (checked: boolean) => {
+    gameStore.battleToFinish = checked
+    try {
+      await apiService.updateSettings({ battleToFinish: checked })
+      toast.success(checked ? t('settings.battleModeEnabled') : t('settings.battleModeDisabled'))
+    } catch {
+      // 设置已本地生效，云端同步失败不阻塞
+      console.warn('Failed to sync battle mode setting to server')
     }
   }
 

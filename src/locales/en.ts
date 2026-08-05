@@ -1011,6 +1011,8 @@ export default {
     gamePauseDesc: 'Pause or resume game time and resource production',
     battleMode: 'Fight to Finish Mode',
     battleModeDesc: 'When enabled, battles last up to 100 rounds until a winner is decided. When disabled, uses classic 6-round mode',
+    battleModeEnabled: 'Fight to Finish mode enabled',
+    battleModeDisabled: 'Fight to Finish mode disabled',
     pause: 'Pause',
     resume: 'Resume',
     gamePaused: 'Game paused',

@@ -995,6 +995,8 @@ export default {
     gamePauseDesc: 'Spielzeit und Ressourcenproduktion pausieren oder fortsetzen',
     battleMode: 'Bis zum Ende kämpfen',
     battleModeDesc: 'Wenn aktiviert, dauern Kämpfe bis zu 100 Runden bis ein Sieger feststeht. Wenn deaktiviert, wird der klassische 6-Runden-Modus verwendet',
+    battleModeEnabled: 'Bis zum Ende kämpfen Modus aktiviert',
+    battleModeDisabled: 'Bis zum Ende kämpfen Modus deaktiviert',
     pause: 'Pausieren',
     resume: 'Fortsetzen',
     gamePaused: 'Spiel pausiert',

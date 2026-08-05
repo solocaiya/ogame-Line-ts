@@ -1002,6 +1002,8 @@ export default {
     gamePauseDesc: 'Pausar o reanudar el tiempo del juego y la producción de recursos',
     battleMode: 'Modo de combate hasta el final',
     battleModeDesc: 'Cuando está activado, las batallas duran hasta 100 rondas hasta que se decide un ganador. Cuando está desactivado, se usa el modo clásico de 6 rondas',
+    battleModeEnabled: 'Modo de combate hasta el final activado',
+    battleModeDisabled: 'Modo de combate hasta el final desactivado',
     pause: 'Pausar',
     resume: 'Reanudar',
     gamePaused: 'Juego pausado',
