@@ -2629,12 +2629,14 @@
     // 连接状态
     wsService.on('connected', () => {
       console.log('[App] WebSocket connected')
+      gameStore.setWsConnected(true) // fixes A4: enable optimistic updates
       // Sync full state on connect
       gameStore.syncFromServer()
     })
 
     wsService.on('disconnected', () => {
       console.log('[App] WebSocket disconnected')
+      gameStore.setWsConnected(false) // fixes A4: pause optimistic updates when offline
     })
   }
 

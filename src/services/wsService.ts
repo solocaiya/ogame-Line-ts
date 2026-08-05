@@ -129,12 +129,16 @@ class WebSocketService {
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return
 
+    // Add random jitter (±25%) to prevent thundering herd when server restarts
+    const jitter = this.currentDelay * 0.25 * (Math.random() * 2 - 1)
+    const delay = Math.max(1000, Math.round(this.currentDelay + jitter))
+
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       this.currentDelay = Math.min(this.currentDelay * 1.5, this.maxReconnectDelay)
-      console.log(`[WS] Reconnecting (delay: ${this.currentDelay}ms)...`)
+      console.log(`[WS] Reconnecting (delay: ${delay}ms)...`)
       this.connect()
-    }, this.currentDelay)
+    }, delay)
   }
 }
 

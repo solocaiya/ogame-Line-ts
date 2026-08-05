@@ -130,6 +130,11 @@ func main() {
 		})
 	})
 
+	// Health check (for Docker HEALTHCHECK)
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	// Auth routes
 	authHandler := &handlers.AuthHandler{
 		JWTSecret:       cfg.JWTSecret,
@@ -182,6 +187,7 @@ func main() {
 		game.POST("/research/start", gameHandler.StartResearch)
 		game.POST("/research/cancel", gameHandler.CancelResearch)
 		game.POST("/fleet/send", gameHandler.SendFleet)
+		game.POST("/fleet/recall", gameHandler.RecallFleet)
 		game.GET("/leaderboard", gameHandler.GetLeaderboard)
 		game.GET("/notifications", gameHandler.GetNotifications)
 		game.POST("/notifications/:id/read", gameHandler.MarkNotificationRead)

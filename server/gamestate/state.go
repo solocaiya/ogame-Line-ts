@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -288,6 +289,60 @@ func (gs *GameState) TickPlayer(playerID string) error {
 	return nil
 }
 
+// Advance processes a player's state forward to the given timestamp.
+// Used for offline settlement — when a player returns after being offline,
+// this processes all fleet missions, queues, and resource updates that
+// should have happened during their absence.
+func (gs *GameState) Advance(playerID string, targetTime int64) error {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+
+	player, ok := gs.players[playerID]
+	if !ok {
+		return fmt.Errorf("player not found: %s", playerID)
+	}
+
+	// Process in time-steps to handle fleet missions correctly
+	// (missions may arrive/return at different times during the offline period)
+	now := targetTime
+
+	// Update resources for all planets to the target time
+	for _, planet := range player.Planets {
+		engine.UpdatePlanetResources(planet, now, player.GameSpeed)
+	}
+
+	// Process all fleet missions that should have completed
+	for i := range player.FleetMissions {
+		mission := &player.FleetMissions[i]
+
+		if mission.Status == "outbound" && now >= mission.ArrivalTime {
+			gs.processFleetArrival(player, mission, mission.ArrivalTime)
+		}
+		if mission.Status == "returning" && now >= mission.ReturnTime {
+			gs.processFleetReturn(player, mission, mission.ReturnTime)
+		}
+	}
+
+	// Process all queues to the target time
+	for _, planet := range player.Planets {
+		gs.processBuildingQueue(planet, now, player.GameSpeed)
+		gs.processResearchQueue(planet, now, player.GameSpeed)
+		gs.processShipQueue(planet, now, player.GameSpeed)
+		gs.processDefenseQueue(planet, now, player.GameSpeed)
+	}
+
+	// Clean up completed missions
+	active := player.FleetMissions[:0]
+	for _, m := range player.FleetMissions {
+		if m.Status != "completed" {
+			active = append(active, m)
+		}
+	}
+	player.FleetMissions = active
+
+	return nil
+}
+
 // tickPlayer processes all pending actions for one player.
 // Called with gs.mu held (write lock).
 func (gs *GameState) tickPlayer(player *engine.PlayerState, now int64) {
@@ -407,6 +462,52 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 				})
 		}
 
+		// Moon generation: if debris field is large enough, chance to form a moon
+		if result.MoonChance > 0 && rand.Float64() < result.MoonChance {
+			moonCoord := defenderPlanet.Coordinate // moon orbits same coords
+			moonKey := fmt.Sprintf("%d:%d:%d:moon", moonCoord.Galaxy, moonCoord.System, moonCoord.Position)
+			if _, exists := gs.coordIndex[moonKey]; !exists {
+				moonID := fmt.Sprintf("%d-%d-%d-moon", moonCoord.Galaxy, moonCoord.System, moonCoord.Position)
+				moonPlanet := &engine.PlanetState{
+					ID:            moonID,
+					Name:          "Moon",
+					Coordinate:    moonCoord,
+					IsMoon:        true,
+					ParentPlanet:  defenderPlanet.ID,
+					Buildings:     map[string]int{},
+					Technologies:  map[string]int{},
+					Ships:         map[string]int{},
+					Defenses:      map[string]int{},
+					Resources:     engine.Resources{Metal: 0, Crystal: 0, Deuterium: 0},
+					StorageCap:    engine.Resources{Metal: 1000, Crystal: 1000, Deuterium: 1000, DarkMatter: 1000},
+					Production:    engine.Resources{},
+					BuildingQueue: []engine.BuildingQueueItem{},
+					ResearchQueue: []engine.ResearchQueueItem{},
+					ShipQueue:     []engine.ShipQueueItem{},
+					DefenseQueue:  []engine.DefenseQueueItem{},
+					LastUpdate:    now,
+				}
+				// Add moon to defender's planets
+				defenderID := gs.findPlayerIDByPlanet(defenderPlanet.ID)
+				if defenderID != "" {
+					if defPlayer, ok := gs.Players[defenderID]; ok {
+						defPlayer.Planets[moonID] = moonPlanet
+						defPlayer.Moons[defenderPlanet.ID] = moonID
+					}
+				}
+				gs.coordIndex[moonKey] = moonPlanet
+				gs.emitEvent(GameEvent{
+					Type:     "moonFormed",
+					PlayerID: gs.findPlayerIDByPlanet(defenderPlanet.ID),
+					Data: map[string]interface{}{
+						"moonId":    moonID,
+						"planetId":  defenderPlanet.ID,
+						"moonChance": result.MoonChance,
+					},
+				})
+			}
+		}
+
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
@@ -447,14 +548,169 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
 	case "recycle":
+		// Collect resources from debris field at target coordinates
+		recyclers := mission.Fleet["recycler"]
+		if recyclers <= 0 {
+			mission.Status = "returning"
+			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+			break
+		}
+		// Each recycler can carry 20000 cargo
+		recyclerCapacity := recyclers * 20000
+		available := player.DebrisField
+		collectedMetal := min(int64(recyclerCapacity/2), available.Metal)
+		remaining := recyclerCapacity - int(collectedMetal)
+		collectedCrystal := min(int64(remaining/2), available.Crystal)
+
+		mission.Cargo = engine.Resources{Metal: collectedMetal, Crystal: collectedCrystal}
+		player.DebrisField = engine.Resources{
+			Metal:      available.Metal - collectedMetal,
+			Crystal:    available.Crystal - collectedCrystal,
+			Deuterium:  available.Deuterium,
+			DarkMatter: available.DarkMatter,
+		}
+		gs.emitEvent(GameEvent{
+			Type:     "recycleComplete",
+			PlayerID: player.ID,
+			Data: map[string]interface{}{
+				"missionId": mission.ID,
+				"collected": mission.Cargo,
+				"target":    mission.Target,
+			},
+		})
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
 	case "colonize":
+		// Check if target slot is empty and player doesn't exceed planet limit
+		targetCoord := mission.Target
+		targetKey := gs.coordKey(targetCoord)
+		_, occupied := gs.coordIndex[targetKey]
+
+		// Planet limit: base 1 + colony tech level (simplified: max 9 planets)
+		maxPlanets := 9
+		if len(player.Planets) >= maxPlanets {
+			// Too many planets — fleet returns, colonizer consumed
+			gs.emitEvent(GameEvent{
+				Type:     "colonizeFailed",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"reason": "planetLimit"},
+			})
+			mission.Fleet = map[string]int{} // colonizer consumed
+			mission.Status = "returning"
+			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+			break
+		}
+
+		if occupied {
+			// Slot already taken
+			gs.emitEvent(GameEvent{
+				Type:     "colonizeFailed",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"reason": "slotOccupied"},
+			})
+			mission.Status = "returning"
+			mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
+			break
+		}
+
+		// Create new planet
+		planetID := fmt.Sprintf("%d-%d-%d", targetCoord.Galaxy, targetCoord.System, targetCoord.Position)
+		newPlanet := &engine.PlanetState{
+			ID:            planetID,
+			Name:          "Colony",
+			Coordinate:    targetCoord,
+			Buildings:     map[string]int{"metalMine": 1, "crystalMine": 1, "deuteriumSynthesizer": 1, "solarPlant": 1},
+			Technologies:  map[string]int{},
+			Ships:         map[string]int{},
+			Defenses:      map[string]int{},
+			Resources:     engine.Resources{Metal: 500, Crystal: 300, Deuterium: 100},
+			StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 5000},
+			Production:    engine.Resources{},
+			BuildingQueue: []engine.BuildingQueueItem{},
+			ResearchQueue: []engine.ResearchQueueItem{},
+			ShipQueue:     []engine.ShipQueueItem{},
+			DefenseQueue:  []engine.DefenseQueueItem{},
+			LastUpdate:    now,
+		}
+		player.Planets[planetID] = newPlanet
+		gs.coordIndex[targetKey] = newPlanet
+
+		gs.emitEvent(GameEvent{
+			Type:     "colonizeSuccess",
+			PlayerID: player.ID,
+			Data: map[string]interface{}{
+				"planetId":   planetID,
+				"coordinate": targetCoord,
+			},
+		})
+		// Colonizer ship is consumed
+		delete(mission.Fleet, "colonyShip")
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
 	case "expedition":
+		// Random expedition outcomes
+		roll := rand.Float64()
+		switch {
+		case roll < 0.3:
+			// 30% — find resources
+			baseValue := int64(500 + rand.Intn(2000))
+			mission.Cargo = engine.Resources{Metal: baseValue, Crystal: baseValue / 2, Deuterium: baseValue / 4}
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "resources", "cargo": mission.Cargo},
+			})
+		case roll < 0.45:
+			// 15% — find ships (small cargo or fighter)
+			shipTypes := []string{"smallCargo", "largeCargo", "lightFighter", "heavyFighter"}
+			foundType := shipTypes[rand.Intn(len(shipTypes))]
+			foundCount := 1 + rand.Intn(3)
+			mission.Fleet[foundType] = mission.Fleet[foundType] + foundCount
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "ships", "type": foundType, "count": foundCount},
+			})
+		case roll < 0.55:
+			// 10% — find dark matter
+			dmAmount := int64(50 + rand.Intn(200))
+			mission.Cargo = engine.Resources{DarkMatter: dmAmount}
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "darkMatter", "amount": dmAmount},
+			})
+		case roll < 0.70:
+			// 15% — nothing found
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "nothing"},
+			})
+		case roll < 0.85:
+			// 15% — encounter danger, lose some ships
+			lossRate := 0.1 + rand.Float64()*0.3 // 10-40% loss
+			for shipType, count := range mission.Fleet {
+				lost := int(float64(count) * lossRate)
+				if lost > 0 {
+					mission.Fleet[shipType] = count - lost
+				}
+			}
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "danger", "fleet": mission.Fleet},
+			})
+		default:
+			// 15% — delayed return (already handled by normal return time)
+			gs.emitEvent(GameEvent{
+				Type:     "expeditionResult",
+				PlayerID: player.ID,
+				Data:     map[string]interface{}{"outcome": "delayed"},
+			})
+		}
 		mission.Status = "returning"
 		mission.ReturnTime = mission.ArrivalTime + (mission.ArrivalTime - mission.DepartureTime)
 
@@ -479,6 +735,44 @@ func (gs *GameState) saveBattleReplay(attackerID string, mission *engine.FleetMi
 		replayID, attackerID,
 		fmt.Sprintf("%d:%d:%d", mission.Target.Galaxy, mission.Target.System, mission.Target.Position),
 		string(replayData), timestamp)
+}
+
+// RecallFleet marks an in-flight mission as recalled.
+// The fleet will reverse course and return to origin on the next tick.
+func (gs *GameState) RecallFleet(playerID, missionID string) (*engine.FleetMission, error) {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+
+	player, ok := gs.players[playerID]
+	if !ok {
+		return nil, fmt.Errorf("player not found")
+	}
+
+	mission, ok := player.FleetMissions[missionID]
+	if !ok {
+		return nil, fmt.Errorf("mission not found")
+	}
+
+	if mission.Status != "inFlight" {
+		return nil, fmt.Errorf("can only recall in-flight missions (status: %s)", mission.Status)
+	}
+
+	// Mark as recalled — tick loop will reverse direction
+	mission.Recalled = true
+	mission.Status = "returning" // tick loop will process as normal return
+
+	// Calculate return time: now + travel time back to origin
+	now := time.Now().UnixMilli()
+	travelTime := mission.ArrivalTime - mission.DepartureTime
+	mission.ReturnTime = now + travelTime
+
+	gs.emitEvent(GameEvent{
+		Type:     "fleetRecalled",
+		PlayerID: playerID,
+		Data:     map[string]interface{}{"missionId": missionID},
+	})
+
+	return mission, nil
 }
 
 // findPlayerIDByPlanet finds which player owns a given planet ID.

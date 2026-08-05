@@ -22,6 +22,31 @@ import pkg from '../../package.json'
 import { encryptData, decryptData } from '@/utils/crypto'
 import { apiService } from '@/services/apiService'
 
+/**
+ * Deep-replace properties of `target` with values from `source`,
+ * preserving Vue reactivity (mutates target in-place).
+ * Arrays are replaced wholesale (splice+push) rather than shallow-merged.
+ * Fixes B6/B7: Object.assign only does shallow merge, leaving stale nested data.
+ */
+function deepMergeReactive<T extends Record<string, any>>(target: T, source: Partial<T>): void {
+  for (const key of Object.keys(target)) {
+    delete (target as any)[key]
+  }
+  for (const key of Object.keys(source)) {
+    const val = (source as any)[key]
+    if (Array.isArray(val)) {
+      // Replace arrays entirely (don't merge element-by-element)
+      ;(target as any)[key] = [...val]
+    } else if (val !== null && typeof val === 'object' && !(val instanceof Date)) {
+      // Recursively deep-merge plain objects
+      ;(target as any)[key] = Array.isArray((target as any)[key]) ? {} : { ...(target as any)[key] }
+      deepMergeReactive((target as any)[key], val)
+    } else {
+      ;(target as any)[key] = val
+    }
+  }
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     gameTime: Date.now(),
@@ -70,7 +95,8 @@ export const useGameStore = defineStore('game', {
     // Server sync state
     _lastSyncTime: 0,
     _pendingSync: false,
-    _optimisticQueue: null as Promise<unknown> | null // serializes optimistic updates
+    _optimisticQueue: null as Promise<unknown> | null, // serializes optimistic updates
+    _wsConnected: false // fixes A4: pause optimistic updates when WS disconnected
   }),
   actions: {
     async requestBrowserPermission(): Promise<boolean> {
@@ -126,8 +152,8 @@ export const useGameStore = defineStore('game', {
             missileAttacks: this.player.missileAttacks,
             missionReports: this.player.missionReports
           }
-          // Update player from server
-          Object.assign(this.player, serverPlayer, localOnly)
+          // Update player from server (deep replace — fixes B6 Object.assign shallow merge)
+          deepMergeReactive(this.player, { ...serverPlayer, ...localOnly } as Partial<Player>)
           this._lastSyncTime = Date.now()
           return true
         }
@@ -219,8 +245,13 @@ export const useGameStore = defineStore('game', {
         // Snapshot for rollback
         const snapshot = JSON.parse(JSON.stringify(this.player))
 
-        // Apply immediately (optimistic)
-        applyLocal()
+        // fixes A4: skip optimistic local change when WS disconnected (no sync to roll back to)
+        if (!this._wsConnected) {
+          console.warn('[GameStore] WS disconnected, skipping optimistic local update')
+        } else {
+          // Apply immediately (optimistic)
+          applyLocal()
+        }
 
         try {
           const result = await serverCall()
@@ -228,7 +259,7 @@ export const useGameStore = defineStore('game', {
         } catch (error) {
           // Rollback
           console.warn('[GameStore] Optimistic update failed, rolling back:', error)
-          Object.assign(this.player, snapshot)
+          deepMergeReactive(this.player, snapshot) // fixes B7: deep replace, not shallow merge
           if (onError && error instanceof Error) {
             onError(error)
           }
@@ -241,6 +272,11 @@ export const useGameStore = defineStore('game', {
       const next = prev.then(() => run(), () => run())
       this._optimisticQueue = next.then(() => {}, () => {}) // swallow for queue
       return next
+    },
+
+    /** fixes A4: called by App.vue on WS connect/disconnect to gate optimistic updates */
+    setWsConnected(connected: boolean) {
+      this._wsConnected = connected
     }
   },
   getters: {

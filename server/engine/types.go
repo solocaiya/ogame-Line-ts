@@ -56,6 +56,8 @@ type PlanetState struct {
 	ID            string              `json:"id"`
 	Name          string              `json:"name"`
 	Coordinate    Coordinate          `json:"coordinate"`
+	IsMoon        bool                `json:"isMoon,omitempty"`
+	ParentPlanet  string              `json:"parentPlanetId,omitempty"`
 	Buildings     map[string]int      `json:"buildings"`
 	Technologies  map[string]int      `json:"technologies"`
 	Ships         map[string]int      `json:"ships"`

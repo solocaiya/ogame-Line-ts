@@ -42,6 +42,14 @@ func (h *GameHandler) GetGameState(c *gin.Context) {
 		return
 	}
 
+	// Offline settlement: advance player state to current time
+	// This processes fleet missions, queues, and resources that happened while offline
+	now := time.Now().UnixMilli()
+	_ = h.gameState.Advance(playerID, now)
+
+	// Re-marshal after advance
+	playerJSON, _ = h.gameState.MarshalPlayer(playerID)
+
 	// Client expects { player: {...} }
 	c.JSON(http.StatusOK, gin.H{"player": playerJSON})
 }
@@ -325,11 +333,25 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 			return fmt.Errorf("insufficient fuel: need %d, have %d", fuel, planet.Resources.Deuterium)
 		}
 
-		// Deduct ships and fuel
+		// Check cargo affordability BEFORE any deductions (atomic validation)
+		totalDeuteriumNeeded := fuel + req.Cargo.Deuterium
+		if req.Cargo.Metal > 0 || req.Cargo.Crystal > 0 || req.Cargo.Deuterium > 0 {
+			// Check against resources after fuel deduction
+			availableAfterFuel := planet.Resources
+			availableAfterFuel.Deuterium -= fuel
+			if !availableAfterFuel.CanAfford(req.Cargo) {
+				return fmt.Errorf("insufficient cargo resources")
+			}
+		}
+
+		// All checks passed — now deduct everything atomically
 		for shipType, count := range req.Fleet {
 			planet.Ships[shipType] -= count
 		}
 		planet.Resources.Deuterium -= fuel
+		if req.Cargo.Metal > 0 || req.Cargo.Crystal > 0 || req.Cargo.Deuterium > 0 {
+			planet.Resources = planet.Resources.Sub(req.Cargo)
+		}
 
 		now := time.Now().UnixMilli()
 		mission = engine.FleetMission{
@@ -347,19 +369,36 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 			BattleToFinish: req.BattleToFinish,
 		}
 
-		// Deduct cargo from planet resources
-		if req.Cargo.Metal > 0 || req.Cargo.Crystal > 0 || req.Cargo.Deuterium > 0 {
-			if !planet.Resources.CanAfford(req.Cargo) {
-				return fmt.Errorf("insufficient cargo resources")
-			}
-			planet.Resources = planet.Resources.Sub(req.Cargo)
-		}
-
 		// Add mission to player — same lock, atomic with ship/fuel deduction
 		p.FleetMissions = append(p.FleetMissions, mission)
 		return nil
 	})
 
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"mission": mission,
+	})
+}
+
+// RecallFleet recalls an in-flight fleet mission.
+// The fleet will reverse course and return to origin.
+func (h *GameHandler) RecallFleet(c *gin.Context) {
+	playerID := c.GetString("user_id")
+
+	var req struct {
+		MissionID string `json:"missionId" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mission, err := h.gameState.RecallFleet(playerID, req.MissionID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

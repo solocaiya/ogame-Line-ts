@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Build Go API Server
 # ============================================
-FROM golang:1.21-alpine AS go-builder
+FROM golang:1.23-alpine AS go-builder
 
 WORKDIR /build/server
 
@@ -69,6 +69,10 @@ VOLUME ["/data"]
 ENV DB_PATH=/data/ogame.db
 
 EXPOSE 80
+
+# Docker 健康检查：每30秒检测一次，连续3次失败视为不健康
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost/api/health || exit 1
 
 # 使用 dumb-init 作为 PID 1 正确处理信号
 ENTRYPOINT ["dumb-init", "--"]
