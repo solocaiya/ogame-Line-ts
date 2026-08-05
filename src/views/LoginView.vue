@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from '@/composables/useI18n'
 import { useAuthStore } from '@/stores/authStore'
@@ -218,7 +218,8 @@ async function skipLogin() {
   // 游客模式 — 生成设备 ID 并调用服务端创建游客账号
   let deviceId = localStorage.getItem('device_id')
   if (!deviceId) {
-    deviceId = crypto.randomUUID()
+    // crypto.randomUUID() requires Safari 15.4+; fallback for older browsers
+    deviceId = (crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).substring(2))
     localStorage.setItem('device_id', deviceId)
   }
   try {
@@ -237,6 +238,30 @@ async function skipLogin() {
 watch(() => authStore.error, () => {
   if (authStore.error) {
     setTimeout(() => authStore.clearError(), 5000)
+  }
+})
+
+// 迁移旧版 guest_mode：如果检测到旧的客户端游客标记，自动走新的服务端游客流程
+onMounted(async () => {
+  const oldGuestMode = localStorage.getItem('guest_mode')
+  if (oldGuestMode === 'true' && !authStore.accessToken) {
+    // 确保有 device_id
+    let deviceId = localStorage.getItem('device_id')
+    if (!deviceId) {
+      deviceId = (crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).substring(2))
+      localStorage.setItem('device_id', deviceId)
+    }
+    // 清除旧标记
+    localStorage.removeItem('guest_mode')
+    // 自动进入服务端游客模式
+    try {
+      await authStore.enterGuest(deviceId)
+      if (gameStore.player.privacyAgreed) {
+        router.replace('/overview')
+      }
+    } catch {
+      // 失败则留在登录页，用户可手动操作
+    }
   }
 })
 </script>

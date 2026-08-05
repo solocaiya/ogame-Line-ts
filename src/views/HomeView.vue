@@ -79,8 +79,7 @@
 
   // 已登录且同意隐私协议 → 自动跳转游戏
   onMounted(() => {
-    const isGuest = localStorage.getItem('guest_mode') === 'true'
-    if (authStore.accessToken || isGuest) {
+    if (authStore.accessToken) {
       if (gameStore.player.privacyAgreed) {
         router.replace('/overview')
       }

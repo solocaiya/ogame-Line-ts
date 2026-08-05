@@ -2682,15 +2682,21 @@
       if (isFirstVisit) {
         gameStore.locale = detectBrowserLocale()
       }
-      await initGame()
 
-      // 云端存档：如果有 token 但没 user，先获取用户信息
+      // 云端存档优先于 initGame()：先加载服务器数据，确保 initGame() 中的
+      // 月球礼物等逻辑能看到服务器端的正确状态（如 firstLoginMoonGiftClaimed）
       if (authStore.accessToken && !authStore.user) {
         await authStore.fetchUser()
       }
-      // 如果已认证（登录或游客），尝试从服务器加载存档，连接 WebSocket
       if (authStore.accessToken) {
         await tryCloudLoad()
+      }
+
+      // 初始化游戏（创建初始星球、检查月球礼物等）
+      await initGame()
+
+      // 启动云端自动保存和 WebSocket
+      if (authStore.accessToken) {
         startCloudAutoSave()
         connectWebSocket()
       }

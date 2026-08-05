@@ -522,7 +522,7 @@
       bindPassword.value = ''
       toast.success('账号绑定成功！')
     } catch (e: any) {
-      if (e?.message?.includes('already_bound') || e?.message?.includes('已绑定')) {
+      if (e?.message?.includes('already bound') || e?.message?.includes('already_bound') || e?.message?.includes('已绑定')) {
         // 已绑定 → 询问是否切换登录
         showConfirmDialog.value = true
         confirmTitle.value = '该设备已绑定账号'

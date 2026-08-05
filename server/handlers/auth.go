@@ -122,6 +122,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Guest accounts cannot login via password — they must use the /auth/guest endpoint
+	if user.IsGuest {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
+		return
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
@@ -291,10 +297,18 @@ func (h *AuthHandler) Bind(c *gin.Context) {
 		return
 	}
 
-	// Check if user is a guest
+	// Use a transaction to prevent race conditions between username check and update
+	tx, err := database.DB.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer tx.Rollback()
+
+	// Check if user is a guest (lock the row to prevent concurrent modifications)
 	var isGuest bool
 	var deviceID string
-	err := database.DB.QueryRow(
+	err = tx.QueryRow(
 		`SELECT is_guest, COALESCE(device_id, '') FROM users WHERE id = ?`, userID,
 	).Scan(&isGuest, &deviceID)
 	if err != nil {
@@ -306,9 +320,9 @@ func (h *AuthHandler) Bind(c *gin.Context) {
 		return
 	}
 
-	// Check if username is taken
+	// Check if username is taken (within transaction for consistency)
 	var exists int
-	err = database.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE username = ?`, req.Username).Scan(&exists)
+	err = tx.QueryRow(`SELECT COUNT(*) FROM users WHERE username = ?`, req.Username).Scan(&exists)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
 		return
@@ -325,12 +339,18 @@ func (h *AuthHandler) Bind(c *gin.Context) {
 	}
 
 	// Update user: set real username + password, clear guest flag
-	_, err = database.DB.Exec(
+	_, err = tx.Exec(
 		`UPDATE users SET username = ?, password_hash = ?, is_guest = 0 WHERE id = ?`,
 		req.Username, string(hash), userID,
 	)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
+		return
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
 		return
 	}
 

@@ -93,7 +93,7 @@ func migrate() error {
 		// Migration: add guest support columns to users (safe to run on existing DBs)
 		`ALTER TABLE users ADD COLUMN is_guest BOOLEAN DEFAULT 0`,
 		`ALTER TABLE users ADD COLUMN device_id TEXT DEFAULT ''`,
-		`CREATE INDEX IF NOT EXISTS idx_users_device_id ON users(device_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_users_device_guest ON users(device_id, is_guest)`,
 	}
 
 	for _, m := range migrations {
