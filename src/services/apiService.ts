@@ -256,6 +256,7 @@ class ApiService {
     fleet: Record<string, number>
     cargo: { metal: number; crystal: number; deuterium: number }
     missionType: string
+    battleToFinish?: boolean
   }): Promise<any> {
     return this.request('POST', '/game/fleet/send', params)
   }

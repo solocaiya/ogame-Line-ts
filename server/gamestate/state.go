@@ -339,7 +339,11 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 			DefenderResources: defenderPlanet.Resources,
 		}
 
-		result := engine.SimulateBattle(attackerSide, defenderSide, 0)
+		maxRounds := 6
+		if mission.BattleToFinish {
+			maxRounds = 100
+		}
+		result := engine.SimulateBattle(attackerSide, defenderSide, maxRounds)
 
 		mission.Fleet = result.AttackerRemaining
 		defenderPlanet.Ships = result.DefenderFleetRemaining

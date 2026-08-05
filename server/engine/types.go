@@ -114,6 +114,7 @@ type FleetMission struct {
 	ReturnTime    int64          `json:"returnTime"`
 	Status        string         `json:"status"` // "outbound" | "returning"
 	Recalled      bool           `json:"recalled"`
+	BattleToFinish bool          `json:"battleToFinish"` // 战斗到底模式：true=最多100回合，false=经典6回合
 }
 
 // PlayerState represents the full server-side state of a player.

@@ -285,11 +285,12 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 	playerID := c.GetString("user_id")
 
 	var req struct {
-		PlanetID    string            `json:"planetId" binding:"required"`
-		TargetCoord engine.Coordinate `json:"targetCoordinate" binding:"required"`
-		MissionType string            `json:"missionType" binding:"required"`
-		Fleet       map[string]int    `json:"fleet" binding:"required"`
-		Cargo       engine.Resources  `json:"cargo"`
+		PlanetID       string            `json:"planetId" binding:"required"`
+		TargetCoord    engine.Coordinate `json:"targetCoordinate" binding:"required"`
+		MissionType    string            `json:"missionType" binding:"required"`
+		Fleet          map[string]int    `json:"fleet" binding:"required"`
+		Cargo          engine.Resources  `json:"cargo"`
+		BattleToFinish bool              `json:"battleToFinish"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -332,17 +333,18 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 
 		now := time.Now().UnixMilli()
 		mission = engine.FleetMission{
-			ID:            generateID(),
-			PlayerID:      playerID,
-			MissionType:   req.MissionType,
-			Fleet:         req.Fleet,
-			Cargo:         req.Cargo,
-			Origin:        planet.Coordinate,
-			Target:        req.TargetCoord,
-			DepartureTime: now,
-			ArrivalTime:   now + int64(flightTime*1000),
-			ReturnTime:    now + int64(flightTime*2000),
-			Status:        "outbound",
+			ID:             generateID(),
+			PlayerID:       playerID,
+			MissionType:    req.MissionType,
+			Fleet:          req.Fleet,
+			Cargo:          req.Cargo,
+			Origin:         planet.Coordinate,
+			Target:         req.TargetCoord,
+			DepartureTime:  now,
+			ArrivalTime:    now + int64(flightTime*1000),
+			ReturnTime:     now + int64(flightTime*2000),
+			Status:         "outbound",
+			BattleToFinish: req.BattleToFinish,
 		}
 
 		// Deduct cargo from planet resources
