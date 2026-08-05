@@ -27,7 +27,7 @@ export const useGameStore = defineStore('game', {
     gameTime: Date.now(),
     isPaused: false,
     gameSpeed: 1,
-    battleToFinish: true, // 战斗到底模式：false=经典模式(6回合平局)，true=战斗到底(最多100回合)
+    battleToFinish: true, // 锁定100回合模式（前后端双战斗系统结果不一致，暂时禁用6回合切换）
     player: {
       id: 'player1',
       name: '',

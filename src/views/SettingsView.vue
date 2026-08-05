@@ -165,14 +165,14 @@
           </Button>
         </div>
 
-        <!-- 战斗模式 -->
-        <div class="flex items-center justify-between p-4 border rounded-lg">
+        <!-- 战斗模式（暂时隐藏：前后端双战斗系统结果可能不一致，默认锁定100回合） -->
+        <!-- <div class="flex items-center justify-between p-4 border rounded-lg">
           <div class="space-y-1">
             <h3 class="font-medium">{{ t('settings.battleMode') }}</h3>
             <p class="text-sm text-muted-foreground">{{ t('settings.battleModeDesc') }}</p>
           </div>
           <Switch :checked="gameStore.battleToFinish" @update:checked="handleBattleModeToggle" />
-        </div>
+        </div> -->
       </CardContent>
     </Card>
 
