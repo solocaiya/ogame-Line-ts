@@ -302,7 +302,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useI18n } from '@/composables/useI18n'
 import { Loader2, Search } from 'lucide-vue-next'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

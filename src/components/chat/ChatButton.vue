@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useI18n } from '@/composables/useI18n'
 import { MessageCircle, Send, BellOff, Loader2 } from 'lucide-vue-next'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
