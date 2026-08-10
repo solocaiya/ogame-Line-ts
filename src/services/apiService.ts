@@ -271,6 +271,80 @@ class ApiService {
     return this.request('GET', '/game/settings')
   }
 
+  // --- Alliance ---
+
+  async createAlliance(name: string, tag: string): Promise<any> {
+    return this.request('POST', '/alliance/create', { name, tag })
+  }
+
+  async getMyAlliance(): Promise<any> {
+    return this.request('GET', '/alliance/my')
+  }
+
+  async updateAllianceSettings(settings: { description?: string; maxMembers?: number; autoAccept?: boolean; requireApproval?: boolean }): Promise<any> {
+    return this.request('PUT', '/alliance/settings', settings)
+  }
+
+  async requestJoinAlliance(allianceId: string, message?: string): Promise<any> {
+    return this.request('POST', '/alliance/join-request', { allianceId, message })
+  }
+
+  async getAllianceRequests(): Promise<any> {
+    return this.request('GET', '/alliance/requests')
+  }
+
+  async acceptAllianceRequest(requestId: string): Promise<any> {
+    return this.request('POST', `/alliance/requests/${requestId}/accept`)
+  }
+
+  async rejectAllianceRequest(requestId: string): Promise<any> {
+    return this.request('POST', `/alliance/requests/${requestId}/reject`)
+  }
+
+  async inviteToAlliance(playerId: string): Promise<any> {
+    return this.request('POST', '/alliance/invite', { playerId })
+  }
+
+  async acceptAllianceInvite(inviteId: string): Promise<any> {
+    return this.request('POST', `/alliance/invite/${inviteId}/accept`)
+  }
+
+  async rejectAllianceInvite(inviteId: string): Promise<any> {
+    return this.request('POST', `/alliance/invite/${inviteId}/reject`)
+  }
+
+  async updateAllianceMemberRole(playerId: string, role: string): Promise<any> {
+    return this.request('PUT', `/alliance/members/${playerId}/role`, { role })
+  }
+
+  async removeMember(playerId: string): Promise<any> {
+    return this.request('DELETE', `/alliance/members/${playerId}`)
+  }
+
+  async leaveAlliance(): Promise<any> {
+    return this.request('POST', '/alliance/leave')
+  }
+
+  async searchAlliances(query: string): Promise<any> {
+    return this.request('GET', `/alliance/search?q=${encodeURIComponent(query)}`)
+  }
+
+  // --- Chat ---
+
+  async sendChatMessage(channel: string, content: string): Promise<any> {
+    return this.request('POST', '/chat/send', { channel, content })
+  }
+
+  async getChatHistory(channel: string, limit = 50, before?: number): Promise<any> {
+    let path = `/chat/history?channel=${encodeURIComponent(channel)}&limit=${limit}`
+    if (before) path += `&before=${before}`
+    return this.request('GET', path)
+  }
+
+  async updateChatDND(mode: string): Promise<any> {
+    return this.request('PUT', '/chat/dnd', { mode })
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; time: string }> {

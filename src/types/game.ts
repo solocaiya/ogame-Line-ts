@@ -865,6 +865,11 @@ export interface Player {
   totalPlayTime?: number // 总游戏时间（秒）
   createdAt?: number // 账号创建时间戳
   lastSaveTime?: number // 最后一次保存的时间戳（用于云端存档比较）
+
+  // 联盟
+  allianceId?: string
+  allianceRole?: AllianceRole
+  chatDNDMode?: ChatDNDMode
 }
 
 export interface NotificationSettings {
@@ -1287,3 +1292,75 @@ export interface WebDAVConfig {
   password: string // 密码或应用专用密码
   basePath: string // 存档存放路径
 }
+
+// ==================== 联盟系统 ====================
+
+export const AllianceRole = {
+  LEADER: 'leader',
+  OFFICER: 'officer',
+  MEMBER: 'member',
+} as const
+export type AllianceRole = (typeof AllianceRole)[keyof typeof AllianceRole]
+
+export const AllianceRequestStatus = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+} as const
+export type AllianceRequestStatus = (typeof AllianceRequestStatus)[keyof typeof AllianceRequestStatus]
+
+export interface Alliance {
+  id: string
+  name: string
+  tag: string // 3-8 字符缩写
+  description: string
+  leaderId: string
+  members: AllianceMember[]
+  pendingRequests: AllianceJoinRequest[]
+  maxMembers: number // 默认 30
+  autoAccept: boolean
+  requireApproval: boolean
+  createdAt: number
+}
+
+export interface AllianceMember {
+  playerId: string
+  username: string
+  role: AllianceRole
+  joinedAt: number
+}
+
+export interface AllianceJoinRequest {
+  id: string
+  playerId: string
+  playerName: string
+  status: AllianceRequestStatus
+  createdAt: number
+  message?: string
+}
+
+// ==================== 聊天系统 ====================
+
+export const ChatChannelType = {
+  WORLD: 'world',
+  ALLIANCE: 'alliance',
+} as const
+export type ChatChannelType = (typeof ChatChannelType)[keyof typeof ChatChannelType]
+
+export interface ChatMessage {
+  id: string
+  channel: ChatChannelType
+  senderId: string
+  senderName: string
+  senderTag?: string // 联盟标签
+  content: string
+  timestamp: number
+}
+
+export const ChatDNDMode = {
+  NONE: 'none',
+  MUTE_WORLD: 'mute_world',
+  MUTE_ALLIANCE: 'mute_alliance',
+  MUTE_ALL: 'mute_all',
+} as const
+export type ChatDNDMode = (typeof ChatDNDMode)[keyof typeof ChatDNDMode]

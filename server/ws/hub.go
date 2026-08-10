@@ -177,3 +177,37 @@ func (h *Hub) ClientCount() int {
 	defer h.mu.RUnlock()
 	return len(h.clients)
 }
+
+// SendToMultiple sends a message to multiple players in one operation.
+// Used for alliance channel messages where only alliance members should receive.
+func (h *Hub) SendToMultiple(playerIDs []string, msgType string, data interface{}) {
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+
+	msg := Message{
+		Type:      msgType,
+		Data:      raw,
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for _, pid := range playerIDs {
+		client, ok := h.clients[pid]
+		if !ok || client.done {
+			continue
+		}
+		select {
+		case client.Send <- bytes:
+		default:
+			// Client send buffer full, skip
+		}
+	}
+}

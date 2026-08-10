@@ -88,7 +88,8 @@ export default {
     queueManagement: '队列',
     messages: '消息',
     settings: '设置',
-    gm: 'GM'
+    gm: 'GM',
+    alliance: '联盟'
   },
   sidebar: {
     lightMode: '日间模式',
@@ -2324,7 +2325,17 @@ export default {
     musicEnabled: '启用背景音乐',
     soundVolume: '音效音量',
     musicVolume: '音乐音量',
-    testSound: '测试音效'
+    testSound: '测试音效',
+    bgmTrack: '背景音乐曲目',
+    bgmTracks: {
+      overview: '总览',
+      building: '建筑',
+      research: '研究',
+      fleet: '舰队',
+      battle: '战斗',
+      trade: '交易',
+      login: '登录'
+    }
   },
   statistics: {
     title: '数据统计',
@@ -2435,5 +2446,72 @@ export default {
     loginButton: '登录',
     registerButton: '注册',
     skipAsGuest: '以游客身份继续'
+  },
+
+  alliance: {
+    title: '联盟',
+    create: '创建联盟',
+    name: '联盟名称',
+    tag: '联盟标签',
+    description: '描述',
+    members: '成员',
+    requests: '申请',
+    settings: '设置',
+    search: '搜索联盟',
+    searchPlaceholder: '按名称或标签搜索...',
+    noAlliance: '你还没有加入联盟',
+    joinAlliance: '加入联盟',
+    requestToJoin: '申请加入',
+    invitePlayer: '邀请玩家',
+    leave: '离开联盟',
+    leaveConfirm: '确定要离开联盟吗？',
+    disband: '解散联盟',
+    disbandConfirm: '确定要解散联盟吗？所有成员将被移除。',
+    promote: '晋升',
+    demote: '降级',
+    kick: '踢出',
+    kickConfirm: '确定要踢出 {name} 吗？',
+    role: {
+      leader: '领袖',
+      officer: '官员',
+      member: '成员'
+    },
+    maxMembers: '最大成员数',
+    autoAccept: '自动接受',
+    requireApproval: '需要审批',
+    saveSettings: '保存设置',
+    requestMessage: '申请留言（可选）',
+    accept: '接受',
+    reject: '拒绝',
+    pendingRequests: '待处理申请',
+    noRequests: '暂无申请',
+    memberSince: '加入时间',
+    lastSeen: '最后在线',
+    namePlaceholder: '输入联盟名称',
+    tagPlaceholder: '例如：ABC',
+    tagHint: '3-8个字母或数字',
+    noResults: '未找到联盟',
+    incomingInvites: '收到的邀请',
+    autoAcceptHint: '自动接受所有加入申请',
+    requireApprovalHint: '加入申请需要官员或领袖审批',
+    kickConfirmName: '确定要踢出该成员吗？'
+  },
+
+  chat: {
+    title: '聊天',
+    world: '世界',
+    alliance: '联盟',
+    inputPlaceholder: '输入消息...',
+    send: '发送',
+    loadMore: '加载更多',
+    dnd: {
+      title: '免打扰',
+      none: '关闭',
+      mute_world: '静音世界频道',
+      mute_alliance: '静音联盟频道',
+      mute_all: '全部静音'
+    },
+    newMessage: '发来了新消息',
+    noMessages: '暂无消息'
   }
 }

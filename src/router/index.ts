@@ -27,6 +27,7 @@ const router = createRouter({
     { path: '/statistics', name: 'statistics', component: () => import('@/views/StatisticsView.vue') },
     { path: '/battle-reports', name: 'battle-reports', component: () => import('@/views/BattleReportsView.vue') },
     { path: '/planet-queue', name: 'planet-queue', component: () => import('@/views/PlanetQueueView.vue') },
+    { path: '/alliance', name: 'alliance', component: () => import('@/views/AllianceView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/gm', name: 'gm', component: () => import('@/views/GMView.vue') },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') }

@@ -189,6 +189,39 @@ func main() {
 		game.GET("/battle-replays", gameHandler.GetBattleReplays)
 	}
 
+	// Alliance routes
+	allianceHandler := handlers.NewAllianceHandler(database.DB, wsHub)
+
+	alliance := r.Group("/api/alliance")
+	alliance.Use(handlers.AuthRequired(cfg.JWTSecret))
+	{
+		alliance.POST("/create", allianceHandler.Create)
+		alliance.GET("/my", allianceHandler.GetMyAlliance)
+		alliance.PUT("/settings", allianceHandler.UpdateSettings)
+		alliance.POST("/join-request", allianceHandler.RequestJoin)
+		alliance.GET("/requests", allianceHandler.GetRequests)
+		alliance.POST("/requests/:id/accept", allianceHandler.AcceptRequest)
+		alliance.POST("/requests/:id/reject", allianceHandler.RejectRequest)
+		alliance.POST("/invite", allianceHandler.InvitePlayer)
+		alliance.POST("/invite/:id/accept", allianceHandler.AcceptInvite)
+		alliance.POST("/invite/:id/reject", allianceHandler.RejectInvite)
+		alliance.PUT("/members/:playerId/role", allianceHandler.UpdateMemberRole)
+		alliance.DELETE("/members/:playerId", allianceHandler.RemoveMember)
+		alliance.POST("/leave", allianceHandler.Leave)
+		alliance.GET("/search", allianceHandler.Search)
+	}
+
+	// Chat routes
+	chatHandler := handlers.NewChatHandler(database.DB, wsHub)
+
+	chat := r.Group("/api/chat")
+	chat.Use(handlers.AuthRequired(cfg.JWTSecret))
+	{
+		chat.POST("/send", chatHandler.Send)
+		chat.GET("/history", chatHandler.History)
+		chat.PUT("/dnd", chatHandler.UpdateDND)
+	}
+
 	// WebSocket endpoint
 	wsGroup := r.Group("/api/ws")
 	wsGroup.Use(handlers.AuthRequired(cfg.JWTSecret))

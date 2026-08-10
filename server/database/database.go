@@ -94,6 +94,53 @@ func migrate() error {
 		`ALTER TABLE users ADD COLUMN is_guest BOOLEAN DEFAULT 0`,
 		`ALTER TABLE users ADD COLUMN device_id TEXT DEFAULT ''`,
 		`CREATE INDEX IF NOT EXISTS idx_users_device_guest ON users(device_id, is_guest)`,
+
+		// Alliance tables
+		`CREATE TABLE IF NOT EXISTS alliances (
+			id TEXT PRIMARY KEY,
+			name TEXT UNIQUE NOT NULL,
+			tag TEXT UNIQUE NOT NULL,
+			description TEXT DEFAULT '',
+			leader_id TEXT NOT NULL,
+			max_members INTEGER DEFAULT 30,
+			auto_accept BOOLEAN DEFAULT 0,
+			require_approval BOOLEAN DEFAULT 1,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS alliance_members (
+			alliance_id TEXT NOT NULL,
+			player_id TEXT PRIMARY KEY,
+			role TEXT NOT NULL DEFAULT 'member',
+			joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (alliance_id) REFERENCES alliances(id) ON DELETE CASCADE
+		)`,
+		`CREATE TABLE IF NOT EXISTS alliance_requests (
+			id TEXT PRIMARY KEY,
+			alliance_id TEXT NOT NULL,
+			player_id TEXT NOT NULL,
+			message TEXT DEFAULT '',
+			status TEXT NOT NULL DEFAULT 'pending',
+			type TEXT NOT NULL DEFAULT 'join',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (alliance_id) REFERENCES alliances(id) ON DELETE CASCADE
+		)`,
+
+		// Chat messages
+		`CREATE TABLE IF NOT EXISTS chat_messages (
+			id TEXT PRIMARY KEY,
+			channel TEXT NOT NULL,
+			sender_id TEXT NOT NULL,
+			sender_name TEXT NOT NULL,
+			sender_tag TEXT DEFAULT '',
+			content TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		// Alliance + Chat indexes
+		`CREATE INDEX IF NOT EXISTS idx_alliance_members_alliance ON alliance_members(alliance_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_alliance_requests_alliance ON alliance_requests(alliance_id, status)`,
+		`CREATE INDEX IF NOT EXISTS idx_alliance_requests_player ON alliance_requests(player_id, status)`,
+		`CREATE INDEX IF NOT EXISTS idx_chat_messages_channel ON chat_messages(channel, created_at DESC)`,
 	}
 
 	for _, m := range migrations {
