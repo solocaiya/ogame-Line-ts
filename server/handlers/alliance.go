@@ -75,7 +75,15 @@ func (h *AllianceHandler) Create(c *gin.Context) {
 		CreatedAt:       now,
 	}
 
-	_, err = h.db.Exec(
+	// Use a transaction to ensure alliance + leader member are created atomically
+	tx, err := h.db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin transaction"})
+		return
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(
 		`INSERT INTO alliances (id, name, tag, description, leader_id, max_members, auto_accept, require_approval, created_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		alliance.ID, alliance.Name, alliance.Tag, alliance.Description,
@@ -91,12 +99,17 @@ func (h *AllianceHandler) Create(c *gin.Context) {
 	}
 
 	// Add creator as leader member
-	_, err = h.db.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO alliance_members (alliance_id, player_id, role, joined_at) VALUES (?, ?, ?, ?)`,
 		allianceID, playerID, "leader", now,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add leader as member"})
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
 		return
 	}
 
@@ -642,22 +655,41 @@ func (h *AllianceHandler) Leave(c *gin.Context) {
 			allianceID,
 		).Scan(&oldestOfficer)
 		if err == nil {
-			// Promote oldest officer to leader
-			h.db.Exec("UPDATE alliance_members SET role = 'leader' WHERE player_id = ?", oldestOfficer)
-			h.db.Exec("UPDATE alliances SET leader_id = ? WHERE id = ?", oldestOfficer, allianceID)
+			// Promote oldest officer to leader — use transaction for both updates
+			tx, txErr := h.db.Begin()
+			if txErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin transaction"})
+				return
+			}
+			defer tx.Rollback()
+			tx.Exec("UPDATE alliance_members SET role = 'leader' WHERE player_id = ?", oldestOfficer)
+			tx.Exec("UPDATE alliances SET leader_id = ? WHERE id = ?", oldestOfficer, allianceID)
+			if commitErr := tx.Commit(); commitErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
+				return
+			}
 			h.notifyAllianceMembers(allianceID, "alliance:role_changed", gin.H{
 				"playerId": oldestOfficer,
 				"newRole":  "leader",
 			})
 		} else {
-			// No officers — disband
-			h.db.Exec("DELETE FROM alliance_members WHERE alliance_id = ?", allianceID)
-			h.db.Exec("DELETE FROM alliance_requests WHERE alliance_id = ?", allianceID)
-			h.db.Exec("DELETE FROM alliances WHERE id = ?", allianceID)
+			// No officers — disband (transaction for 3 deletes)
+			tx, txErr := h.db.Begin()
+			if txErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin transaction"})
+				return
+			}
+			defer tx.Rollback()
+			tx.Exec("DELETE FROM alliance_members WHERE alliance_id = ?", allianceID)
+			tx.Exec("DELETE FROM alliance_requests WHERE alliance_id = ?", allianceID)
+			tx.Exec("DELETE FROM alliances WHERE id = ?", allianceID)
+			if commitErr := tx.Commit(); commitErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
+				return
+			}
 			h.notifyAllianceMembers(allianceID, "alliance:disbanded", gin.H{
 				"allianceId": allianceID,
 			})
-			// Notify the leaving leader too (they were already removed from members)
 			h.wsHub.SendTo(playerID, "alliance:disbanded", gin.H{
 				"allianceId": allianceID,
 			})
@@ -688,14 +720,22 @@ func (h *AllianceHandler) getMemberInfo(playerID string) (allianceID string, rol
 func (h *AllianceHandler) acceptJoinInternal(allianceID, playerID, playerName, requestID string) {
 	now := time.Now()
 
-	// Update request status
-	h.db.Exec("UPDATE alliance_requests SET status = 'accepted' WHERE id = ?", requestID)
+	// Use transaction for atomic update-request + insert-member
+	tx, err := h.db.Begin()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
 
-	// Add member
-	h.db.Exec(
+	tx.Exec("UPDATE alliance_requests SET status = 'accepted' WHERE id = ?", requestID)
+	tx.Exec(
 		"INSERT INTO alliance_members (alliance_id, player_id, role, joined_at) VALUES (?, ?, 'member', ?)",
 		allianceID, playerID, now,
 	)
+
+	if err := tx.Commit(); err != nil {
+		return
+	}
 
 	// Notify alliance members
 	h.notifyAllianceMembers(allianceID, "alliance:member_joined", gin.H{
@@ -712,9 +752,16 @@ func (h *AllianceHandler) acceptJoinInternal(allianceID, playerID, playerName, r
 }
 
 func (h *AllianceHandler) removeMemberInternal(allianceID, playerID string) {
-	h.db.Exec("DELETE FROM alliance_members WHERE player_id = ?", playerID)
-	// Clean up any pending requests
-	h.db.Exec("DELETE FROM alliance_requests WHERE player_id = ? AND status = 'pending'", playerID)
+	tx, err := h.db.Begin()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	tx.Exec("DELETE FROM alliance_members WHERE player_id = ?", playerID)
+	tx.Exec("DELETE FROM alliance_requests WHERE player_id = ? AND status = 'pending'", playerID)
+
+	tx.Commit()
 }
 
 func (h *AllianceHandler) getAllianceFull(allianceID string) (gin.H, error) {

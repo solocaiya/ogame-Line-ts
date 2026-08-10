@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"ogame-server/models"
@@ -19,12 +21,18 @@ import (
 type ChatHandler struct {
 	db    *sql.DB
 	wsHub *ws.Hub
+
+	// Rate limiting: playerID -> last send time
+	mu         sync.Mutex
+	lastSendAt map[string]time.Time
 }
 
 // NewChatHandler creates a new ChatHandler.
 func NewChatHandler(db *sql.DB, wsHub *ws.Hub) *ChatHandler {
-	return &ChatHandler{db: db, wsHub: wsHub}
+	return &ChatHandler{db: db, wsHub: wsHub, lastSendAt: make(map[string]time.Time)}
 }
+
+const chatRateLimit = 500 * time.Millisecond // min interval between messages per player
 
 // Send sends a chat message to world or alliance channel.
 func (h *ChatHandler) Send(c *gin.Context) {
@@ -49,6 +57,16 @@ func (h *ChatHandler) Send(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid channel"})
 		return
 	}
+
+	// Rate limit: max 1 message per 500ms per player
+	h.mu.Lock()
+	if last, ok := h.lastSendAt[playerID]; ok && time.Since(last) < chatRateLimit {
+		h.mu.Unlock()
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "please slow down"})
+		return
+	}
+	h.lastSendAt[playerID] = time.Now()
+	h.mu.Unlock()
 
 	// Get sender info
 	var senderName string
@@ -233,21 +251,29 @@ func (h *ChatHandler) UpdateDND(c *gin.Context) {
 	}
 
 	// Store DND mode in player_game_states as a JSON field
-	// We'll read the current state, patch it, and save back
 	var stateData string
 	err := h.db.QueryRow(
 		"SELECT state_data FROM player_game_states WHERE player_id = ?", playerID,
 	).Scan(&stateData)
 	if err != nil {
 		// No state yet — create minimal state with DND
-		stateData = `{"chatDNDMode":"` + req.Mode + `"}`
+		state := map[string]interface{}{"chatDNDMode": req.Mode}
+		patched, _ := json.Marshal(state)
+		stateData = string(patched)
 		h.db.Exec(
 			"INSERT INTO player_game_states (player_id, state_data, updated_at) VALUES (?, ?, ?)",
 			playerID, stateData, time.Now(),
 		)
 	} else {
-		// Patch the JSON — simple string replacement for the DND field
-		stateData = patchJSONField(stateData, "chatDNDMode", `"`+req.Mode+`"`)
+		// Parse existing state, update DND field, marshal back
+		var state map[string]interface{}
+		if err := json.Unmarshal([]byte(stateData), &state); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "corrupt state data"})
+			return
+		}
+		state["chatDNDMode"] = req.Mode
+		patched, _ := json.Marshal(state)
+		stateData = string(patched)
 		h.db.Exec(
 			"UPDATE player_game_states SET state_data = ?, updated_at = ? WHERE player_id = ?",
 			stateData, time.Now(), playerID,
@@ -268,43 +294,3 @@ func parseTimestamp(s string) *time.Time {
 	return &t
 }
 
-func patchJSONField(jsonStr, key, value string) string {
-	// Simple JSON field patcher — replaces existing field or adds it
-	jsonKey := `"` + key + `"`
-	idx := strings.Index(jsonStr, jsonKey)
-	if idx >= 0 {
-		// Find the colon after the key
-		colonIdx := strings.Index(jsonStr[idx:], ":")
-		if colonIdx < 0 {
-			return jsonStr
-		}
-		colonIdx += idx
-		// Find the value after colon — skip whitespace
-		rest := jsonStr[colonIdx+1:]
-		rest = strings.TrimLeft(rest, " ")
-		// Find end of value
-		var endIdx int
-		if strings.HasPrefix(rest, `"`) {
-			// String value — find closing quote
-			endIdx = strings.Index(rest[1:], `"`) + 2
-		} else {
-			// Number/bool/null — find comma or brace
-			endIdx = strings.IndexAny(rest, ",}")
-		}
-		if endIdx <= 0 {
-			return jsonStr
-		}
-		absEnd := colonIdx + 1 + (len(jsonStr[colonIdx+1:]) - len(rest)) + endIdx
-		return jsonStr[:colonIdx+1] + " " + value + jsonStr[absEnd:]
-	}
-	// Key not found — insert before closing brace
-	lastBrace := strings.LastIndex(jsonStr, "}")
-	if lastBrace < 0 {
-		return jsonStr
-	}
-	prefix := jsonStr[:lastBrace]
-	if !strings.HasSuffix(strings.TrimSpace(prefix), "{") {
-		prefix = prefix + ","
-	}
-	return prefix + `"` + key + `":` + value + "}"
-}
