@@ -10,28 +10,33 @@ const (
 	DarkMatterBase     = 100.0
 	SolarPlantBase     = 50.0
 	FusionReactorBase  = 150.0
-	SolarSatBase       = 0.0 // depends on temperature
 )
 
-// Energy consumption base per level
+// Energy consumption base per level: {base, multiplier}
+// Values match client src/config/gameConfig.ts exactly.
 var buildingEnergyConsumption = map[string]struct {
-	base     float64
+	base       float64
 	multiplier float64
 }{
-	"metalMine":          {30, 1.1},
-	"crystalMine":        {20, 1.1},
-	"deuteriumSynthesizer": {20, 1.1},
-	"roboticsFactory":    {10, 1.1},
-	"naniteFactory":      {20, 1.15},
-	"shipyard":           {10, 1.1},
-	"researchLab":        {10, 1.1},
-	"terraformer":        {30, 1.15},
-	"hangar":             {10, 1.1},
+	"metalMine":           {10, 1.1},
+	"crystalMine":         {10, 1.1},
+	"deuteriumSynthesizer": {15, 1.1},
+	"roboticsFactory":     {5, 1.1},
+	"naniteFactory":       {20, 1.15},
+	"shipyard":            {8, 1.1},
+	"researchLab":         {12, 1.1},
+	"terraformer":         {25, 1.12},
+	"hangar":              {10, 1.1},
 	"darkMatterCollector": {10, 1.1},
+	"missileSilo":         {8, 1.1},
+	"sensorPhalanx":       {15, 1.12},
+	"jumpGate":            {50, 1.2},
 }
 
 // CalculateResourceProduction calculates hourly production for a planet.
 // Returns production per hour and energy balance.
+// Uses BINARY efficiency model: if energy production >= consumption, efficiency = 1; else 0.
+// This matches the client's behavior in src/logic/resourceLogic.ts.
 func CalculateResourceProduction(planet *PlanetState, gameSpeed int) (production Resources, energyProd, energyUsed int64, efficiency float64) {
 	level := func(name string) int {
 		if v, ok := planet.Buildings[name]; ok {
@@ -52,65 +57,73 @@ func CalculateResourceProduction(planet *PlanetState, gameSpeed int) (production
 	}
 
 	// Metal mine: level * 1500 * 1.5^level * resourceBonus * metalTechBonus
+	// mineralResearch gives +2% per level
 	metalMineLvl := level("metalMine")
 	metalProd := float64(metalMineLvl) * MetalMineBase * math.Pow(1.5, float64(metalMineLvl))
-	metalProd *= (1 + 0.02*float64(tech("metalTechnology"))) // +2% per tech level
+	metalProd *= (1 + 0.02*float64(tech("mineralResearch")))
 	metalProd *= speed
 
 	// Crystal mine: level * 1000 * 1.5^level
+	// crystalResearch gives +2% per level
 	crystalMineLvl := level("crystalMine")
 	crystalProd := float64(crystalMineLvl) * CrystalMineBase * math.Pow(1.5, float64(crystalMineLvl))
-	crystalProd *= (1 + 0.02*float64(tech("crystalTechnology")))
+	crystalProd *= (1 + 0.02*float64(tech("crystalResearch")))
 	crystalProd *= speed
 
 	// Deuterium: level * 500 * 1.5^level * tempBonus
+	// fuelResearch gives +2% per level
+	// Temperature bonus: 1.36 - 0.004 * maxTemp (lower temp = more deuterium)
 	deuteriumLvl := level("deuteriumSynthesizer")
 	deuteriumProd := float64(deuteriumLvl) * DeuteriumBase * math.Pow(1.5, float64(deuteriumLvl))
-	deuteriumProd *= (1 + 0.02*float64(tech("deuteriumTechnology")))
+	deuteriumProd *= (1 + 0.02*float64(tech("fuelResearch")))
 	deuteriumProd *= speed
+	// Apply temperature bonus for deuterium
+	deuteriumTempBonus := 1.36 - 0.004*float64(planet.MaxTemp)
+	deuteriumProd *= deuteriumTempBonus
 
 	// Dark matter: level * 100 * 1.5^level
+	// NOT affected by energy efficiency, NOT affected by deposit efficiency
 	darkMatterLvl := level("darkMatterCollector")
 	darkMatterProd := float64(darkMatterLvl) * DarkMatterBase * math.Pow(1.5, float64(darkMatterLvl))
 	darkMatterProd *= speed
 
 	// Energy production
-	// Solar plant: level * 50 * 1.1^level
+	// Solar plant: level * 50 * 1.1^level (NO energyTechnology bonus)
 	solarLvl := level("solarPlant")
 	solarEnergy := float64(solarLvl) * SolarPlantBase * math.Pow(1.1, float64(solarLvl))
-	solarEnergy *= (1 + 0.02*float64(tech("energyTechnology")))
 
-	// Fusion reactor: level * 150 * 1.15^level
+	// Fusion reactor: level * 150 * 1.15^level (NO energyTechnology bonus)
 	fusionLvl := level("fusionReactor")
 	fusionEnergy := float64(fusionLvl) * FusionReactorBase * math.Pow(1.15, float64(fusionLvl))
-	fusionEnergy *= (1 + 0.02*float64(tech("energyTechnology")))
 
-	// Solar satellites (simplified: assume average output)
+	// Solar satellites: temperature-based output = count * floor((maxTemp + 160) / 6)
 	solarSatCount := level("solarSatellite")
-	solarSatEnergy := float64(solarSatCount) * 25.0 // simplified average
+	solarSatPerUnit := math.Floor((float64(planet.MaxTemp) + 160.0) / 6.0)
+	if solarSatPerUnit < 0 {
+		solarSatPerUnit = 0
+	}
+	solarSatEnergy := float64(solarSatCount) * solarSatPerUnit
 
 	totalEnergyProd := int64(solarEnergy + fusionEnergy + solarSatEnergy)
 
-	// Energy consumption
+	// Energy consumption (NO energyTechnology reduction)
 	totalEnergyUsed := int64(0)
 	for building, params := range buildingEnergyConsumption {
 		lvl := level(building)
 		if lvl > 0 {
 			consumption := float64(lvl) * params.base * math.Pow(params.multiplier, float64(lvl))
-			// Energy tech reduces consumption by 1% per level
-			consumption *= (1 - 0.01*float64(tech("energyTechnology")))
 			totalEnergyUsed += int64(consumption)
 		}
 	}
 
-	// Efficiency: production / consumption ratio
-	if totalEnergyUsed > 0 && totalEnergyProd < totalEnergyUsed {
-		efficiency = float64(totalEnergyProd) / float64(totalEnergyUsed)
-	} else {
+	// BINARY efficiency: if production >= consumption, efficiency = 1; else 0
+	if totalEnergyProd >= totalEnergyUsed {
 		efficiency = 1.0
+	} else {
+		efficiency = 0.0
 	}
 
-	// Apply efficiency to mines
+	// Apply efficiency to mines (NOT to dark matter)
 	metalProd *= efficiency
 	crystalProd *= efficiency
 	deuteriumProd *= efficiency

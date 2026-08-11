@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -474,6 +475,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 					Coordinate:    moonCoord,
 					IsMoon:        true,
 					ParentPlanet:  defenderPlanet.ID,
+					MaxTemp:       defenderPlanet.MaxTemp, // moon inherits parent planet temperature
 					Buildings:     map[string]int{},
 					Technologies:  map[string]int{},
 					Ships:         map[string]int{},
@@ -616,10 +618,12 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 
 		// Create new planet
 		planetID := fmt.Sprintf("%d-%d-%d", targetCoord.Galaxy, targetCoord.System, targetCoord.Position)
+		colonyMaxTemp := int(math.Round(240.0 - float64(targetCoord.Position-1)*31.4))
 		newPlanet := &engine.PlanetState{
 			ID:            planetID,
 			Name:          "Colony",
 			Coordinate:    targetCoord,
+			MaxTemp:       colonyMaxTemp,
 			Buildings:     map[string]int{"metalMine": 1, "crystalMine": 1, "deuteriumSynthesizer": 1, "solarPlant": 1},
 			Technologies:  map[string]int{},
 			Ships:         map[string]int{},

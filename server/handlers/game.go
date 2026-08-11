@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -85,10 +86,13 @@ func (h *GameHandler) InitPlayer(c *gin.Context) {
 
 	// Create starting planet [1:1:4]
 	now := time.Now().UnixMilli()
+	startPos := 4
+	startMaxTemp := int(math.Round(240.0 - float64(startPos-1)*31.4))
 	planet := &engine.PlanetState{
 		ID:   "1-1-4",
 		Name: "Homeworld",
-		Coordinate: engine.Coordinate{Galaxy: 1, System: 1, Position: 4},
+		Coordinate: engine.Coordinate{Galaxy: 1, System: 1, Position: startPos},
+		MaxTemp:      startMaxTemp,
 		Buildings:     map[string]int{"metalMine": 1, "crystalMine": 1, "deuteriumSynthesizer": 1, "solarPlant": 1},
 		Technologies:  map[string]int{},
 		Ships:         map[string]int{"smallCargo": 3, "espionageProbe": 1},

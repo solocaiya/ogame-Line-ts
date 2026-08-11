@@ -58,6 +58,7 @@ type PlanetState struct {
 	Coordinate    Coordinate          `json:"coordinate"`
 	IsMoon        bool                `json:"isMoon,omitempty"`
 	ParentPlanet  string              `json:"parentPlanetId,omitempty"`
+	MaxTemp       int                 `json:"maxTemp"`
 	Buildings     map[string]int      `json:"buildings"`
 	Technologies  map[string]int      `json:"technologies"`
 	Ships         map[string]int      `json:"ships"`
@@ -175,9 +176,10 @@ type BattleResult struct {
 
 // CostEntry represents the cost to build one unit.
 type CostEntry struct {
-	Metal     int64
-	Crystal   int64
-	Deuterium int64
+	Metal      int64
+	Crystal    int64
+	Deuterium  int64
+	DarkMatter int64
 }
 
 // ShipDef holds ship statistics.
