@@ -1437,7 +1437,7 @@ export default {
       introduction: {
         title: 'Introduction',
         content:
-          'This privacy policy explains how OGame-Vue-Ts handles your data. We are committed to protecting your privacy, and this game is designed with complete respect for user privacy.'
+          'This privacy policy explains how Infinite Stars handles your data. We are committed to protecting your privacy, and this game is designed with complete respect for user privacy.'
       },
       dataCollection: {
         title: 'Data Collection',
@@ -1492,7 +1492,7 @@ export default {
     completeButton: 'Complete',
     skip: 'Skip Tutorial',
     welcome: {
-      title: 'Welcome to OGame',
+      title: 'Welcome to Infinite Stars',
       content:
         'Welcome, Commander! This tutorial will guide you through the basics of building your empire. Click "Next" to begin your journey.'
     },
@@ -1598,7 +1598,7 @@ export default {
     // Mobile tutorial
     mobile: {
       welcome: {
-        title: 'Welcome to OGame (Mobile)',
+        title: 'Welcome to Infinite Stars (Mobile)',
         content:
           "Welcome, Commander! This is a streamlined tutorial designed for touchscreens. We'll quickly cover the core features to get you started building your empire."
       },
@@ -2533,7 +2533,7 @@ export default {
   },
 
   login: {
-    title: 'OGame',
+    title: 'Infinite Stars',
     subtitle: 'Sign in or create an account',
     login: 'Login',
     register: 'Register',

@@ -1535,7 +1535,7 @@ export default {
     completeButton: '完成',
     skip: '跳过引导',
     welcome: {
-      title: '欢迎来到 OGame',
+      title: '欢迎来到无限星辰',
       content: '欢迎，指挥官！本教程将引导您了解建立帝国的基础知识。点击"下一步"开始您的征程。'
     },
     resources: {
@@ -1627,7 +1627,7 @@ export default {
     // 移动端教程
     mobile: {
       welcome: {
-        title: '欢迎来到 OGame（移动版）',
+        title: '欢迎来到无限星辰（移动版）',
         content: '欢迎，指挥官！这是专为触摸屏设计的简化教程。我们将快速介绍核心功能，让您开始建设帝国。'
       },
       resources: {
@@ -2433,7 +2433,7 @@ export default {
   },
 
   login: {
-    title: 'OGame 星际争霸',
+    title: '无限星辰',
     subtitle: '登录账号或创建新账号',
     login: '登录',
     register: '注册',

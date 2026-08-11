@@ -1403,7 +1403,7 @@ export default {
       introduction: {
         title: 'Einführung',
         content:
-          'Diese Datenschutzrichtlinie erklärt, wie OGame-Vue-Ts Ihre Daten behandelt. Wir sind dem Schutz Ihrer Privatsphäre verpflichtet, und dieses Spiel wurde mit vollständigem Respekt für die Privatsphäre der Benutzer entwickelt.'
+          'Diese Datenschutzrichtlinie erklärt, wie Infinite Stars Ihre Daten behandelt. Wir sind dem Schutz Ihrer Privatsphäre verpflichtet, und dieses Spiel wurde mit vollständigem Respekt für die Privatsphäre der Benutzer entwickelt.'
       },
       dataCollection: {
         title: 'Datenerfassung',
@@ -1458,7 +1458,7 @@ export default {
     completeButton: 'Fertig',
     skip: 'Anleitung überspringen',
     welcome: {
-      title: 'Willkommen bei OGame',
+      title: 'Willkommen bei Infinite Stars',
       content:
         'Willkommen, Kommandant! Diese Anleitung führt Sie durch die Grundlagen des Imperiumsaufbaus. Klicken Sie auf "Weiter", um Ihre Reise zu beginnen.'
     },
@@ -1566,7 +1566,7 @@ export default {
     },
     mobile: {
       welcome: {
-        title: 'Willkommen bei OGame (Mobil)',
+        title: 'Willkommen bei Infinite Stars (Mobil)',
         content:
           'Willkommen, Kommandant! Dies ist eine vereinfachte Anleitung für Touchscreens. Wir werden schnell die Kernfunktionen durchgehen, damit Sie mit dem Aufbau Ihres Imperiums beginnen können.'
       },

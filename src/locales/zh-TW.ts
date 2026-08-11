@@ -1399,7 +1399,7 @@ export default {
     sections: {
       introduction: {
         title: '簡介',
-        content: '本隱私協議說明了 OGame-Vue-Ts 如何處理您的資料。我們致力於保護您的隱私，本遊戲的設計完全尊重用戶隱私。'
+        content: '本隱私協議說明了 無限星辰 如何處理您的資料。我們致力於保護您的隱私，本遊戲的設計完全尊重用戶隱私。'
       },
       dataCollection: {
         title: '資料收集',
@@ -1454,7 +1454,7 @@ export default {
     completeButton: '完成',
     skip: '跳過引導',
     welcome: {
-      title: '歡迎來到 OGame',
+      title: '歡迎來到無限星辰',
       content: '歡迎，指揮官！本教學將引導您了解建立帝國的基礎知識。點擊「下一步」開始您的征程。'
     },
     resources: {
@@ -1546,7 +1546,7 @@ export default {
     // 移動端教學
     mobile: {
       welcome: {
-        title: '歡迎來到 OGame（移動版）',
+        title: '歡迎來到無限星辰（移動版）',
         content: '歡迎，指揮官！這是專為觸控螢幕設計的簡化教學。我們將快速介紹核心功能，讓您開始建設帝國。'
       },
       resources: {

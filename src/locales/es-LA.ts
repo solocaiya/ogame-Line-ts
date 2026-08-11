@@ -1414,7 +1414,7 @@ export default {
       introduction: {
         title: 'Introduction',
         content:
-          'This privacy policy explains how OGame-Vue-Ts handles your data. We are committed to protecting your privacy, and this game is designed with complete respect for user privacy.'
+          'This privacy policy explains how Infinite Stars handles your data. We are committed to protecting your privacy, and this game is designed with complete respect for user privacy.'
       },
       dataCollection: {
         title: 'Data Collection',
@@ -1469,7 +1469,7 @@ export default {
     completeButton: 'Completar',
     skip: 'Saltar Tutorial',
     welcome: {
-      title: 'Bienvenido a OGame',
+      title: 'Bienvenido a Infinite Stars',
       content:
         '¡Bienvenido, Comandante! Este tutorial te guiará a través de los conceptos básicos para construir tu imperio. Haz clic en "Siguiente" para comenzar tu aventura.'
     },
@@ -1577,7 +1577,7 @@ export default {
     // Mobile tutorial
     mobile: {
       welcome: {
-        title: 'Bienvenido a OGame (Móvil)',
+        title: 'Bienvenido a Infinite Stars (Móvil)',
         content:
           '¡Bienvenido, Comandante! Este es un tutorial simplificado diseñado para pantallas táctiles. Cubriremos rápidamente las características principales para que comiences a construir tu imperio.'
       },

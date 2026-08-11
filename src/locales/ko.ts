@@ -1377,7 +1377,7 @@ export default {
       introduction: {
         title: '소개',
         content:
-          '이 개인정보처리방침은 OGame-Vue-Ts가 귀하의 데이터를 어떻게 처리하는지 설명합니다. 우리는 귀하의 개인정보 보호에 전념하며, 이 게임은 사용자 개인정보를 완전히 존중하도록 설계되었습니다.'
+          '이 개인정보처리방침은 Infinite Stars가 귀하의 데이터를 어떻게 처리하는지 설명합니다. 우리는 귀하의 개인정보 보호에 전념하며, 이 게임은 사용자 개인정보를 완전히 존중하도록 설계되었습니다.'
       },
       dataCollection: {
         title: '데이터 수집',
@@ -1432,7 +1432,7 @@ export default {
     completeButton: '완료',
     skip: '튜토리얼 건너뛰기',
     welcome: {
-      title: 'OGame에 오신 것을 환영합니다',
+      title: 'Infinite Stars에 오신 것을 환영합니다',
       content: '환영합니다, 사령관! 이 튜토리얼은 제국 건설의 기초를 안내합니다. "다음"을 클릭하여 여정을 시작하세요.'
     },
     resources: {
@@ -1530,7 +1530,7 @@ export default {
     },
     mobile: {
       welcome: {
-        title: 'OGame에 오신 것을 환영합니다 (모바일)',
+        title: 'Infinite Stars에 오신 것을 환영합니다 (모바일)',
         content:
           '환영합니다, 사령관! 터치스크린을 위해 설계된 간소화된 튜토리얼입니다. 핵심 기능을 빠르게 소개하여 제국 건설을 시작하겠습니다.'
       },
