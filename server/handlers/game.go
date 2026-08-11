@@ -56,19 +56,23 @@ func (h *GameHandler) GetGameState(c *gin.Context) {
 	// Inject alliance info into the response
 	allianceTag := ""
 	allianceName := ""
+	displayName := ""
 	if h.db != nil {
 		_ = h.db.QueryRow(`
 			SELECT a.tag, a.name FROM alliance_members am
 			JOIN alliances a ON a.id = am.alliance_id
 			WHERE am.player_id = ?
 		`, playerID).Scan(&allianceTag, &allianceName)
+		// Look up display name (fall back to username)
+		_ = h.db.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, playerID).Scan(&displayName)
 	}
 
-	// Client expects { player: {...}, allianceTag: "...", allianceName: "..." }
+	// Client expects { player: {...}, allianceTag: "...", allianceName: "...", displayName: "..." }
 	c.JSON(http.StatusOK, gin.H{
 		"player":       playerJSON,
 		"allianceTag":  allianceTag,
 		"allianceName": allianceName,
+		"displayName":  displayName,
 	})
 }
 

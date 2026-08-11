@@ -359,6 +359,15 @@
             <!-- 操作 -->
             <div class="flex gap-2">
               <Button
+                @click="handleAccelerateFleet(mission)"
+                variant="outline"
+                size="sm"
+                class="text-amber-500 hover:text-amber-400 gap-1"
+              >
+                <Zap class="h-3 w-3" />
+                {{ getFleetAccelerateCost(mission) }}
+              </Button>
+              <Button
                 v-if="mission.status === 'outbound'"
                 @click="handleRecallFleet(mission.id)"
                 variant="outline"
@@ -643,6 +652,9 @@
   import * as gameLogic from '@/logic/gameLogic'
   import * as moonLogic from '@/logic/moonLogic'
   import { generateId } from '@/utils/id'
+  import * as accelerateLogic from '@/logic/accelerateLogic'
+  import { apiService } from '@/services/apiService'
+  import { toast } from 'vue-sonner'
 
   const route = useRoute()
   const gameStore = useGameStore()
@@ -1433,6 +1445,49 @@
       alertDialogMessage.value = t('fleetView.abortMissionSuccessMessage')
       alertDialogCallback.value = null
       alertDialogOpen.value = true
+    }
+  }
+
+  // 获取舰队任务剩余时间（毫秒）
+  const getFleetRemainingMs = (mission: any): number => {
+    const now = currentTime.value
+    const targetTime = mission.status === 'outbound' ? mission.arrivalTime : mission.returnTime
+    return Math.max(0, targetTime - now)
+  }
+
+  // 获取舰队加速费用标签
+  const getFleetAccelerateCost = (mission: any): string => {
+    const remainingMs = getFleetRemainingMs(mission)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    return `${cost}DM`
+  }
+
+  // 处理舰队加速
+  const handleAccelerateFleet = async (mission: any) => {
+    const remainingMs = getFleetRemainingMs(mission)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const balance = gameStore.darkMatterBalance || 0
+
+    if (balance < cost) {
+      toast.error(t('accelerate.insufficientDM'))
+      return
+    }
+
+    const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const confirmed = window.confirm(
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+    )
+    if (!confirmed) return
+
+    try {
+      const result = await apiService.accelerateFleetTravel(mission.id)
+      if (result.success) {
+        const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
+        toast.success(t('accelerate.success', { time: skippedLabel }))
+        gameStore.darkMatterBalance = result.newBalance
+      }
+    } catch {
+      toast.error('Accelerate failed')
     }
   }
 

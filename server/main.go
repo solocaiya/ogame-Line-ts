@@ -224,6 +224,39 @@ func main() {
 		chat.PUT("/dnd", chatHandler.UpdateDND)
 	}
 
+	// Wallet routes (recharge, monthly cards, growth fund, gift packs)
+	walletHandler := handlers.NewWalletHandler(gs, database.DB, wsHub)
+
+	wallet := r.Group("/api/wallet")
+	wallet.Use(handlers.AuthRequired(cfg.JWTSecret))
+	{
+		wallet.GET("/balance", walletHandler.GetBalance)
+		wallet.GET("/products", walletHandler.GetProducts)
+		wallet.POST("/recharge", walletHandler.CreateRecharge)
+		wallet.POST("/confirm-payment", walletHandler.ConfirmPayment)
+		wallet.GET("/transactions", walletHandler.GetTransactions)
+		wallet.GET("/monthly-cards", walletHandler.GetMonthlyCards)
+		wallet.POST("/buy-monthly-card", walletHandler.BuyMonthlyCard)
+		wallet.POST("/claim-daily-dm", walletHandler.ClaimDailyDM)
+		wallet.GET("/growth-fund", walletHandler.GetGrowthFund)
+		wallet.POST("/buy-growth-fund", walletHandler.BuyGrowthFund)
+		wallet.POST("/claim-growth-fund", walletHandler.ClaimGrowthFund)
+		wallet.GET("/gift-packs", walletHandler.GetGiftPacks)
+		wallet.POST("/buy-gift-pack", walletHandler.BuyGiftPack)
+	}
+
+	// Acceleration endpoints (Phase 2.2)
+	accelHandler := handlers.NewAccelerateHandler(gs, database.DB, wsHub)
+	accel := r.Group("/api/accelerate")
+	accel.Use(handlers.AuthRequired(cfg.JWTSecret))
+	{
+		accel.POST("/building", accelHandler.AccelerateBuilding)
+		accel.POST("/research", accelHandler.AccelerateResearch)
+		accel.POST("/fleet-build", accelHandler.AccelerateFleetBuild)
+		accel.POST("/fleet-travel", accelHandler.AccelerateFleetTravel)
+		accel.GET("/available", accelHandler.GetAvailable)
+	}
+
 	// WebSocket endpoint
 	wsGroup := r.Group("/api/ws")
 	wsGroup.Use(handlers.AuthRequired(cfg.JWTSecret))

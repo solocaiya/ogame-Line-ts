@@ -12,6 +12,10 @@
           <img src="@/assets/logo.png" class="w-10 group-data-[collapsible=icon]:w-8" />
           <h1 class="text-xl font-bold ml-2 group-data-[collapsible=icon]:hidden">{{ pkg.title }}</h1>
         </div>
+        <div class="flex items-center gap-2 px-4 py-2 border-t group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center">
+          <Gem class="w-4 h-4 text-purple-400 shrink-0" />
+          <span class="text-sm font-bold group-data-[collapsible=icon]:hidden">{{ formatNumber(gameStore.darkMatterBalance) }}</span>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -580,7 +584,9 @@
     BarChart3,
     ListOrdered,
     FileText,
-    Flag
+    Flag,
+    Gem,
+    TrendingUp
   } from 'lucide-vue-next'
   import * as gameLogic from '@/logic/gameLogic'
   import * as planetLogic from '@/logic/planetLogic'
@@ -712,6 +718,8 @@
     { name: computed(() => t('nav.campaign')), path: '/campaign', icon: Scroll },
     { name: computed(() => t('nav.ranking')), path: '/ranking', icon: Crown },
     { name: computed(() => t('nav.trader')), path: '/trader', icon: ArrowLeftRight },
+    { name: computed(() => t('nav.recharge')), path: '/recharge', icon: Gem },
+    { name: computed(() => t('nav.growthFund')), path: '/growth-fund', icon: TrendingUp },
     { name: computed(() => t('nav.bookmarks')), path: '/bookmarks', icon: Bookmark },
     { name: computed(() => t('nav.statistics')), path: '/statistics', icon: BarChart3 },
     { name: computed(() => t('nav.battleReports')), path: '/battle-reports', icon: FileText },

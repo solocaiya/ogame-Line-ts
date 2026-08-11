@@ -159,6 +159,55 @@ func migrate() error {
 
 		// Leaderboard display name (separate from username)
 		`ALTER TABLE leaderboard ADD COLUMN display_name TEXT DEFAULT ''`,
+
+		// === Dark Matter Economy System v1.6 ===
+
+		// VIP/subscription support
+		`ALTER TABLE users ADD COLUMN vip_level INTEGER DEFAULT 0`,
+		`ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME`,
+
+		// Consumption points (1 DM spent = 1 point)
+		`ALTER TABLE users ADD COLUMN consumption_points INTEGER DEFAULT 0`,
+
+		// Recharge orders (mock payment flow)
+		`CREATE TABLE IF NOT EXISTS recharge_orders (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			product_id TEXT NOT NULL,
+			amount_rmb INTEGER NOT NULL,
+			dark_matter INTEGER NOT NULL,
+			status TEXT NOT NULL DEFAULT 'pending',
+			payment_method TEXT DEFAULT '',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			paid_at DATETIME,
+			delivered_at DATETIME
+		)`,
+
+		// Dark matter transaction log (all DM flows)
+		`CREATE TABLE IF NOT EXISTS dark_matter_transactions (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			amount INTEGER NOT NULL,
+			balance_after INTEGER NOT NULL,
+			type TEXT NOT NULL,
+			ref_id TEXT DEFAULT '',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		// Growth fund (one-time purchase, stage-based DM returns)
+		`CREATE TABLE IF NOT EXISTS growth_fund (
+			user_id TEXT PRIMARY KEY,
+			purchased_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			total_claimed INTEGER DEFAULT 0,
+			last_claim_at DATETIME
+		)`,
+
+		// Indexes for new tables
+		`CREATE INDEX IF NOT EXISTS idx_recharge_orders_user ON recharge_orders(user_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_dm_transactions_user ON dark_matter_transactions(user_id, created_at DESC)`,
+
+		// Second subscription slot (large monthly card has independent expiry)
+		`ALTER TABLE users ADD COLUMN subscription2_expires_at DATETIME`,
 	}
 
 	for _, m := range migrations {

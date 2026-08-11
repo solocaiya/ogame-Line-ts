@@ -79,8 +79,18 @@
                     :style="{ width: getProgress(item) + '%' }"
                   />
                 </div>
-                <!-- 取消按钮（仅队列首项可取消） -->
-                <div v-if="index === 0" class="mt-2 flex justify-end">
+                <!-- 操作按钮（仅队列首项可操作） -->
+                <div v-if="index === 0" class="mt-2 flex justify-end gap-2">
+                  <Button
+                    v-if="canAccelerateItem(item)"
+                    variant="ghost"
+                    size="sm"
+                    class="text-xs text-amber-500 hover:text-amber-400 gap-1"
+                    @click="handleAccelerateItem(planet, item)"
+                  >
+                    <Zap class="h-3 w-3" />
+                    {{ getAccelerateCostText(item) }}
+                  </Button>
                   <Button variant="ghost" size="sm" class="text-xs text-destructive gap-1" @click="cancelActiveItem(planet.id, item.id)">
                     <X class="h-3 w-3" />
                     {{ t('queueManagement.cancel') }}
@@ -262,11 +272,14 @@
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
   import { formatNumber } from '@/utils/format'
   import {
-    Moon, Globe, Clock, ListOrdered, Play, Pause, X, ChevronUp, ChevronDown, GripVertical
+    Moon, Globe, Clock, ListOrdered, Play, Pause, X, ChevronUp, ChevronDown, GripVertical, Zap
   } from 'lucide-vue-next'
   import type { Planet, BuildQueueItem, WaitingQueueItem } from '@/types/game'
   import { BuildingType, ShipType, DefenseType, TechnologyType } from '@/types/game'
   import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
+  import * as accelerateLogic from '@/logic/accelerateLogic'
+  import { apiService } from '@/services/apiService'
+  import { toast } from 'vue-sonner'
 
   const { t } = useI18n()
   const gameStore = useGameStore()
@@ -384,6 +397,68 @@
       for (const id of itemIds) {
         waitingQueueLogic.removeFromBuildWaitingQueue(planet, id)
       }
+    }
+  }
+
+  // 判断是否可加速（defense 无后端接口）
+  const canAccelerateItem = (item: BuildQueueItem): boolean => {
+    if (item.type === 'defense' || item.type === 'demolish' || item.type === 'scrap_ship') return false
+    return true
+  }
+
+  // 获取加速费用文本
+  const getAccelerateCostText = (item: BuildQueueItem): string => {
+    const remainingMs = Math.max(0, item.endTime - Date.now())
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    return `${cost}DM`
+  }
+
+  // 计算项在其子队列中的索引
+  const getSubQueueIndex = (planet: Planet, item: BuildQueueItem): number => {
+    const queue = planet.buildQueue || []
+    const subQueue = queue.filter(i => {
+      if (item.type === 'building' || item.type === 'demolish') {
+        return i.type === 'building' || i.type === 'demolish'
+      }
+      return i.type === item.type
+    })
+    return subQueue.findIndex(i => i.id === item.id)
+  }
+
+  // 加速处理
+  const handleAccelerateItem = async (planet: Planet, item: BuildQueueItem) => {
+    const remainingMs = Math.max(0, item.endTime - Date.now())
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const balance = gameStore.darkMatterBalance || 0
+
+    if (balance < cost) {
+      toast.error(t('accelerate.insufficientDM'))
+      return
+    }
+
+    const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const confirmed = window.confirm(
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+    )
+    if (!confirmed) return
+
+    const idx = getSubQueueIndex(planet, item)
+
+    try {
+      let result
+      if (item.type === 'ship') {
+        result = await apiService.accelerateFleetBuild(planet.id, idx)
+      } else {
+        result = await apiService.accelerateBuilding(planet.id, idx)
+      }
+
+      if (result.success) {
+        const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
+        toast.success(t('accelerate.success', { time: skippedLabel }))
+        gameStore.darkMatterBalance = result.newBalance
+      }
+    } catch {
+      toast.error('Accelerate failed')
     }
   }
 

@@ -192,7 +192,7 @@ export const calculateResourceProduction = (
       productionEfficiency *
       deuteriumDepositEfficiency *
       deuteriumTempBonus,
-    darkMatter: darkMatterCollectorLevel * 100 * Math.pow(1.5, darkMatterCollectorLevel) * darkMatterBonus,
+    darkMatter: darkMatterCollectorLevel * 10 * (1 + 0.15 * darkMatterCollectorLevel) * darkMatterBonus,
     energy: energyProduction
   }
 }
@@ -641,8 +641,8 @@ export const calculateProductionBreakdown = (
 
   const deuteriumFinal = deuteriumBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.deuteriumBonus / 100) * productionEfficiency
 
-  // 暗物质收集器产量
-  const darkMatterBase = darkMatterCollectorLevel * 100 * Math.pow(1.5, darkMatterCollectorLevel)
+  // 暗物质收集器产量 (quadratic: level * 10 * (1 + 0.15 * level))
+  const darkMatterBase = darkMatterCollectorLevel * 10 * (1 + 0.15 * darkMatterCollectorLevel)
   const darkMatterBonuses: ProductionBonus[] = []
 
   activeOfficerBonuses.forEach(officer => {

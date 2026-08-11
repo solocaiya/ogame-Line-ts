@@ -48,6 +48,103 @@ interface SaveInfo {
   savedAt: string
 }
 
+// --- Wallet types ---
+
+interface WalletBalance {
+  darkMatter: number
+  consumptionPoints: number
+  vipLevel: number
+  subscriptionExpiresAt: string
+}
+
+interface RechargeProduct {
+  id: string
+  amountRMB: number
+  darkMatter: number
+  bonus: number
+  firstBonus: number
+}
+
+interface DMTransaction {
+  id: string
+  amount: number
+  balanceAfter: number
+  type: string
+  refId: string
+  createdAt: string
+}
+
+interface MonthlyCardInfo {
+  id: string
+  name: string
+  amountRMB: number
+  dailyDM: number
+  durationDays: number
+  perks: string[]
+  vipLevel: number
+  active: boolean
+  expiresAt: string
+}
+
+interface GrowthFundStage {
+  id: string
+  pointsReq: number
+  rewardDM: number
+  description: string
+}
+
+interface GrowthFundStatus {
+  purchased: boolean
+  totalClaimed: number
+  stages: {
+    id: string
+    pointsReq: number
+    rewardDM: number
+    description: string
+    claimed: boolean
+    claimable: boolean
+  }[]
+  playerPoints: number
+}
+
+interface GiftPackInfo {
+  id: string
+  name: string
+  costDM: number
+  onceOnly: boolean
+  cooldownHours: number
+  contents: {
+    darkMatter?: number
+    metal?: number
+    crystal?: number
+    deuterium?: number
+  }
+  available: boolean
+  purchased?: boolean
+  cooldownRemaining?: number
+}
+
+// --- Acceleration types ---
+
+interface AccelerationItem {
+  type: string        // building, research, ship_build, defense_build, fleet_travel
+  planetId?: string
+  queueIndex: number  // -1 for fleet_travel
+  missionId?: string
+  itemName: string
+  remainingMs: number
+  costDM: number
+}
+
+interface AccelerationResult {
+  success: boolean
+  costDM: number
+  newEndTime?: number
+  newTargetTime?: number
+  skippedMs: number
+  newBalance: number
+}
+
 class ApiService {
   private accessToken: string | null = null
   private refreshToken: string | null = null
@@ -357,6 +454,82 @@ class ApiService {
     return this.request('PUT', '/chat/dnd', { mode })
   }
 
+  // --- Wallet ---
+
+  async getWalletBalance(): Promise<WalletBalance> {
+    return this.request<WalletBalance>('GET', '/wallet/balance')
+  }
+
+  async getRechargeProducts(): Promise<{ products: RechargeProduct[]; firstRecharge: boolean }> {
+    return this.request('GET', '/wallet/products')
+  }
+
+  async createRechargeOrder(productId: string): Promise<{ orderId: string }> {
+    return this.request('POST', '/wallet/recharge', { productId })
+  }
+
+  async confirmPayment(orderId: string): Promise<{ success: boolean; darkMatterAdded: number }> {
+    return this.request('POST', '/wallet/confirm-payment', { orderId })
+  }
+
+  async getDMTransactions(limit = 20, offset = 0): Promise<{ transactions: DMTransaction[] }> {
+    return this.request('GET', `/wallet/transactions?limit=${limit}&offset=${offset}`)
+  }
+
+  async getMonthlyCards(): Promise<{ cards: MonthlyCardInfo[]; dailyReady: boolean }> {
+    return this.request('GET', '/wallet/monthly-cards')
+  }
+
+  async buyMonthlyCard(cardId: string): Promise<{ success: boolean }> {
+    return this.request('POST', '/wallet/buy-monthly-card', { cardId })
+  }
+
+  async claimDailyDM(): Promise<{ success: boolean; dmClaimed: number }> {
+    return this.request('POST', '/wallet/claim-daily-dm')
+  }
+
+  async getGrowthFund(): Promise<GrowthFundStatus> {
+    return this.request<GrowthFundStatus>('GET', '/wallet/growth-fund')
+  }
+
+  async buyGrowthFund(): Promise<{ success: boolean }> {
+    return this.request('POST', '/wallet/buy-growth-fund')
+  }
+
+  async claimGrowthFund(stageId: string): Promise<{ success: boolean }> {
+    return this.request('POST', '/wallet/claim-growth-fund', { stageId })
+  }
+
+  async getGiftPacks(): Promise<{ packs: GiftPackInfo[] }> {
+    return this.request('GET', '/wallet/gift-packs')
+  }
+
+  async buyGiftPack(packId: string): Promise<{ success: boolean }> {
+    return this.request('POST', '/wallet/buy-gift-pack', { packId })
+  }
+
+  // --- Acceleration ---
+
+  async getAvailableAccelerations(): Promise<{ items: AccelerationItem[] }> {
+    return this.request<{ items: AccelerationItem[] }>('GET', '/accelerate/available')
+  }
+
+  async accelerateBuilding(planetId: string, queueIndex: number, skipMinutes: number): Promise<AccelerationResult> {
+    return this.request<AccelerationResult>('POST', '/accelerate/building', { planetId, queueIndex, skipMinutes })
+  }
+
+  async accelerateResearch(planetId: string, queueIndex: number, skipMinutes: number): Promise<AccelerationResult> {
+    return this.request<AccelerationResult>('POST', '/accelerate/research', { planetId, queueIndex, skipMinutes })
+  }
+
+  async accelerateFleetBuild(planetId: string, queueIndex: number, skipMinutes: number): Promise<AccelerationResult> {
+    return this.request<AccelerationResult>('POST', '/accelerate/fleet-build', { planetId, queueIndex, skipMinutes })
+  }
+
+  async accelerateFleetTravel(missionId: string, skipMinutes: number): Promise<AccelerationResult> {
+    return this.request<AccelerationResult>('POST', '/accelerate/fleet-travel', { missionId, skipMinutes })
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; time: string }> {
@@ -365,4 +538,9 @@ class ApiService {
 }
 
 export const apiService = new ApiService()
-export type { UserInfo, SaveGameResponse, LoadGameResponse, SaveInfo }
+export type {
+  UserInfo, SaveGameResponse, LoadGameResponse, SaveInfo,
+  WalletBalance, RechargeProduct, DMTransaction, MonthlyCardInfo,
+  GrowthFundStatus, GrowthFundStage, GiftPackInfo,
+  AccelerationItem, AccelerationResult
+}

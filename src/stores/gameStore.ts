@@ -92,6 +92,11 @@ export const useGameStore = defineStore('game', {
       }
     },
     webdavConfig: null as WebDAVConfig | null,
+    // Wallet / dark-matter economy state
+    darkMatterBalance: 0,
+    consumptionPoints: 0,
+    vipLevel: 0,
+    subscriptionExpiresAt: '' as string,
     // Server sync state
     _lastSyncTime: 0,
     _pendingSync: false,
@@ -152,12 +157,14 @@ export const useGameStore = defineStore('game', {
             missileAttacks: this.player.missileAttacks,
             missionReports: this.player.missionReports
           }
-          // Extract alliance info from response (server injects these alongside player data)
-          const allianceInfo: Partial<Player> = {}
-          if (response.allianceTag !== undefined) allianceInfo.allianceTag = response.allianceTag
-          if (response.allianceName !== undefined) allianceInfo.allianceName = response.allianceName
+          // Extract alliance info and display name from response (server injects these alongside player data)
+          const extra: Partial<Player> = {}
+          if (response.allianceTag !== undefined) extra.allianceTag = response.allianceTag
+          if (response.allianceName !== undefined) extra.allianceName = response.allianceName
+          // Sync display name from server → player.name (keeps in-game name consistent with profile)
+          if (response.displayName) extra.name = response.displayName
           // Update player from server (deep replace — fixes B6 Object.assign shallow merge)
-          deepMergeReactive(this.player, { ...serverPlayer, ...allianceInfo, ...localOnly } as Partial<Player>)
+          deepMergeReactive(this.player, { ...serverPlayer, ...extra, ...localOnly } as Partial<Player>)
           this._lastSyncTime = Date.now()
           return true
         }
@@ -229,6 +236,14 @@ export const useGameStore = defineStore('game', {
           // Trigger full sync after battle (ships/defenses changed)
           this.syncFromServer()
           break
+        case 'dmBalanceChanged':
+          this.darkMatterBalance = data.balance
+          this.consumptionPoints = data.consumptionPoints ?? this.consumptionPoints
+          break
+        case 'vipChanged':
+          this.vipLevel = data.vipLevel
+          this.subscriptionExpiresAt = data.expiresAt ?? this.subscriptionExpiresAt
+          break
       }
     },
 
@@ -281,6 +296,20 @@ export const useGameStore = defineStore('game', {
     /** fixes A4: called by App.vue on WS connect/disconnect to gate optimistic updates */
     setWsConnected(connected: boolean) {
       this._wsConnected = connected
+    },
+
+    /** Fetch wallet balance from server and update local state. */
+    async refreshWalletBalance() {
+      try {
+        const balance = await apiService.getWalletBalance()
+        this.darkMatterBalance = balance.darkMatter
+        this.consumptionPoints = balance.consumptionPoints
+        this.vipLevel = balance.vipLevel
+        this.subscriptionExpiresAt = balance.subscriptionExpiresAt
+      } catch (e) {
+        // Wallet balance is non-critical — don't break the app if it fails
+        console.warn('[GameStore] refreshWalletBalance failed:', e)
+      }
     }
   },
   getters: {

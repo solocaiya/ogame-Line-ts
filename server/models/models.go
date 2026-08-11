@@ -4,16 +4,54 @@ import "time"
 
 // User represents a player account (registered or guest)
 type User struct {
-	ID           string    `json:"id"`
-	Username     string    `json:"username"`
-	DisplayName  string    `json:"display_name"`
-	PasswordHash string    `json:"-"`
-	CreatedAt    time.Time `json:"created_at"`
-	LastLogin    time.Time `json:"last_login"`
-	IsActive     bool      `json:"is_active"`
-	IsGuest      bool      `json:"is_guest"`
-	DeviceID     string    `json:"device_id,omitempty"`
-	RenameCount  int       `json:"rename_count"`
+	ID                    string     `json:"id"`
+	Username              string     `json:"username"`
+	DisplayName           string     `json:"display_name"`
+	PasswordHash          string     `json:"-"`
+	CreatedAt             time.Time  `json:"created_at"`
+	LastLogin             time.Time  `json:"last_login"`
+	IsActive              bool       `json:"is_active"`
+	IsGuest               bool       `json:"is_guest"`
+	DeviceID              string     `json:"device_id,omitempty"`
+	RenameCount           int        `json:"rename_count"`
+	DarkMatterBalance     int64      `json:"darkMatterBalance"`
+	VIPLevel              int        `json:"vipLevel"`
+	SubscriptionExpiresAt *time.Time `json:"subscriptionExpiresAt,omitempty"`  // small monthly card expiry
+	Subscription2ExpiresAt *time.Time `json:"subscription2ExpiresAt,omitempty"` // large monthly card expiry
+	ConsumptionPoints     int64      `json:"consumptionPoints"`
+}
+
+// RechargeOrder represents a DM purchase order (mock payment flow).
+type RechargeOrder struct {
+	ID            string  `json:"id"`
+	UserID        string  `json:"user_id"`
+	ProductID     string  `json:"product_id"`
+	AmountRMB     int64   `json:"amount_rmb"`
+	DarkMatter    int64   `json:"dark_matter"`
+	Status        string  `json:"status"` // pending, paid, delivered, failed
+	PaymentMethod string  `json:"payment_method,omitempty"`
+	CreatedAt     string  `json:"created_at"`
+	PaidAt        *string `json:"paid_at,omitempty"`
+	DeliveredAt   *string `json:"delivered_at,omitempty"`
+}
+
+// DMTransaction records a single dark matter flow (income or expense).
+type DMTransaction struct {
+	ID           string `json:"id"`
+	UserID       string `json:"user_id"`
+	Amount       int64  `json:"amount"` // positive = income, negative = expense
+	BalanceAfter int64  `json:"balance_after"`
+	Type         string `json:"type"` // recharge, monthly_card, growth_fund, accelerate, rename, shop, trade, lottery, gift
+	RefID        string `json:"ref_id,omitempty"`
+	CreatedAt    string `json:"created_at"`
+}
+
+// GrowthFund tracks a player's growth fund purchase and claim progress.
+type GrowthFund struct {
+	UserID       string  `json:"user_id"`
+	PurchasedAt string  `json:"purchased_at"`
+	TotalClaimed int64   `json:"total_claimed"`
+	LastClaimAt  *string `json:"last_claim_at,omitempty"`
 }
 
 type PlayerSave struct {

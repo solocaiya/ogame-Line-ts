@@ -113,6 +113,16 @@
                         {{ formatTime(getRemainingTime(item as BuildQueueItem)) }}
                       </span>
                       <Button
+                        v-if="canAccelerate(item as BuildQueueItem, tab.value)"
+                        variant="ghost"
+                        size="sm"
+                        class="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs text-amber-500 hover:text-amber-400 gap-0.5"
+                        @click.stop="handleAccelerate(item as BuildQueueItem, tab.value)"
+                      >
+                        <Zap class="h-3 w-3" />
+                        {{ getAccelerateCostLabel(item as BuildQueueItem) }}
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="sm"
                         class="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
@@ -135,7 +145,7 @@
 
 <script setup lang="ts">
   import { computed, ref, onUnmounted, watch } from 'vue'
-  import { ListOrdered, Inbox } from 'lucide-vue-next'
+  import { ListOrdered, Inbox, Zap } from 'lucide-vue-next'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
   import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -150,6 +160,9 @@
   import type { BuildQueueItem, WaitingQueueItem, BuildingType, ShipType, DefenseType, TechnologyType, Resources } from '@/types/game'
   import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
   import * as resourceLogic from '@/logic/resourceLogic'
+  import * as accelerateLogic from '@/logic/accelerateLogic'
+  import { apiService } from '@/services/apiService'
+  import { toast } from 'vue-sonner'
 
   const { t } = useI18n()
   const gameStore = useGameStore()
@@ -303,6 +316,80 @@
     } else {
       // 从建筑等待队列移除
       waitingQueueLogic.removeFromBuildWaitingQueue(planet, item.id)
+    }
+  }
+
+  // 判断是否可加速（defense 无后端接口，不支持加速）
+  const canAccelerate = (item: BuildQueueItem, tabValue: string): boolean => {
+    if (tabValue === 'defense') return false
+    if (item.type === 'demolish' || item.type === 'scrap_ship') return false
+    return true
+  }
+
+  // 计算加速所需 DM 并格式化显示
+  const getAccelerateCostLabel = (item: BuildQueueItem): string => {
+    const remainingMs = Math.max(0, item.endTime - currentTime.value)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    return `${cost}DM`
+  }
+
+  // 计算项在其子队列中的索引
+  const getSubQueueIndex = (item: BuildQueueItem): number => {
+    if (item.type === 'technology') {
+      return researchQueue.value.findIndex(i => i.id === item.id)
+    }
+    // 对于 buildQueue 中的项，按类型筛选后找索引
+    const subQueue = buildQueue.value.filter(i => {
+      if (item.type === 'building' || item.type === 'demolish') {
+        return i.type === 'building' || i.type === 'demolish'
+      }
+      return i.type === item.type
+    })
+    return subQueue.findIndex(i => i.id === item.id)
+  }
+
+  // 加速处理
+  const handleAccelerate = async (item: BuildQueueItem, tabValue: string) => {
+    const remainingMs = Math.max(0, item.endTime - currentTime.value)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const balance = gameStore.darkMatterBalance || 0
+
+    if (balance < cost) {
+      toast.error(t('accelerate.insufficientDM'))
+      return
+    }
+
+    const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const confirmed = window.confirm(
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+    )
+    if (!confirmed) return
+
+    const planetId = gameStore.currentPlanet?.id
+    if (!planetId && tabValue !== 'research') return
+
+    try {
+      let result
+      if (tabValue === 'research' || item.type === 'technology') {
+        const idx = getSubQueueIndex(item)
+        result = await apiService.accelerateResearch(idx)
+      } else if (tabValue === 'ships' || item.type === 'ship') {
+        const idx = getSubQueueIndex(item)
+        result = await apiService.accelerateFleetBuild(planetId!, idx)
+      } else {
+        // buildings tab
+        const idx = getSubQueueIndex(item)
+        result = await apiService.accelerateBuilding(planetId!, idx)
+      }
+
+      if (result.success) {
+        const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
+        toast.success(t('accelerate.success', { time: skippedLabel }))
+        // 刷新余额
+        gameStore.darkMatterBalance = result.newBalance
+      }
+    } catch {
+      toast.error('Accelerate failed')
     }
   }
 
