@@ -402,13 +402,27 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 			break
 		}
 
+		// Compute VIP bonuses for attacker.
+		attackerVIP := engine.GetVIPBonus(player.VIPLevel, player.SubExpiresAt, player.Sub2ExpiresAt)
+
 		attackerSide := engine.BattleSide{
 			Ships:      mission.Fleet,
 			Defense:    map[string]int{},
 			WeaponTech: originPlanet.Technologies["weaponsTech"],
 			ShieldTech: originPlanet.Technologies["shieldingTech"],
 			ArmorTech:  originPlanet.Technologies["armorTech"],
+			AttackPct:  attackerVIP.AttackPct,
 		}
+
+		// Compute VIP bonuses for defender (find defender player).
+		var defenderVIP engine.VIPBonus
+		defenderID := gs.findPlayerIDByPlanet(defenderPlanet.ID)
+		if defenderID != "" {
+			if defPlayer, ok := gs.players[defenderID]; ok {
+				defenderVIP = engine.GetVIPBonus(defPlayer.VIPLevel, defPlayer.SubExpiresAt, defPlayer.Sub2ExpiresAt)
+			}
+		}
+
 		defenderSide := engine.BattleSide{
 			Ships:             defenderPlanet.Ships,
 			Defense:           defenderPlanet.Defenses,
@@ -416,6 +430,8 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 			ShieldTech:        defenderPlanet.Technologies["shieldingTech"],
 			ArmorTech:         defenderPlanet.Technologies["armorTech"],
 			DefenderResources: defenderPlanet.Resources,
+			AttackPct:         defenderVIP.AttackPct,
+			DefensePct:        defenderVIP.DefensePct,
 		}
 
 		maxRounds := 6
@@ -450,7 +466,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 		gs.saveBattleReplay(player.ID, mission, result, now)
 
 		// Notify defender (WS if online, DB notification if offline)
-		defenderID := gs.findPlayerIDByPlanet(defenderPlanet.ID)
+		defenderID = gs.findPlayerIDByPlanet(defenderPlanet.ID)
 		if defenderID != "" {
 			gs.queueNotification(defenderID, "battleIncoming",
 				fmt.Sprintf("Your planet at [%d:%d:%d] was attacked!",

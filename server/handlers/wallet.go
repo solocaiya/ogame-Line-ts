@@ -256,10 +256,14 @@ func (h *WalletHandler) ConfirmPayment(c *gin.Context) {
 	if isFirstRecharge {
 		txType = "recharge_first"
 	}
+	desc := fmt.Sprintf("充值 %d DM (%s)", product.DarkMatter+product.Bonus, product.ID)
+	if isFirstRecharge {
+		desc = "首充奖励 " + desc
+	}
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, txID, playerID, totalDM, newBalance, txType, orderID, now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, txID, playerID, totalDM, newBalance, txType, orderID, desc, now)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -484,9 +488,9 @@ func (h *WalletHandler) BuyMonthlyCard(c *gin.Context) {
 
 	// Log transaction
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, 'monthly_card', ?, ?)
-	`, txID, playerID, -costDM, newBalance, card.ID, now.Format(time.RFC3339))
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, 'monthly_card', ?, ?, ?)
+	`, txID, playerID, -costDM, newBalance, card.ID, fmt.Sprintf("购买%s (¥%d)", card.Name, card.AmountRMB), now.Format(time.RFC3339))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -502,6 +506,23 @@ func (h *WalletHandler) BuyMonthlyCard(c *gin.Context) {
 	var newSubExpires, newSub2Expires sql.NullTime
 	_ = h.db.QueryRow(`SELECT vip_level, subscription_expires_at, subscription2_expires_at FROM users WHERE id = ?`, playerID).
 		Scan(&newVIPLevel, &newSubExpires, &newSub2Expires)
+
+	// Sync VIP state to in-memory PlayerState so engine calculations pick it up immediately.
+	var sub1, sub2 *time.Time
+	if newSubExpires.Valid {
+		t := newSubExpires.Time
+		sub1 = &t
+	}
+	if newSub2Expires.Valid {
+		t := newSub2Expires.Time
+		sub2 = &t
+	}
+	_ = h.gameState.UpdatePlayer(playerID, func(player *engine.PlayerState) error {
+		player.VIPLevel = newVIPLevel
+		player.SubExpiresAt = sub1
+		player.Sub2ExpiresAt = sub2
+		return nil
+	})
 
 	// Notify
 	if h.wsHub != nil {
@@ -599,9 +620,9 @@ func (h *WalletHandler) ClaimDailyDM(c *gin.Context) {
 
 	// Log transaction
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, 'daily_claim', ?, ?)
-	`, txID, playerID, dailyDM, newBalance, fmt.Sprintf("vip_%d", vipLevel), now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, 'daily_claim', ?, ?, ?)
+	`, txID, playerID, dailyDM, newBalance, fmt.Sprintf("vip_%d", vipLevel), fmt.Sprintf("每日领取 %d DM", dailyDM), now)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -751,9 +772,9 @@ func (h *WalletHandler) BuyGrowthFund(c *gin.Context) {
 
 	// Log transaction
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, 'growth_fund', 'purchase', ?)
-	`, txID, playerID, -costDM, newBalance, now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, 'growth_fund', 'purchase', ?, ?)
+	`, txID, playerID, -costDM, newBalance, "购买成长基金", now)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -869,9 +890,9 @@ func (h *WalletHandler) ClaimGrowthFund(c *gin.Context) {
 
 	// Log transaction
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, 'growth_fund', ?, ?)
-	`, txID, playerID, stage.RewardDM, newBalance, stage.ID, now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, 'growth_fund', ?, ?, ?)
+	`, txID, playerID, stage.RewardDM, newBalance, stage.ID, fmt.Sprintf("成长基金阶段奖励: %s", stage.ID), now)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -1013,9 +1034,9 @@ func (h *WalletHandler) BuyGiftPack(c *gin.Context) {
 
 	// Log transaction
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, 'gift_pack', ?, ?)
-	`, txID, playerID, -pack.CostDM, newBalance, pack.ID, now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, 'gift_pack', ?, ?, ?)
+	`, txID, playerID, -pack.CostDM, newBalance, pack.ID, fmt.Sprintf("购买限时礼包: %s", pack.Name), now)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return

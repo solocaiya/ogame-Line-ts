@@ -15,6 +15,13 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	// minSkipMinutes is the minimum allowed acceleration skip (1 minute).
+	minSkipMinutes int64 = 1
+	// maxSkipMinutes is the maximum allowed acceleration skip (24 hours).
+	maxSkipMinutes int64 = 1440
+)
+
 // AccelerateHandler handles acceleration endpoints for building, research,
 // ship construction, and fleet travel.
 type AccelerateHandler struct {
@@ -68,10 +75,11 @@ func (h *AccelerateHandler) deductDM(tx *sql.Tx, playerID string, amount int64, 
 	// Log transaction
 	txID := uuid.New().String()
 	now := time.Now().UTC().Format(time.RFC3339)
+	desc := fmt.Sprintf("加速 %s", refID)
 	_, err = tx.Exec(`
-		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, txID, playerID, -amount, newBalance, refType, refID, now)
+		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, txID, playerID, -amount, newBalance, refType, refID, desc, now)
 	if err != nil {
 		return 0, fmt.Errorf("failed to log transaction: %w", err)
 	}
@@ -94,6 +102,10 @@ func (h *AccelerateHandler) AccelerateBuilding(c *gin.Context) {
 	var req accelerateBuildingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	if req.SkipMinutes < minSkipMinutes || req.SkipMinutes > maxSkipMinutes {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("skipMinutes must be between %d and %d", minSkipMinutes, maxSkipMinutes)})
 		return
 	}
 
@@ -203,6 +215,10 @@ func (h *AccelerateHandler) AccelerateResearch(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
+	if req.SkipMinutes < minSkipMinutes || req.SkipMinutes > maxSkipMinutes {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("skipMinutes must be between %d and %d", minSkipMinutes, maxSkipMinutes)})
+		return
+	}
 
 	planet, ok := h.gameState.GetPlanet(playerID, req.PlanetID)
 	if !ok {
@@ -307,6 +323,10 @@ func (h *AccelerateHandler) AccelerateFleetBuild(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
+	if req.SkipMinutes < minSkipMinutes || req.SkipMinutes > maxSkipMinutes {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("skipMinutes must be between %d and %d", minSkipMinutes, maxSkipMinutes)})
+		return
+	}
 
 	planet, ok := h.gameState.GetPlanet(playerID, req.PlanetID)
 	if !ok {
@@ -408,6 +428,10 @@ func (h *AccelerateHandler) AccelerateFleetTravel(c *gin.Context) {
 	var req accelerateFleetTravelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	if req.SkipMinutes < minSkipMinutes || req.SkipMinutes > maxSkipMinutes {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("skipMinutes must be between %d and %d", minSkipMinutes, maxSkipMinutes)})
 		return
 	}
 

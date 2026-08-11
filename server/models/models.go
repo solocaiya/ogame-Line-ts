@@ -43,6 +43,7 @@ type DMTransaction struct {
 	BalanceAfter int64  `json:"balance_after"`
 	Type         string `json:"type"` // recharge, monthly_card, growth_fund, accelerate, rename, shop, trade, lottery, gift
 	RefID        string `json:"ref_id,omitempty"`
+	Description  string `json:"description,omitempty"`
 	CreatedAt    string `json:"created_at"`
 }
 

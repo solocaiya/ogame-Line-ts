@@ -1,5 +1,7 @@
 package engine
 
+import "time"
+
 // Resources represents the 4 resources in the game.
 type Resources struct {
 	Metal      int64 `json:"metal"`
@@ -135,6 +137,10 @@ type PlayerState struct {
 	DebrisField   Resources               `json:"debrisField"`
 	Moons         map[string]string       `json:"moons"` // planetID -> moonID
 	Settings      PlayerSettings          `json:"settings"`
+	// VIP / subscription state (mirrored from users table so gamestate has no DB dep).
+	VIPLevel      int        `json:"vipLevel"`
+	SubExpiresAt  *time.Time `json:"subExpiresAt,omitempty"`  // small monthly card expiry
+	Sub2ExpiresAt *time.Time `json:"sub2ExpiresAt,omitempty"` // large monthly card expiry
 }
 
 // CombatUnit represents a unit in combat simulation.
@@ -157,6 +163,9 @@ type BattleSide struct {
 	ShieldTech       int
 	ArmorTech        int
 	DefenderResources Resources // only used for defender side — plunder calculation
+	// VIP bonuses applied on top of tech bonuses.
+	AttackPct  float64 // e.g. 5.0 = +5% attack
+	DefensePct float64 // e.g. 5.0 = +5% defense
 }
 
 // BattleResult holds the outcome of a battle.

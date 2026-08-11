@@ -29,6 +29,31 @@ func NewGameHandler(gameState *gamestate.GameState, db *sql.DB, wsHub *ws.Hub) *
 	return &GameHandler{gameState: gameState, db: db, wsHub: wsHub}
 }
 
+// getVIPBonus queries the player's VIP/subscription state from the DB and returns
+// the computed VIPBonus. Returns zero-value if DB is unavailable or query fails.
+func (h *GameHandler) getVIPBonus(playerID string) engine.VIPBonus {
+	if h.db == nil {
+		return engine.VIPBonus{}
+	}
+	var vipLevel int
+	var expiresAt, expiresAt2 sql.NullTime
+	_ = h.db.QueryRow(
+		`SELECT vip_level, subscription_expires_at, subscription2_expires_at FROM users WHERE id = ?`,
+		playerID,
+	).Scan(&vipLevel, &expiresAt, &expiresAt2)
+
+	var sub1, sub2 *time.Time
+	if expiresAt.Valid {
+		t := expiresAt.Time
+		sub1 = &t
+	}
+	if expiresAt2.Valid {
+		t := expiresAt2.Time
+		sub2 = &t
+	}
+	return engine.GetVIPBonus(vipLevel, sub1, sub2)
+}
+
 // GetGameState returns the current game state for the authenticated player.
 // If not in memory, tries to load from database.
 func (h *GameHandler) GetGameState(c *gin.Context) {
@@ -156,10 +181,13 @@ func (h *GameHandler) StartBuilding(c *gin.Context) {
 		return
 	}
 
+	vipBonus := h.getVIPBonus(playerID)
+	maxQueue := 1 + vipBonus.BuildQueueBonus
+
 	var endTime int64
 	err := h.gameState.UpdatePlanet(playerID, req.PlanetID, func(planet *engine.PlanetState) error {
-		// Check queue not full (max 1 building at a time)
-		if len(planet.BuildingQueue) > 0 {
+		// Check queue not full (base 1 slot + VIP bonus slots)
+		if len(planet.BuildingQueue) >= maxQueue {
 			return fmt.Errorf("building queue is full")
 		}
 
@@ -174,7 +202,7 @@ func (h *GameHandler) StartBuilding(c *gin.Context) {
 
 		roboticsLevel := planet.Buildings["roboticsFactory"]
 		naniteLevel := planet.Buildings["naniteFactory"]
-		buildTime := engine.CalculateBuildingTime(buildingDef.BaseTime, roboticsLevel, naniteLevel, 0)
+		buildTime := engine.CalculateBuildingTime(buildingDef.BaseTime, roboticsLevel, naniteLevel, vipBonus.BuildSpeedPct)
 
 		planet.Resources = planet.Resources.Sub(costRes)
 		endTime = time.Now().UnixMilli() + int64(buildTime*1000)
@@ -214,6 +242,8 @@ func (h *GameHandler) StartShipProduction(c *gin.Context) {
 		return
 	}
 
+	vipBonus := h.getVIPBonus(playerID)
+
 	var endTime int64
 	err := h.gameState.UpdatePlanet(playerID, req.PlanetID, func(planet *engine.PlanetState) error {
 		totalCost := engine.Resources{
@@ -228,7 +258,7 @@ func (h *GameHandler) StartShipProduction(c *gin.Context) {
 
 		shipyardLevel := planet.Buildings["shipyard"]
 		naniteLevel := planet.Buildings["naniteFactory"]
-		buildTime := engine.CalculateShipBuildTime(shipDef.BuildTime, shipyardLevel, naniteLevel) * req.Count
+		buildTime := engine.CalculateShipBuildTime(shipDef.BuildTime, shipyardLevel, naniteLevel, vipBonus.BuildSpeedPct) * req.Count
 
 		planet.Resources = planet.Resources.Sub(totalCost)
 		endTime = time.Now().UnixMilli() + int64(buildTime*1000)
@@ -268,6 +298,8 @@ func (h *GameHandler) StartDefenseProduction(c *gin.Context) {
 		return
 	}
 
+	vipBonus := h.getVIPBonus(playerID)
+
 	var endTime int64
 	err := h.gameState.UpdatePlanet(playerID, req.PlanetID, func(planet *engine.PlanetState) error {
 		totalCost := engine.Resources{
@@ -282,7 +314,7 @@ func (h *GameHandler) StartDefenseProduction(c *gin.Context) {
 
 		shipyardLevel := planet.Buildings["shipyard"]
 		naniteLevel := planet.Buildings["naniteFactory"]
-		buildTime := engine.CalculateDefenseBuildTime(defenseDef.BuildTime, shipyardLevel, naniteLevel) * req.Count
+		buildTime := engine.CalculateDefenseBuildTime(defenseDef.BuildTime, shipyardLevel, naniteLevel, vipBonus.BuildSpeedPct) * req.Count
 
 		planet.Resources = planet.Resources.Sub(totalCost)
 		endTime = time.Now().UnixMilli() + int64(buildTime*1000)
@@ -335,6 +367,8 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 		return
 	}
 
+	vipBonus := h.getVIPBonus(playerID)
+
 	var mission engine.FleetMission
 	err := h.gameState.UpdatePlayer(playerID, func(p *engine.PlayerState) error {
 		planet, ok := p.Planets[req.PlanetID]
@@ -351,7 +385,7 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 
 		distance := engine.CalculateDistance(planet.Coordinate, req.TargetCoord)
 		minSpeed := engine.CalculateMinSpeed(req.Fleet)
-		flightTime := engine.CalculateFlightTime(distance, minSpeed)
+		flightTime := engine.CalculateFlightTime(distance, minSpeed, vipBonus.FleetSpeedPct)
 		fuel := engine.CalculateFuelConsumption(req.Fleet, distance, flightTime)
 
 		if planet.Resources.Deuterium < fuel {
@@ -566,6 +600,8 @@ func (h *GameHandler) StartResearch(c *gin.Context) {
 		return
 	}
 
+	vipBonus := h.getVIPBonus(playerID)
+
 	var endTime int64
 	err := h.gameState.UpdatePlanet(playerID, req.PlanetID, func(planet *engine.PlanetState) error {
 		// Check research lab exists
@@ -594,9 +630,9 @@ func (h *GameHandler) StartResearch(c *gin.Context) {
 			return fmt.Errorf("insufficient resources")
 		}
 
-		// Research time = baseTime * level / (1 + labLevel * 0.1)
+		// Research time = baseTime * level / (1 + labLevel * 0.1), reduced by VIP bonus
 		baseTime := researchDef.BaseTime * targetLevel
-		buildTime := int(float64(baseTime) / (1.0 + float64(labLevel)*0.1))
+		buildTime := int(float64(baseTime) / (1.0+float64(labLevel)*0.1) * (1.0 - vipBonus.ResearchSpeedPct/100.0))
 		if buildTime < 1 {
 			buildTime = 1
 		}

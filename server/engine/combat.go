@@ -29,6 +29,22 @@ func applyTechBonus(baseValue int, techLevel int) int {
 	return int(math.Floor(float64(baseValue) * (1.0 + float64(techLevel)*0.1)))
 }
 
+// applyVIPAttack applies VIP attack percentage bonus on top of tech-buffed value.
+func applyVIPAttack(baseValue int, vipPct float64) int {
+	if vipPct == 0 {
+		return baseValue
+	}
+	return int(math.Floor(float64(baseValue) * (1.0 + vipPct/100.0)))
+}
+
+// applyVIPDefense applies VIP defense percentage bonus on top of tech-buffed value.
+func applyVIPDefense(baseValue int, vipPct float64) int {
+	if vipPct == 0 {
+		return baseValue
+	}
+	return int(math.Floor(float64(baseValue) * (1.0 + vipPct/100.0)))
+}
+
 // prepareCombatUnits converts ships and defenses to combat units.
 func prepareCombatUnits(side BattleSide, isDefender bool) []CombatUnit {
 	var units []CombatUnit
@@ -41,14 +57,17 @@ func prepareCombatUnits(side BattleSide, isDefender bool) []CombatUnit {
 		if !ok {
 			continue
 		}
+		atk := applyVIPAttack(applyTechBonus(def.Attack, side.WeaponTech), side.AttackPct)
+		shd := applyVIPDefense(applyTechBonus(def.Shield, side.ShieldTech), side.DefensePct)
+		arm := applyVIPDefense(applyTechBonus(def.Armor, side.ArmorTech), side.DefensePct)
 		units = append(units, CombatUnit{
 			Type:          shipType,
 			Count:         count,
-			Attack:        applyTechBonus(def.Attack, side.WeaponTech),
-			Shield:        applyTechBonus(def.Shield, side.ShieldTech),
-			Armor:         applyTechBonus(def.Armor, side.ArmorTech),
+			Attack:        atk,
+			Shield:        shd,
+			Armor:         arm,
 			RapidFire:     def.RapidFire,
-			CurrentShield: applyTechBonus(def.Shield, side.ShieldTech),
+			CurrentShield: shd,
 			ArmorDamage:   0,
 		})
 	}
@@ -62,13 +81,16 @@ func prepareCombatUnits(side BattleSide, isDefender bool) []CombatUnit {
 			if !ok {
 				continue
 			}
+			atk := applyVIPAttack(applyTechBonus(def.Attack, side.WeaponTech), side.AttackPct)
+			shd := applyVIPDefense(applyTechBonus(def.Shield, side.ShieldTech), side.DefensePct)
+			arm := applyVIPDefense(applyTechBonus(def.Armor, side.ArmorTech), side.DefensePct)
 			units = append(units, CombatUnit{
 				Type:          defType,
 				Count:         count,
-				Attack:        applyTechBonus(def.Attack, side.WeaponTech),
-				Shield:        applyTechBonus(def.Shield, side.ShieldTech),
-				Armor:         applyTechBonus(def.Armor, side.ArmorTech),
-				CurrentShield: applyTechBonus(def.Shield, side.ShieldTech),
+				Attack:        atk,
+				Shield:        shd,
+				Armor:         arm,
+				CurrentShield: shd,
 				ArmorDamage:   0,
 			})
 		}

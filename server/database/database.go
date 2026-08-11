@@ -208,6 +208,9 @@ func migrate() error {
 
 		// Second subscription slot (large monthly card has independent expiry)
 		`ALTER TABLE users ADD COLUMN subscription2_expires_at DATETIME`,
+
+		// Description field for dark matter transactions
+		`ALTER TABLE dark_matter_transactions ADD COLUMN description TEXT DEFAULT ''`,
 	}
 
 	for _, m := range migrations {

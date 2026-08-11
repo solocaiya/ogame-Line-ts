@@ -33,12 +33,14 @@ func CalculateDistance(from, to Coordinate) int {
 }
 
 // CalculateFlightTime computes flight time in seconds.
-// Formula: max(10, floor(distance * 50 / minSpeed))
-func CalculateFlightTime(distance int, minSpeed int) int {
+// speedBonus is a percentage (e.g. 25 = 25% faster) from VIP bonuses.
+// Formula: max(10, floor(distance * 50 / (minSpeed * (1 + speedBonus/100))))
+func CalculateFlightTime(distance int, minSpeed int, speedBonus float64) int {
 	if minSpeed <= 0 {
 		return 10
 	}
-	time := int(math.Floor(float64(distance) * 50.0 / float64(minSpeed)))
+	effectiveSpeed := float64(minSpeed) * (1.0 + speedBonus/100.0)
+	time := int(math.Floor(float64(distance) * 50.0 / effectiveSpeed))
 	if time < 10 {
 		time = 10
 	}

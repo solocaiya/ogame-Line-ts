@@ -27,8 +27,9 @@ func CalculateBuildingTime(baseTime int, roboticsLevel, naniteLevel int, speedBo
 }
 
 // CalculateShipBuildTime returns the time to build one ship.
-func CalculateShipBuildTime(baseTime int, shipyardLevel, naniteLevel int) int {
-	divisor := 1.0 + float64(shipyardLevel)*0.5 + float64(naniteLevel)*2.0
+// speedBonus is a percentage (e.g. 10 = 10% faster) from VIP bonuses.
+func CalculateShipBuildTime(baseTime int, shipyardLevel, naniteLevel int, speedBonus float64) int {
+	divisor := (1.0 + float64(shipyardLevel)*0.5 + float64(naniteLevel)*2.0) * (1.0 + speedBonus/100.0)
 	time := float64(baseTime) / divisor
 	result := int(math.Floor(time))
 	if result < 1 {
@@ -38,9 +39,9 @@ func CalculateShipBuildTime(baseTime int, shipyardLevel, naniteLevel int) int {
 }
 
 // CalculateDefenseBuildTime returns the time to build one defense unit.
-func CalculateDefenseBuildTime(baseTime int, shipyardLevel, naniteLevel int) int {
-	// Same as ship build time
-	return CalculateShipBuildTime(baseTime, shipyardLevel, naniteLevel)
+// speedBonus is a percentage from VIP bonuses.
+func CalculateDefenseBuildTime(baseTime int, shipyardLevel, naniteLevel int, speedBonus float64) int {
+	return CalculateShipBuildTime(baseTime, shipyardLevel, naniteLevel, speedBonus)
 }
 
 // CalculateResearchCost returns the cost to research a technology at targetLevel.
