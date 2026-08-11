@@ -431,7 +431,7 @@ export const generateNPCResources = (npc: NPC, deltaSeconds: number, config: Dyn
   const metalProduction = 90 * metalMineLevel * Math.pow(1.1, metalMineLevel) * config.resourceGrowthRate
   const crystalProduction = 60 * crystalMineLevel * Math.pow(1.1, crystalMineLevel) * config.resourceGrowthRate
   const deuteriumProduction = 30 * deuteriumLevel * Math.pow(1.1, deuteriumLevel) * config.resourceGrowthRate
-  const darkMatterProduction = ((75 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
+  const darkMatterProduction = ((100 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
 
   // 应用游戏速度倍率到时间
   const effectiveDeltaSeconds = deltaSeconds * gameSpeed
@@ -1110,7 +1110,7 @@ export const generateNPCResourcesByDistance = (
   const metalProduction = 90 * metalMineLevel * Math.pow(1.1, metalMineLevel) * config.resourceGrowthRate
   const crystalProduction = 60 * crystalMineLevel * Math.pow(1.1, crystalMineLevel) * config.resourceGrowthRate
   const deuteriumProduction = 30 * deuteriumLevel * Math.pow(1.1, deuteriumLevel) * config.resourceGrowthRate
-  const darkMatterProduction = ((75 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
+  const darkMatterProduction = ((100 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
 
   // 应用游戏速度倍率到时间
   const effectiveDeltaSeconds = deltaSeconds * gameSpeed

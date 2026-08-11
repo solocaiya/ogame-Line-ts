@@ -642,7 +642,7 @@ export const calculateProductionBreakdown = (
   const deuteriumFinal = deuteriumBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.deuteriumBonus / 100) * productionEfficiency
 
   // 暗物质收集器产量
-  const darkMatterBase = darkMatterCollectorLevel * 25 * Math.pow(1.5, darkMatterCollectorLevel)
+  const darkMatterBase = darkMatterCollectorLevel * 100 * Math.pow(1.5, darkMatterCollectorLevel)
   const darkMatterBonuses: ProductionBonus[] = []
 
   activeOfficerBonuses.forEach(officer => {

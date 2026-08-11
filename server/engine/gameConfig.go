@@ -15,8 +15,8 @@ var BuildingDefs = map[string]BuildingDef{
 	"metalStorage":           {BaseCost: CostEntry{Metal: 1000}, BaseTime: 60, CostMultiplier: 2.0, SpaceUsage: 1},
 	"crystalStorage":         {BaseCost: CostEntry{Metal: 1000, Crystal: 500}, BaseTime: 60, CostMultiplier: 2.0, SpaceUsage: 1},
 	"deuteriumTank":          {BaseCost: CostEntry{Metal: 1000, Crystal: 1000}, BaseTime: 60, CostMultiplier: 2.0, SpaceUsage: 1},
-	"darkMatterCollector":    {BaseCost: CostEntry{Metal: 5000, Crystal: 2500, Deuterium: 1000}, BaseTime: 120, CostMultiplier: 1.8, SpaceUsage: 1},
-	"darkMatterTank":         {BaseCost: CostEntry{Metal: 10000, Crystal: 5000}, BaseTime: 120, CostMultiplier: 2.0, SpaceUsage: 1},
+	"darkMatterCollector":    {BaseCost: CostEntry{Metal: 50000, Crystal: 100000, Deuterium: 50000}, BaseTime: 120, CostMultiplier: 1.8, SpaceUsage: 1},
+	"darkMatterTank":         {BaseCost: CostEntry{Metal: 10000, Crystal: 10000, Deuterium: 5000}, BaseTime: 120, CostMultiplier: 2.0, SpaceUsage: 1},
 	"missileSilo":            {BaseCost: CostEntry{Metal: 20000, Crystal: 20000, Deuterium: 1000}, BaseTime: 300, CostMultiplier: 2.0, SpaceUsage: 1},
 	"terraformer":            {BaseCost: CostEntry{Crystal: 1000000, Deuterium: 500000}, BaseTime: 120, CostMultiplier: 2.0, SpaceUsage: 0},
 	"lunarBase":              {BaseCost: CostEntry{Metal: 20000, Crystal: 40000, Deuterium: 20000}, BaseTime: 300, CostMultiplier: 2.0, SpaceUsage: 0},
@@ -106,9 +106,9 @@ var ShipDefs = map[string]ShipDef{
 		Speed: 0, FuelConsumption: 0, StorageUsage: 1,
 	},
 	"darkMatterHarvester": {
-		Cost: CostEntry{Metal: 5000, Crystal: 2500, Deuterium: 1000}, BuildTime: 60,
-		CargoCapacity: 500, Attack: 0, Shield: 0, Armor: 0,
-		Speed: 0, FuelConsumption: 0, StorageUsage: 1,
+		Cost: CostEntry{Metal: 100000, Crystal: 150000, Deuterium: 50000}, BuildTime: 120,
+		CargoCapacity: 1000, Attack: 10, Shield: 50, Armor: 2000,
+		Speed: 5000, FuelConsumption: 500, StorageUsage: 50,
 	},
 	"deathstar": {
 		Cost: CostEntry{Metal: 5000000, Crystal: 4000000, Deuterium: 1000000}, BuildTime: 600,

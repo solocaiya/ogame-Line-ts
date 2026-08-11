@@ -94,7 +94,7 @@ func (h *GameHandler) InitPlayer(c *gin.Context) {
 		Ships:         map[string]int{"smallCargo": 3, "espionageProbe": 1},
 		Defenses:      map[string]int{"rocketLauncher": 5},
 		Resources:     engine.Resources{Metal: 500, Crystal: 300, Deuterium: 100},
-		StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 5000},
+		StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 1000},
 		Production:    engine.Resources{},
 		BuildingQueue: []engine.BuildingQueueItem{},
 		ResearchQueue: []engine.ResearchQueueItem{},

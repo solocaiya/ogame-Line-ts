@@ -27,6 +27,7 @@ var buildingEnergyConsumption = map[string]struct {
 	"researchLab":        {10, 1.1},
 	"terraformer":        {30, 1.15},
 	"hangar":             {10, 1.1},
+	"darkMatterCollector": {10, 1.1},
 }
 
 // CalculateResourceProduction calculates hourly production for a planet.
@@ -124,10 +125,16 @@ func CalculateResourceProduction(planet *PlanetState, gameSpeed int) (production
 	return production, totalEnergyProd, totalEnergyUsed, efficiency
 }
 
-// CalculateResourceCapacity returns storage capacity for each resource.
+// CalculateResourceCapacity returns storage capacity for standard resources.
 // Base 10000 * 2^storageLevel * bonus
 func CalculateResourceCapacity(storageLevel int, bonus float64) int64 {
 	return int64(10000.0 * math.Pow(2, float64(storageLevel)) * bonus)
+}
+
+// CalculateDarkMatterCapacity returns storage capacity for dark matter.
+// Base 1000 * 2^storageLevel * bonus (dark matter is rarer)
+func CalculateDarkMatterCapacity(storageLevel int, bonus float64) int64 {
+	return int64(1000.0 * math.Pow(2, float64(storageLevel)) * bonus)
 }
 
 // UpdatePlanetResources applies resource production since last update.

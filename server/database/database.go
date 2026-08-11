@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -145,7 +146,11 @@ func migrate() error {
 
 	for _, m := range migrations {
 		if _, err := DB.Exec(m); err != nil {
-			return fmt.Errorf("migration failed: %w\nSQL: %s", err, m)
+			// ALTER TABLE ADD COLUMN is not idempotent in SQLite;
+			// skip "duplicate column name" errors so restarts are safe.
+			if !strings.Contains(err.Error(), "duplicate column name") {
+				return fmt.Errorf("migration failed: %w\nSQL: %s", err, m)
+			}
 		}
 	}
 

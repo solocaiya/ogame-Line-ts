@@ -625,7 +625,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 			Ships:         map[string]int{},
 			Defenses:      map[string]int{},
 			Resources:     engine.Resources{Metal: 500, Crystal: 300, Deuterium: 100},
-			StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 5000},
+			StorageCap:    engine.Resources{Metal: 5000, Crystal: 5000, Deuterium: 5000, DarkMatter: 1000},
 			Production:    engine.Resources{},
 			BuildingQueue: []engine.BuildingQueueItem{},
 			ResearchQueue: []engine.ResearchQueueItem{},
@@ -814,7 +814,7 @@ func (gs *GameState) processBuildingQueue(planet *engine.PlanetState, now int64,
 		storageLevel = planet.Buildings["deuteriumTank"]
 		planet.StorageCap.Deuterium = engine.CalculateResourceCapacity(storageLevel, 1.0)
 		storageLevel = planet.Buildings["darkMatterTank"]
-		planet.StorageCap.DarkMatter = engine.CalculateResourceCapacity(storageLevel, 1.0)
+		planet.StorageCap.DarkMatter = engine.CalculateDarkMatterCapacity(storageLevel, 1.0)
 
 		gs.emitEvent(GameEvent{
 			Type: "buildingComplete",
