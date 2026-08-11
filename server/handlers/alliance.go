@@ -58,7 +58,7 @@ func (h *AllianceHandler) Create(c *gin.Context) {
 
 	// Get player username
 	var username string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&username)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&username)
 
 	allianceID := uuid.New().String()
 	now := time.Now()
@@ -305,7 +305,7 @@ func (h *AllianceHandler) RequestJoin(c *gin.Context) {
 	}
 
 	var playerName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&playerName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&playerName)
 
 	requestID := uuid.New().String()
 	now := time.Now()
@@ -351,7 +351,7 @@ func (h *AllianceHandler) GetRequests(c *gin.Context) {
 	}
 
 	rows, err := h.db.Query(
-		`SELECT r.id, r.player_id, r.message, r.status, r.created_at, u.username
+		`SELECT r.id, r.player_id, r.message, r.status, r.created_at, COALESCE(NULLIF(u.display_name,''), u.username)
 		 FROM alliance_requests r JOIN users u ON r.player_id = u.id
 		 WHERE r.alliance_id = ? AND r.status = 'pending' AND r.type = 'join'
 		 ORDER BY r.created_at DESC`,
@@ -409,7 +409,7 @@ func (h *AllianceHandler) AcceptRequest(c *gin.Context) {
 	}
 
 	var playerName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", reqPlayerID).Scan(&playerName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", reqPlayerID).Scan(&playerName)
 
 	h.acceptJoinInternal(allianceID, reqPlayerID, playerName, requestID)
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -472,7 +472,7 @@ func (h *AllianceHandler) InvitePlayer(c *gin.Context) {
 	}
 
 	var inviterName, allianceName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&inviterName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&inviterName)
 	h.db.QueryRow("SELECT name FROM alliances WHERE id = ?", allianceID).Scan(&allianceName)
 
 	requestID := uuid.New().String()
@@ -520,7 +520,7 @@ func (h *AllianceHandler) AcceptInvite(c *gin.Context) {
 	}
 
 	var playerName, allianceName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&playerName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&playerName)
 	h.db.QueryRow("SELECT name FROM alliances WHERE id = ?", allianceID).Scan(&allianceName)
 
 	h.acceptJoinInternal(allianceID, playerID, playerName, requestID)
@@ -624,7 +624,7 @@ func (h *AllianceHandler) RemoveMember(c *gin.Context) {
 	h.removeMemberInternal(allianceID, targetID)
 
 	var playerName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", targetID).Scan(&playerName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", targetID).Scan(&playerName)
 
 	h.notifyAllianceMembers(allianceID, "alliance:member_left", gin.H{
 		"playerId":   targetID,
@@ -645,7 +645,7 @@ func (h *AllianceHandler) Leave(c *gin.Context) {
 	}
 
 	var playerName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&playerName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&playerName)
 
 	if role == "leader" {
 		// Try to promote oldest officer
@@ -776,7 +776,7 @@ func (h *AllianceHandler) getAllianceFull(allianceID string) (gin.H, error) {
 
 	// Get members
 	rows, err := h.db.Query(
-		`SELECT m.player_id, m.role, m.joined_at, u.username
+		`SELECT m.player_id, m.role, m.joined_at, COALESCE(NULLIF(u.display_name,''), u.username)
 		 FROM alliance_members m JOIN users u ON m.player_id = u.id
 		 WHERE m.alliance_id = ? ORDER BY
 		 CASE m.role WHEN 'leader' THEN 0 WHEN 'officer' THEN 1 ELSE 2 END, m.joined_at ASC`,
@@ -807,7 +807,7 @@ func (h *AllianceHandler) getAllianceFull(allianceID string) (gin.H, error) {
 
 	// Get pending requests
 	reqRows, err := h.db.Query(
-		`SELECT r.id, r.player_id, r.message, r.created_at, u.username
+		`SELECT r.id, r.player_id, r.message, r.created_at, COALESCE(NULLIF(u.display_name,''), u.username)
 		 FROM alliance_requests r JOIN users u ON r.player_id = u.id
 		 WHERE r.alliance_id = ? AND r.status = 'pending' AND r.type = 'join'
 		 ORDER BY r.created_at DESC`,

@@ -11,6 +11,7 @@ import (
 
 	"ogame-server/engine"
 	"ogame-server/gamestate"
+	"ogame-server/ws"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -20,11 +21,12 @@ import (
 type GameHandler struct {
 	gameState *gamestate.GameState
 	db        *sql.DB
+	wsHub     *ws.Hub
 }
 
 // NewGameHandler creates a new GameHandler.
-func NewGameHandler(gameState *gamestate.GameState, db *sql.DB) *GameHandler {
-	return &GameHandler{gameState: gameState, db: db}
+func NewGameHandler(gameState *gamestate.GameState, db *sql.DB, wsHub *ws.Hub) *GameHandler {
+	return &GameHandler{gameState: gameState, db: db, wsHub: wsHub}
 }
 
 // GetGameState returns the current game state for the authenticated player.
@@ -51,8 +53,23 @@ func (h *GameHandler) GetGameState(c *gin.Context) {
 	// Re-marshal after advance
 	playerJSON, _ = h.gameState.MarshalPlayer(playerID)
 
-	// Client expects { player: {...} }
-	c.JSON(http.StatusOK, gin.H{"player": playerJSON})
+	// Inject alliance info into the response
+	allianceTag := ""
+	allianceName := ""
+	if h.db != nil {
+		_ = h.db.QueryRow(`
+			SELECT a.tag, a.name FROM alliance_members am
+			JOIN alliances a ON a.id = am.alliance_id
+			WHERE am.player_id = ?
+		`, playerID).Scan(&allianceTag, &allianceName)
+	}
+
+	// Client expects { player: {...}, allianceTag: "...", allianceName: "..." }
+	c.JSON(http.StatusOK, gin.H{
+		"player":       playerJSON,
+		"allianceTag":  allianceTag,
+		"allianceName": allianceName,
+	})
 }
 
 // InitPlayer initializes a new player with a starting planet if not exists.
@@ -669,6 +686,75 @@ func (h *GameHandler) GetLeaderboard(c *gin.Context) {
 	})
 }
 
+// ScanGalaxy handles GET /api/game/galaxy?galaxy=1&system=1
+// Returns all player planets in the specified system with owner info.
+func (h *GameHandler) ScanGalaxy(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	galaxyStr := c.Query("galaxy")
+	systemStr := c.Query("system")
+	galaxy, err := strconv.Atoi(galaxyStr)
+	if err != nil || galaxy < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid galaxy"})
+		return
+	}
+	system, err := strconv.Atoi(systemStr)
+	if err != nil || system < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid system"})
+		return
+	}
+
+	// Scan the system for all player planets
+	planets := h.gameState.ScanSystem(galaxy, system)
+
+	// Build result with owner info (username + alliance tag)
+	type planetResult struct {
+		Position     int    `json:"position"`
+		PlanetID     string `json:"planetId"`
+		PlanetName   string `json:"planetName"`
+		OwnerID      string `json:"ownerId"`
+		OwnerName    string `json:"ownerName"`
+		AllianceTag  string `json:"allianceTag"`
+		AllianceName string `json:"allianceName"`
+	}
+
+	results := make([]planetResult, 0, len(planets))
+	for _, p := range planets {
+		ownerName := ""
+		allianceTag := ""
+		allianceName := ""
+
+		if p.OwnerID != "" {
+			// Look up username
+			if h.db != nil {
+				_ = h.db.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, p.OwnerID).Scan(&ownerName)
+				// Look up alliance info
+				_ = h.db.QueryRow(`
+					SELECT a.tag, a.name FROM alliance_members am
+					JOIN alliances a ON a.id = am.alliance_id
+					WHERE am.player_id = ?
+				`, p.OwnerID).Scan(&allianceTag, &allianceName)
+			}
+		}
+
+		results = append(results, planetResult{
+			Position:     p.Position,
+			PlanetID:     p.PlanetID,
+			PlanetName:   p.PlanetName,
+			OwnerID:      p.OwnerID,
+			OwnerName:    ownerName,
+			AllianceTag:  allianceTag,
+			AllianceName: allianceName,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"planets": results})
+}
+
 // GetNotifications handles GET /api/game/notifications
 func (h *GameHandler) GetNotifications(c *gin.Context) {
 	playerID := c.GetString("user_id")
@@ -870,4 +956,104 @@ func (h *GameHandler) GetSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"settings": settings})
+}
+
+// UpdateProfile handles PUT /api/game/profile — change display name (nickname).
+// First rename is free; subsequent renames cost 2000 dark matter.
+func (h *GameHandler) UpdateProfile(c *gin.Context) {
+	playerID := c.GetString("user_id")
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var req struct {
+		DisplayName string `json:"display_name" binding:"required,min=3,max=20"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "display name must be 3-20 characters"})
+		return
+	}
+
+	// Use a transaction for atomicity
+	tx, err := h.db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer tx.Rollback()
+
+	// Get current rename_count
+	var renameCount int
+	if err := tx.QueryRow(`SELECT COALESCE(rename_count, 0) FROM users WHERE id = ?`, playerID).Scan(&renameCount); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+		return
+	}
+
+	// If not the first rename, deduct 2000 dark matter from in-memory game state
+	cost := int64(0)
+	if renameCount > 0 {
+		cost = 2000
+		player, ok := h.gameState.GetPlayer(playerID)
+		if !ok || len(player.Planets) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient dark matter"})
+			return
+		}
+		// Find first planet with enough dark matter and deduct
+		deducted := false
+		for pid, planet := range player.Planets {
+			if planet.Resources.DarkMatter >= cost {
+				pidCopy := pid
+				h.gameState.UpdatePlanet(playerID, pidCopy, func(p *engine.PlanetState) error {
+					p.Resources.DarkMatter -= cost
+					return nil
+				})
+				deducted = true
+				break
+			}
+		}
+		if !deducted {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient dark matter"})
+			return
+		}
+	}
+
+	// Update display_name and increment rename_count
+	_, err = tx.Exec(`UPDATE users SET display_name = ?, rename_count = COALESCE(rename_count, 0) + 1 WHERE id = ?`,
+		req.DisplayName, playerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
+		return
+	}
+
+	// Update leaderboard entry immediately
+	displayName := req.DisplayName
+	if displayName == "" {
+		// Fallback to username
+		var uname string
+		tx.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, playerID).Scan(&uname)
+		displayName = uname
+	}
+	tx.Exec(`UPDATE leaderboard SET username = ? WHERE user_id = ?`, displayName, playerID)
+
+	if err := tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save changes"})
+		return
+	}
+
+	// Broadcast name change to all connected players via WebSocket
+	if h.wsHub != nil {
+		h.wsHub.Broadcast("nameChanged", map[string]interface{}{
+			"playerId":   playerID,
+			"newName":    req.DisplayName,
+			"renameCost": cost,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "profile updated",
+		"display_name":  req.DisplayName,
+		"rename_count":  renameCount + 1,
+		"cost":          cost,
+	})
 }

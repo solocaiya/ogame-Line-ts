@@ -890,6 +890,44 @@ func (gs *GameState) processDefenseQueue(planet *engine.PlanetState, now int64, 
 	}
 }
 
+// ScanSystemResult represents a single planet found in a system scan.
+type ScanSystemResult struct {
+	Position     int    `json:"position"`
+	PlanetID     string `json:"planetId"`
+	PlanetName   string `json:"planetName"`
+	OwnerID      string `json:"ownerId"`
+	IsMoon       bool   `json:"isMoon"`
+}
+
+// ScanSystem returns all planets in the given galaxy/system from the coordIndex.
+func (gs *GameState) ScanSystem(galaxy, system int) []ScanSystemResult {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	prefix := fmt.Sprintf("%d:%d:", galaxy, system)
+	var results []ScanSystemResult
+
+	for key, planet := range gs.coordIndex {
+		if len(key) < len(prefix) || key[:len(prefix)] != prefix {
+			continue
+		}
+		// Skip moons in the scan result
+		if planet.IsMoon {
+			continue
+		}
+		ownerID := gs.findPlayerIDByPlanet(planet.ID)
+		results = append(results, ScanSystemResult{
+			Position:   planet.Coordinate.Position,
+			PlanetID:   planet.ID,
+			PlanetName: planet.Name,
+			OwnerID:    ownerID,
+			IsMoon:     false,
+		})
+	}
+
+	return results
+}
+
 // coordKey converts a coordinate to a map key string for the coordinate index.
 func (gs *GameState) coordKey(c engine.Coordinate) string {
 	return fmt.Sprintf("%d:%d:%d", c.Galaxy, c.System, c.Position)

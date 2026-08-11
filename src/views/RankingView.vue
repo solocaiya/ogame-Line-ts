@@ -49,6 +49,7 @@
               </TableCell>
               <TableCell>
                 <div class="flex items-center gap-1">
+                  <span v-if="entry.allianceTag" class="text-muted-foreground text-xs shrink-0">[{{ entry.allianceTag }}]</span>
                   <span class="font-medium truncate" :class="{ 'text-primary': entry.isPlayer }">
                     {{ entry.name }}
                   </span>

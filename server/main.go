@@ -164,7 +164,7 @@ func main() {
 	}
 
 	// Game routes
-	gameHandler := handlers.NewGameHandler(gs, database.DB)
+	gameHandler := handlers.NewGameHandler(gs, database.DB, wsHub)
 
 	game := r.Group("/api/game")
 	game.Use(handlers.AuthRequired(cfg.JWTSecret))
@@ -173,6 +173,7 @@ func main() {
 		game.GET("/state", gameHandler.GetGameState)
 		game.PUT("/settings", gameHandler.UpdateSettings)
 		game.GET("/settings", gameHandler.GetSettings)
+		game.PUT("/profile", gameHandler.UpdateProfile)
 		game.POST("/building/start", gameHandler.StartBuilding)
 		game.POST("/building/cancel", gameHandler.CancelBuilding)
 		game.POST("/ship/start", gameHandler.StartShipProduction)
@@ -184,6 +185,7 @@ func main() {
 		game.POST("/fleet/send", gameHandler.SendFleet)
 		game.POST("/fleet/recall", gameHandler.RecallFleet)
 		game.GET("/leaderboard", gameHandler.GetLeaderboard)
+		game.GET("/galaxy", gameHandler.ScanGalaxy)
 		game.GET("/notifications", gameHandler.GetNotifications)
 		game.POST("/notifications/:id/read", gameHandler.MarkNotificationRead)
 		game.GET("/battle-replays", gameHandler.GetBattleReplays)

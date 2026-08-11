@@ -13,7 +13,8 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isLoggedIn: (state) => !!state.accessToken && !!state.user,
     isGuest: (state) => state.user?.is_guest ?? false,
-    username: (state) => state.user?.username || ''
+    username: (state) => state.user?.username || '',
+    displayName: (state) => state.user?.display_name || state.user?.username || ''
   },
 
   actions: {
@@ -108,6 +109,14 @@ export const useAuthStore = defineStore('auth', {
       this.accessToken = null
       this.refreshToken = null
       apiService.clearTokens()
+    },
+
+    async updateProfile(displayName: string) {
+      const res = await apiService.updateProfile(displayName)
+      if (this.user) {
+        this.user = { ...this.user, display_name: displayName, rename_count: res.rename_count ?? (this.user.rename_count ?? 0) + 1 }
+      }
+      return res
     },
 
     clearError() {

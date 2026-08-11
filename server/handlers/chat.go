@@ -70,7 +70,7 @@ func (h *ChatHandler) Send(c *gin.Context) {
 
 	// Get sender info
 	var senderName string
-	h.db.QueryRow("SELECT username FROM users WHERE id = ?", playerID).Scan(&senderName)
+	h.db.QueryRow("SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?", playerID).Scan(&senderName)
 
 	// For alliance channel, verify membership and get tag
 	var senderTag string

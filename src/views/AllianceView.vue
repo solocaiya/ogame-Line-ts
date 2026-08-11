@@ -158,6 +158,7 @@
                     <Badge :variant="roleVariant(member.role)" class="text-[10px]">
                       {{ t(`alliance.role.${member.role}`) }}
                     </Badge>
+                    <span class="text-muted-foreground text-xs">[{{ allianceStore.alliance.tag }}]</span>
                     <span class="font-medium text-sm">{{ member.username }}</span>
                   </div>
                   <!-- Actions for officers/leader (not on self) -->

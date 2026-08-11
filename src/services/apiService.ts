@@ -13,11 +13,13 @@ interface AuthResponse {
 interface UserInfo {
   id: string
   username: string
+  display_name?: string
   created_at: string
   last_login: string
   is_active: boolean
   is_guest: boolean
   device_id?: string
+  rename_count?: number
 }
 
 interface SaveGameRequest {
@@ -218,6 +220,10 @@ class ApiService {
     return this.request('GET', '/game/state')
   }
 
+  async scanGalaxy(galaxy: number, system: number): Promise<any> {
+    return this.request('GET', `/game/galaxy?galaxy=${galaxy}&system=${system}`)
+  }
+
   async startBuilding(planetId: string, buildingType: string): Promise<any> {
     return this.request('POST', '/game/building/start', { planetId, buildingType })
   }
@@ -269,6 +275,12 @@ class ApiService {
 
   async getSettings(): Promise<{ settings: { battleToFinish: boolean } }> {
     return this.request('GET', '/game/settings')
+  }
+
+  // --- Profile ---
+
+  async updateProfile(displayName: string): Promise<any> {
+    return this.request('PUT', '/game/profile', { display_name: displayName })
   }
 
   // --- Alliance ---

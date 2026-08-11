@@ -54,6 +54,64 @@
       </CardContent>
     </Card>
 
+    <!-- 个人资料 -->
+    <Card>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <Edit class="h-4 w-4" />
+          {{ t('settings.profile') }}
+        </CardTitle>
+        <CardDescription>
+          {{ t('settings.profileDesc') }}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          <div class="p-3 rounded-lg bg-muted/50 text-sm">
+            <span class="text-muted-foreground">{{ t('settings.currentName') }}：</span>
+            <span class="font-medium">{{ authStore.displayName }}</span>
+            <span v-if="authStore.user?.username !== authStore.displayName" class="text-muted-foreground ml-2">
+              (@{{ authStore.user?.username }})
+            </span>
+          </div>
+          <form @submit.prevent="handleUpdateProfile" class="space-y-3">
+            <div class="space-y-2">
+              <Label for="display-name">{{ t('settings.displayName') }}</Label>
+              <Input
+                id="display-name"
+                v-model="newDisplayName"
+                :placeholder="t('settings.displayNamePlaceholder')"
+                :disabled="profileLoading"
+                maxlength="20"
+                minlength="3"
+                required
+              />
+            </div>
+            <div v-if="profileError" class="p-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              {{ profileError }}
+            </div>
+            <div class="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                <template v-if="(authStore.user?.rename_count ?? 0) === 0">
+                  ✓ {{ t('settings.firstRenameFree') }}
+                </template>
+                <template v-else>
+                  {{ t('settings.renameCost') }}：2000 {{ t('resources.darkMatter') }}
+                </template>
+              </span>
+              <span v-if="(authStore.user?.rename_count ?? 0) > 0">
+                {{ t('settings.renameCount', { count: authStore.user?.rename_count }) }}
+              </span>
+            </div>
+            <Button type="submit" class="w-full" :disabled="profileLoading">
+              <RefreshCw v-if="profileLoading" class="mr-2 h-4 w-4 animate-spin" />
+              {{ t('settings.saveName') }}
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
+
     <!-- 数据管理（已隐藏：服务端存档替代） -->
     <Card v-if="false">
       <CardHeader>
@@ -477,7 +535,8 @@
     CloudDownload,
     Settings2,
     Volume2,
-    User
+    User,
+    Edit
   } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
@@ -538,6 +597,34 @@
       }
     } finally {
       bindLoading.value = false
+    }
+  }
+
+  // --- 个人资料（昵称） ---
+  const newDisplayName = ref('')
+  const profileLoading = ref(false)
+  const profileError = ref('')
+
+  async function handleUpdateProfile() {
+    const name = newDisplayName.value.trim()
+    if (name.length < 3 || name.length > 20) {
+      profileError.value = t('settings.nameLengthError')
+      return
+    }
+    if (name === authStore.displayName) {
+      profileError.value = t('settings.nameSameError')
+      return
+    }
+    profileLoading.value = true
+    profileError.value = ''
+    try {
+      await authStore.updateProfile(name)
+      toast.success(t('settings.profileSaved'))
+      newDisplayName.value = ''
+    } catch (e: any) {
+      profileError.value = e?.message || t('settings.profileSaveFailed')
+    } finally {
+      profileLoading.value = false
     }
   }
 

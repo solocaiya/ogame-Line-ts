@@ -701,6 +701,8 @@ export interface Planet {
   id: string
   name: string
   ownerId?: string
+  ownerName?: string // 星球所有者名称（用于星系视图显示其他玩家）
+  allianceTag?: string // 所有者联盟标签（用于星系视图显示 [TAG]）
   position: { galaxy: number; system: number; position: number }
   resources: Resources
   buildings: Record<BuildingType, number>
@@ -869,6 +871,8 @@ export interface Player {
   // 联盟
   allianceId?: string
   allianceRole?: AllianceRole
+  allianceTag?: string // 联盟标签，用于显示 [TAG]
+  allianceName?: string // 联盟名称，用于点击查看详情
   chatDNDMode?: ChatDNDMode
 }
 
@@ -1111,6 +1115,8 @@ export interface RankingEntry {
   id: string // 玩家或NPC ID
   name: string // 名称
   isPlayer: boolean // 是否为玩家（否则为NPC）
+  allianceTag?: string // 联盟标签，用于显示 [TAG]
+  allianceName?: string // 联盟名称，用于点击查看详情
   scores: {
     total: number // 总积分
     building: number // 建筑积分

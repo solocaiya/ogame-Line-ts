@@ -104,9 +104,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	var user models.User
 	err := database.DB.QueryRow(
-		`SELECT id, username, password_hash, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		`SELECT id, username, password_hash, COALESCE(display_name, ''), created_at, last_login, is_active, is_guest, COALESCE(device_id, ''), COALESCE(rename_count, 0)
 		 FROM users WHERE username = ?`, req.Username,
-	).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+	).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.DisplayName, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID, &user.RenameCount)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
@@ -204,9 +204,9 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 	var user models.User
 	err := database.DB.QueryRow(
-		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		`SELECT id, username, COALESCE(display_name, ''), created_at, last_login, is_active, is_guest, COALESCE(device_id, ''), COALESCE(rename_count, 0)
 		 FROM users WHERE id = ?`, userID,
-	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+	).Scan(&user.ID, &user.Username, &user.DisplayName, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID, &user.RenameCount)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -228,9 +228,9 @@ func (h *AuthHandler) Guest(c *gin.Context) {
 	// Check if guest already exists for this device
 	var user models.User
 	err := database.DB.QueryRow(
-		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		`SELECT id, username, COALESCE(display_name, ''), created_at, last_login, is_active, is_guest, COALESCE(device_id, ''), COALESCE(rename_count, 0)
 		 FROM users WHERE device_id = ? AND is_guest = 1`, req.DeviceID,
-	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+	).Scan(&user.ID, &user.Username, &user.DisplayName, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID, &user.RenameCount)
 
 	if err == nil {
 		// Existing guest — update last login and return tokens
@@ -357,9 +357,9 @@ func (h *AuthHandler) Bind(c *gin.Context) {
 	// Return updated user with fresh tokens
 	var user models.User
 	database.DB.QueryRow(
-		`SELECT id, username, created_at, last_login, is_active, is_guest, COALESCE(device_id, '')
+		`SELECT id, username, COALESCE(display_name, ''), created_at, last_login, is_active, is_guest, COALESCE(device_id, ''), COALESCE(rename_count, 0)
 		 FROM users WHERE id = ?`, userID,
-	).Scan(&user.ID, &user.Username, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID)
+	).Scan(&user.ID, &user.Username, &user.DisplayName, &user.CreatedAt, &user.LastLogin, &user.IsActive, &user.IsGuest, &user.DeviceID, &user.RenameCount)
 
 	tokens, err := h.generateTokens(user.ID)
 	if err != nil {

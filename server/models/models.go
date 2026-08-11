@@ -6,12 +6,14 @@ import "time"
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
+	DisplayName  string    `json:"display_name"`
 	PasswordHash string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 	LastLogin    time.Time `json:"last_login"`
 	IsActive     bool      `json:"is_active"`
 	IsGuest      bool      `json:"is_guest"`
 	DeviceID     string    `json:"device_id,omitempty"`
+	RenameCount  int       `json:"rename_count"`
 }
 
 type PlayerSave struct {

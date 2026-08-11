@@ -14,6 +14,8 @@ import (
 type LeaderboardEntry struct {
 	UserID         string `json:"userId"`
 	Username       string `json:"username"`
+	AllianceTag    string `json:"allianceTag"`
+	AllianceName   string `json:"allianceName"`
 	TotalPoints    int64  `json:"totalPoints"`
 	EconomyPoints  int64  `json:"economyPoints"`
 	MilitaryPoints int64  `json:"militaryPoints"`
@@ -47,24 +49,37 @@ func (gs *GameState) CalculateLeaderboard(db *sql.DB) {
 		economy, military, research := calculatePlayerPoints(player)
 		total := economy + military + research
 
-		// Look up username from users table via player_id == user_id convention
+		// Look up display name (fallback to username) from users table
 		username := playerID
 		var uname string
-		if err := db.QueryRow(`SELECT username FROM users WHERE id = ?`, playerID).Scan(&uname); err == nil {
+		if err := db.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, playerID).Scan(&uname); err == nil {
 			username = uname
 		}
 
+		// Look up alliance tag and name
+		allianceTag := ""
+		allianceName := ""
+		if err := db.QueryRow(`
+			SELECT a.tag, a.name FROM alliance_members am
+			JOIN alliances a ON a.id = am.alliance_id
+			WHERE am.player_id = ?
+		`, playerID).Scan(&allianceTag, &allianceName); err != nil {
+			// Player not in an alliance — leave empty
+		}
+
 		_, err := db.Exec(`
-			INSERT INTO leaderboard (user_id, username, total_points, economy_points, military_points, research_points, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO leaderboard (user_id, username, alliance_tag, alliance_name, total_points, economy_points, military_points, research_points, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(user_id) DO UPDATE SET
 				username = excluded.username,
+				alliance_tag = excluded.alliance_tag,
+				alliance_name = excluded.alliance_name,
 				total_points = excluded.total_points,
 				economy_points = excluded.economy_points,
 				military_points = excluded.military_points,
 				research_points = excluded.research_points,
 				updated_at = excluded.updated_at
-		`, playerID, username, total, economy, military, research, now)
+		`, playerID, username, allianceTag, allianceName, total, economy, military, research, now)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %v", playerID, err))
 		}
@@ -175,7 +190,7 @@ func GetLeaderboard(db *sql.DB, limit, offset int) ([]LeaderboardEntry, error) {
 	}
 
 	rows, err := db.Query(`
-		SELECT user_id, username, total_points, economy_points, military_points, research_points, updated_at
+		SELECT user_id, username, alliance_tag, alliance_name, total_points, economy_points, military_points, research_points, updated_at
 		FROM leaderboard
 		ORDER BY total_points DESC
 		LIMIT ? OFFSET ?
@@ -189,7 +204,7 @@ func GetLeaderboard(db *sql.DB, limit, offset int) ([]LeaderboardEntry, error) {
 	for rows.Next() {
 		var e LeaderboardEntry
 		var updatedAt string
-		if err := rows.Scan(&e.UserID, &e.Username, &e.TotalPoints, &e.EconomyPoints, &e.MilitaryPoints, &e.ResearchPoints, &updatedAt); err != nil {
+		if err := rows.Scan(&e.UserID, &e.Username, &e.AllianceTag, &e.AllianceName, &e.TotalPoints, &e.EconomyPoints, &e.MilitaryPoints, &e.ResearchPoints, &updatedAt); err != nil {
 			return nil, fmt.Errorf("scan leaderboard row: %w", err)
 		}
 		entries = append(entries, e)

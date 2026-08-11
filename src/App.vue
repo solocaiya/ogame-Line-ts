@@ -975,7 +975,7 @@
 
       return
     }
-    gameStore.player = gameLogic.initializePlayer(gameStore.player.id, t('common.playerName'))
+    gameStore.player = gameLogic.initializePlayer(gameStore.player.id, authStore.displayName || t('common.playerName'))
     const initialPlanet = planetLogic.createInitialPlanet(gameStore.player.id, t('planet.homePlanet'))
     gameStore.player.planets = [initialPlanet]
     gameStore.currentPlanetId = initialPlanet.id
@@ -2674,6 +2674,13 @@
     wsService.on('disconnected', () => {
       console.log('[App] WebSocket disconnected')
       gameStore.setWsConnected(false) // fixes A4: pause optimistic updates when offline
+    })
+
+    // 其他玩家改名 → 刷新排行榜 / 星系视图等
+    wsService.on('nameChanged', (data: { userId: string; newName: string }) => {
+      // 排行榜 / 星系 / 联盟等视图从各自 store 取用户名，
+      // 这里只需触发全局刷新即可
+      gameStore.syncFromServer()
     })
   }
 

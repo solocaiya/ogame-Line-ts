@@ -142,6 +142,14 @@ func migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_alliance_requests_alliance ON alliance_requests(alliance_id, status)`,
 		`CREATE INDEX IF NOT EXISTS idx_alliance_requests_player ON alliance_requests(player_id, status)`,
 		`CREATE INDEX IF NOT EXISTS idx_chat_messages_channel ON chat_messages(channel, created_at DESC)`,
+
+		// Leaderboard alliance columns (added for alliance tag display)
+		`ALTER TABLE leaderboard ADD COLUMN alliance_tag TEXT DEFAULT ''`,
+		`ALTER TABLE leaderboard ADD COLUMN alliance_name TEXT DEFAULT ''`,
+
+		// Display name (nickname) support
+		`ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''`,
+		`ALTER TABLE users ADD COLUMN rename_count INTEGER DEFAULT 0`,
 	}
 
 	for _, m := range migrations {

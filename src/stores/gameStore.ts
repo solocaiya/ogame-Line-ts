@@ -152,8 +152,12 @@ export const useGameStore = defineStore('game', {
             missileAttacks: this.player.missileAttacks,
             missionReports: this.player.missionReports
           }
+          // Extract alliance info from response (server injects these alongside player data)
+          const allianceInfo: Partial<Player> = {}
+          if (response.allianceTag !== undefined) allianceInfo.allianceTag = response.allianceTag
+          if (response.allianceName !== undefined) allianceInfo.allianceName = response.allianceName
           // Update player from server (deep replace — fixes B6 Object.assign shallow merge)
-          deepMergeReactive(this.player, { ...serverPlayer, ...localOnly } as Partial<Player>)
+          deepMergeReactive(this.player, { ...serverPlayer, ...allianceInfo, ...localOnly } as Partial<Player>)
           this._lastSyncTime = Date.now()
           return true
         }

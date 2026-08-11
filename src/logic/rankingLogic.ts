@@ -146,9 +146,14 @@ export const createRankingEntry = (
   name: string,
   isPlayer: boolean,
   scores: RankingEntry['scores'],
-  planetCount: number
+  planetCount: number,
+  allianceTag?: string,
+  allianceName?: string
 ): RankingEntry => {
-  return { id, name, isPlayer, scores, planetCount }
+  const entry: RankingEntry = { id, name, isPlayer, scores, planetCount }
+  if (allianceTag) entry.allianceTag = allianceTag
+  if (allianceName) entry.allianceName = allianceName
+  return entry
 }
 
 /**
@@ -163,7 +168,7 @@ export const getRanking = (player: Player, npcs: NPC[], category: RankingCategor
 
   // 添加玩家
   const playerScores = calculatePlayerScores(player)
-  entries.push(createRankingEntry(player.id, player.name || '玩家', true, playerScores, player.planets.length))
+  entries.push(createRankingEntry(player.id, player.name || '玩家', true, playerScores, player.planets.length, player.allianceTag, player.allianceName))
 
   // 添加所有NPC
   for (const npc of npcs) {

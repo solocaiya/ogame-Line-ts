@@ -1082,6 +1082,7 @@
   import { BuildingType, MissionType } from '@/types/game'
   import type { FleetMission, OreDeposits } from '@/types/game'
   import { toast } from 'vue-sonner'
+  import { apiService } from '@/services/apiService'
 
   const gameStore = useGameStore()
   const universeStore = useUniverseStore()
@@ -1112,6 +1113,9 @@
   const bookmarkTargetPlanet = ref<Planet | null>(null)
   const bookmarkCategory = ref<BookmarkCategory>('planet')
   const bookmarkStarred = ref(false)
+
+  // 服务端扫描的其他玩家星球数据（key = "g:s:p"）
+  const scannedPlayerPlanets = ref<Record<string, { ownerId: string; ownerName: string; allianceTag: string; allianceName: string }>>({})
 
   // 获取玩家书签列表
   const bookmarks = computed(() => gameStore.player.bookmarks || [])
@@ -1238,18 +1242,36 @@
     return positions.map(pos => {
       const key = gameLogic.generatePositionKey(galaxy, system, pos.position)
       // 先从玩家星球中查找（非月球），再从宇宙地图中查找
-      const planet =
+      let planet =
         gameStore.player.planets.find(
           p => !p.isMoon && p.position.galaxy === galaxy && p.position.system === system && p.position.position === pos.position
         ) ||
         universeStore.planets[key] ||
         null
 
+      // 如果本地没有该位置的星球，检查服务端扫描的其他玩家星球数据
+      if (!planet) {
+        const scannedKey = `${galaxy}:${system}:${pos.position}`
+        const scanned = scannedPlayerPlanets.value[scannedKey]
+        if (scanned) {
+          // 创建一个合成的 Planet 对象用于显示
+          planet = {
+            id: `scanned_${scannedKey}`,
+            name: scanned.ownerName || '',
+            coordinate: { galaxy, system, position: pos.position },
+            ownerId: scanned.ownerId,
+            ownerName: scanned.ownerName,
+            allianceTag: scanned.allianceTag,
+            allianceName: scanned.allianceName,
+          } as Planet
+        }
+      }
+
       // 查找该位置的月球（如果有星球的话）
       let moon: Planet | null = null
       if (planet) {
         // 从玩家星球中查找月球
-        moon = gameStore.player.planets.find(p => p.isMoon && p.parentPlanetId === planet.id) || null
+        moon = gameStore.player.planets.find(p => p.isMoon && p.parentPlanetId === planet!.id) || null
       }
 
       return { position: pos.position, planet, moon }
@@ -1288,6 +1310,34 @@
     currentGalaxy.value = selectedGalaxy.value
     currentSystem.value = selectedSystem.value
     systemSlots.value = getSystemPlanets(currentGalaxy.value, currentSystem.value)
+    // 从服务端扫描该系统内的其他玩家星球
+    scanSystemPlayers(currentGalaxy.value, currentSystem.value)
+  }
+
+  // 调用服务端 API 扫描系统内的玩家星球
+  const scanSystemPlayers = async (galaxy: number, system: number) => {
+    try {
+      const result = await apiService.scanGalaxy(galaxy, system)
+      const map: Record<string, { ownerId: string; ownerName: string; allianceTag: string; allianceName: string }> = {}
+      if (result?.planets) {
+        for (const p of result.planets) {
+          if (p.ownerId && p.ownerId !== gameStore.player.id) {
+            const key = `${galaxy}:${system}:${p.position}`
+            map[key] = {
+              ownerId: p.ownerId,
+              ownerName: p.ownerName || '',
+              allianceTag: p.allianceTag || '',
+              allianceName: p.allianceName || '',
+            }
+          }
+        }
+      }
+      scannedPlayerPlanets.value = map
+      // 重新生成 systemSlots 以合并扫描结果
+      systemSlots.value = getSystemPlanets(galaxy, system)
+    } catch (e) {
+      console.warn('[GalaxyView] scanGalaxy failed:', e)
+    }
   }
 
   // 跳转到指定星球的星系
@@ -1379,13 +1429,31 @@
     return 'text-muted-foreground'
   }
 
-  // 获取NPC星球的显示名称 - 使用"XXX的星球"格式，如果有备注则显示"NPC名称(备注)的星球"
+  // 获取星球的坐标key（g:s:p格式）
+  const getPlanetCoordKey = (planet: Planet | null): string | null => {
+    if (!planet) return null
+    const coord = planet.coordinate
+    if (!coord) return null
+    return `${coord.galaxy}:${coord.system}:${coord.position}`
+  }
+
+  // 获取NPC/其他玩家星球的显示名称
+  // - NPC星球：使用"XXX的星球"格式
+  // - 其他玩家星球：显示 "[TAG] OwnerName"
+  // - 其他情况：显示星球名
   const getNpcPlanetDisplayName = (planet: Planet | null): string => {
     if (!planet) return ''
     const npc = getPlanetNPC(planet)
     if (npc) {
       const displayName = npc.note ? `${npc.name}(${npc.note})` : npc.name
       return t('galaxyView.npcPlanetName').replace('{name}', displayName)
+    }
+    // 检查是否是其他玩家的星球（通过服务端扫描数据）
+    const key = getPlanetCoordKey(planet)
+    if (key && scannedPlayerPlanets.value[key]) {
+      const info = scannedPlayerPlanets.value[key]
+      const tagPrefix = info.allianceTag ? `[${info.allianceTag}] ` : ''
+      return `${tagPrefix}${info.ownerName}`
     }
     return planet.name
   }
