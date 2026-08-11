@@ -2510,9 +2510,9 @@ export default {
     perks: {
       build_queue_plus_1: '建設キュー +1',
       build_speed_10pct: '建設速度 +10%',
-      attack_10pct: '攻撃力 +10%',
-      defense_10pct: '防御力 +10%',
-      fleet_speed_10pct: '艦隊速度 +10%',
+      attack_5pct: '攻撃力 +5%',
+      defense_5pct: '防御力 +5%',
+      fleet_speed_25pct: '艦隊速度 +25%',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '利用可能',
@@ -2530,7 +2530,7 @@ export default {
     confirm: '確認',
     remaining: '残り時間',
     skipTime: 'スキップ',
-    costPerHour: '1 DM = 60分',
+    costPerHour: 'タイプ別コスト: 建築200/研究250/艦隊300 DM/時',
     insufficientDM: 'ダークマターが不足しています',
     success: '加速完了！{time}スキップ',
     building: '建築を加速',

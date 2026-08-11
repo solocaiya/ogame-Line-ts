@@ -1,22 +1,30 @@
 /**
  * 加速逻辑 — 暗物质加速建造/研究/造船/舰队旅行
  *
- * 核心公式：1 DM = 60 分钟（1 小时），不足 1 小时向上取整，最低 1 DM
+ * 核心公式：costPerHour DM = 60 分钟（1 小时），不足 1 小时向上取整，最低 costPerHour DM
+ * 不同类型加速消耗不同（与后端 shopConfig.go 保持一致）
  */
 
-/** 每小时加速消耗的暗物质（与后端 AccelerateCostPerHour 保持一致） */
-export const ACCELERATE_COST_PER_HOUR = 1
+/** 每小时加速消耗的暗物质，按类型区分（与后端 AccelerateCost* 常量一致） */
+export const ACCELERATE_COST_BUILDING = 200
+export const ACCELERATE_COST_RESEARCH = 250
+export const ACCELERATE_COST_FLEET_BUILD = 300
+export const ACCELERATE_COST_FLEET_TRAVEL = 300
+
+/** @deprecated 使用按类型区分的常量 */
+export const ACCELERATE_COST_PER_HOUR = ACCELERATE_COST_BUILDING
 
 /**
  * 计算加速剩余时间所需的暗物质数量
  * @param remainingMs 剩余时间（毫秒）
+ * @param costPerHour 每小时消耗的暗物质（默认建筑加速）
  * @returns 所需暗物质数量
  */
-export function calculateAccelerateCost(remainingMs: number): number {
+export function calculateAccelerateCost(remainingMs: number, costPerHour: number = ACCELERATE_COST_BUILDING): number {
   if (remainingMs <= 0) return 0
   const remainingMinutes = remainingMs / 60000
   const hours = Math.ceil(remainingMinutes / 60)
-  return Math.max(1, hours) * ACCELERATE_COST_PER_HOUR
+  return Math.max(1, hours) * costPerHour
 }
 
 /**

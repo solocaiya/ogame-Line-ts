@@ -31,8 +31,9 @@ func NewAccelerateHandler(gameState *gamestate.GameState, db *sql.DB, wsHub *ws.
 // ─── Cost Calculation ────────────────────────────────────────────────────────
 
 // calcAccelerateCost returns the DM cost to skip the given number of milliseconds.
-// 1 DM = 60 minutes (AccelerateCostPerHour). Fractional hours round up.
-func calcAccelerateCost(remainingMs int64) int64 {
+// costPerHour is the DM cost per 60 minutes (varies by acceleration type).
+// Fractional hours round up.
+func calcAccelerateCost(remainingMs int64, costPerHour int64) int64 {
 	if remainingMs <= 0 {
 		return 0
 	}
@@ -41,7 +42,7 @@ func calcAccelerateCost(remainingMs int64) int64 {
 	if hours < 1 {
 		hours = 1
 	}
-	return int64(hours) * engine.AccelerateCostPerHour
+	return int64(hours) * costPerHour
 }
 
 // deductDM deducts the given amount from the player's dark matter balance and
@@ -120,7 +121,7 @@ func (h *AccelerateHandler) AccelerateBuilding(c *gin.Context) {
 		skipMs = remainingMs
 	}
 
-	costDM := calcAccelerateCost(skipMs)
+	costDM := calcAccelerateCost(skipMs, engine.AccelerateCostBuilding)
 	if costDM <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nothing to accelerate"})
 		return
@@ -227,7 +228,7 @@ func (h *AccelerateHandler) AccelerateResearch(c *gin.Context) {
 		skipMs = remainingMs
 	}
 
-	costDM := calcAccelerateCost(skipMs)
+	costDM := calcAccelerateCost(skipMs, engine.AccelerateCostResearch)
 	if costDM <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nothing to accelerate"})
 		return
@@ -331,7 +332,7 @@ func (h *AccelerateHandler) AccelerateFleetBuild(c *gin.Context) {
 		skipMs = remainingMs
 	}
 
-	costDM := calcAccelerateCost(skipMs)
+	costDM := calcAccelerateCost(skipMs, engine.AccelerateCostFleetBuild)
 	if costDM <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nothing to accelerate"})
 		return
@@ -455,7 +456,7 @@ func (h *AccelerateHandler) AccelerateFleetTravel(c *gin.Context) {
 		skipMs = remainingMs
 	}
 
-	costDM := calcAccelerateCost(skipMs)
+	costDM := calcAccelerateCost(skipMs, engine.AccelerateCostFleetTravel)
 	if costDM <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nothing to accelerate"})
 		return
@@ -560,7 +561,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 					QueueIndex:  i,
 					ItemName:    item.Type,
 					RemainingMs: remaining,
-					CostDM:      calcAccelerateCost(remaining),
+					CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostBuilding),
 				})
 			}
 		}
@@ -575,7 +576,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 					QueueIndex:  i,
 					ItemName:    item.Type,
 					RemainingMs: remaining,
-					CostDM:      calcAccelerateCost(remaining),
+					CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostResearch),
 				})
 			}
 		}
@@ -590,7 +591,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 					QueueIndex:  i,
 					ItemName:    item.Type,
 					RemainingMs: remaining,
-					CostDM:      calcAccelerateCost(remaining),
+					CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostFleetBuild),
 				})
 			}
 		}
@@ -605,7 +606,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 					QueueIndex:  i,
 					ItemName:    item.Type,
 					RemainingMs: remaining,
-					CostDM:      calcAccelerateCost(remaining),
+					CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostFleetBuild),
 				})
 			}
 		}
@@ -629,7 +630,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 				MissionID:   m.ID,
 				ItemName:    m.MissionType,
 				RemainingMs: remaining,
-				CostDM:      calcAccelerateCost(remaining),
+				CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostFleetTravel),
 			})
 		}
 	}

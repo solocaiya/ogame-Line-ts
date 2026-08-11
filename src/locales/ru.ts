@@ -2512,9 +2512,9 @@ export default {
     perks: {
       build_queue_plus_1: 'Очередь строительства +1',
       build_speed_10pct: 'Скорость строительства +10%',
-      attack_10pct: 'Атака +10%',
-      defense_10pct: 'Защита +10%',
-      fleet_speed_10pct: 'Скорость флота +10%',
+      attack_5pct: 'Атака +5%',
+      defense_5pct: 'Защита +5%',
+      fleet_speed_25pct: 'Скорость флота +25%',
       research_speed_10pct: 'Скорость исследований +10%'
     },
     available: 'Доступно',
@@ -2532,7 +2532,7 @@ export default {
     confirm: 'Подтвердить',
     remaining: 'Осталось',
     skipTime: 'Пропустить',
-    costPerHour: '1 DM = 60 минут',
+    costPerHour: 'Зависит от типа: здание 200 / исследование 250 / флот 300 DM/ч',
     insufficientDM: 'Недостаточно Тёмной материи',
     success: 'Ускорено! Пропущено {time}',
     building: 'Ускорить строительство',

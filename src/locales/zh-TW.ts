@@ -2691,9 +2691,9 @@ export default {
     perks: {
       build_queue_plus_1: '建造隊列 +1',
       build_speed_10pct: '建造速度 +10%',
-      attack_10pct: '攻擊力 +10%',
-      defense_10pct: '防禦力 +10%',
-      fleet_speed_10pct: '艦隊速度 +10%',
+      attack_5pct: '攻擊力 +5%',
+      defense_5pct: '防禦力 +5%',
+      fleet_speed_25pct: '艦隊速度 +25%',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '可購買',
@@ -2711,7 +2711,7 @@ export default {
     confirm: '確認',
     remaining: '剩餘時間',
     skipTime: '跳過',
-    costPerHour: '1 暗物質 = 60 分鐘',
+    costPerHour: '加速費用按類型區分：建築200/研究250/艦隊300 DM/時',
     insufficientDM: '暗物質不足',
     success: '加速成功！跳過 {time}',
     building: '加速建築',

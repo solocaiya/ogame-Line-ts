@@ -2554,9 +2554,9 @@ export default {
     perks: {
       build_queue_plus_1: '建造队列 +1',
       build_speed_10pct: '建造速度 +10%',
-      attack_10pct: '攻击力 +10%',
-      defense_10pct: '防御力 +10%',
-      fleet_speed_10pct: '舰队速度 +10%',
+      attack_5pct: '攻击力 +5%',
+      defense_5pct: '防御力 +5%',
+      fleet_speed_25pct: '舰队速度 +25%',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '可购买',
@@ -2574,7 +2574,7 @@ export default {
     confirm: '确认加速',
     remaining: '剩余时间',
     skipTime: '跳过时间',
-    costPerHour: '1 暗物质 = 60 分钟',
+    costPerHour: '加速费用按类型区分：建筑200/研究250/舰队300 DM/时',
     insufficientDM: '暗物质不足',
     success: '加速成功！跳过 {time}',
     building: '加速建筑',

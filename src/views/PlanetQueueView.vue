@@ -409,7 +409,10 @@
   // 获取加速费用文本
   const getAccelerateCostText = (item: BuildQueueItem): string => {
     const remainingMs = Math.max(0, item.endTime - Date.now())
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const costPerHour = item.type === 'ship'
+      ? accelerateLogic.ACCELERATE_COST_FLEET_BUILD
+      : accelerateLogic.ACCELERATE_COST_BUILDING
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, costPerHour)
     return `${cost}DM`
   }
 
@@ -428,7 +431,10 @@
   // 加速处理
   const handleAccelerateItem = async (planet: Planet, item: BuildQueueItem) => {
     const remainingMs = Math.max(0, item.endTime - Date.now())
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const costPerHour = item.type === 'ship'
+      ? accelerateLogic.ACCELERATE_COST_FLEET_BUILD
+      : accelerateLogic.ACCELERATE_COST_BUILDING
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, costPerHour)
     const balance = gameStore.darkMatterBalance || 0
 
     if (balance < cost) {

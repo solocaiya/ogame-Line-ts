@@ -1458,14 +1458,14 @@
   // 获取舰队加速费用标签
   const getFleetAccelerateCost = (mission: any): string => {
     const remainingMs = getFleetRemainingMs(mission)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, accelerateLogic.ACCELERATE_COST_FLEET_TRAVEL)
     return `${cost}DM`
   }
 
   // 处理舰队加速
   const handleAccelerateFleet = async (mission: any) => {
     const remainingMs = getFleetRemainingMs(mission)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, accelerateLogic.ACCELERATE_COST_FLEET_TRAVEL)
     const balance = gameStore.darkMatterBalance || 0
 
     if (balance < cost) {

@@ -415,8 +415,8 @@ func (h *WalletHandler) BuyMonthlyCard(c *gin.Context) {
 		return
 	}
 
-	// Cost in DM (mock: 1 RMB = 10 DM)
-	costDM := card.AmountRMB * 10
+	// Cost in DM (mock: 1 RMB = 100 DM)
+	costDM := card.AmountRMB * 100
 
 	tx, err := h.db.Begin()
 	if err != nil {
@@ -695,8 +695,8 @@ func (h *WalletHandler) BuyGrowthFund(c *gin.Context) {
 		return
 	}
 
-	// Cost in DM (mock: 1 RMB = 10 DM)
-	costDM := int64(engine.GrowthFundCostRMB * 10)
+	// Cost in DM (mock: 1 RMB = 100 DM)
+	costDM := int64(engine.GrowthFundCostRMB * 100)
 
 	tx, err := h.db.Begin()
 	if err != nil {
@@ -1026,9 +1026,18 @@ func (h *WalletHandler) BuyGiftPack(c *gin.Context) {
 		var planetID string
 		err = tx.QueryRow(`SELECT id FROM planets WHERE owner_id = ? ORDER BY created_at ASC LIMIT 1`, playerID).Scan(&planetID)
 		if err == nil {
-			// We can't easily update planet resources here without loading the full game state.
-			// For the mock flow, we'll just add DM if the pack has DM, and log a note about resources.
-			// TODO: integrate with gameState to add resources to planet
+			// Update planet resources directly in DB
+			_, err = tx.Exec(`
+				UPDATE planets SET
+					metal = metal + ?,
+					crystal = crystal + ?,
+					deuterium = deuterium + ?
+				WHERE id = ?
+			`, pack.Contents.Metal, pack.Contents.Crystal, pack.Contents.Deuterium, planetID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add pack resources"})
+				return
+			}
 		}
 	}
 

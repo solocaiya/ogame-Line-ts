@@ -6,7 +6,7 @@ type RechargeProduct struct {
 	AmountRMB  int64  `json:"amountRMB"`
 	DarkMatter int64  `json:"darkMatter"`
 	Bonus      int64  `json:"bonus"` // bonus DM on top of base
-	FirstBonus float64 `json:"firstBonus"` // first-recharge bonus multiplier (e.g. 0.5 = +50%)
+	FirstBonus float64 `json:"firstBonus"` // first-recharge bonus multiplier (1.0 = +100%, 首充双倍)
 }
 
 // MonthlyCard defines a subscription card.
@@ -47,29 +47,30 @@ type GrowthFundStage struct {
 }
 
 // RechargeProducts available for purchase.
+// Exchange rate: 1 RMB = 100 DM. FirstBonus 1.0 = +100% (首充双倍).
 var RechargeProducts = map[string]RechargeProduct{
-	"dm_60":   {ID: "dm_60",   AmountRMB: 6,   DarkMatter: 60,   Bonus: 0,   FirstBonus: 0.5},
-	"dm_300":  {ID: "dm_300",  AmountRMB: 30,  DarkMatter: 300,  Bonus: 0,   FirstBonus: 0.5},
-	"dm_680":  {ID: "dm_680",  AmountRMB: 68,  DarkMatter: 680,  Bonus: 0,   FirstBonus: 0.5},
-	"dm_1280": {ID: "dm_1280", AmountRMB: 128, DarkMatter: 1280, Bonus: 128, FirstBonus: 0.5},
-	"dm_3280": {ID: "dm_3280", AmountRMB: 328, DarkMatter: 3280, Bonus: 492, FirstBonus: 0.5},
-	"dm_6480": {ID: "dm_6480", AmountRMB: 648, DarkMatter: 6480, Bonus: 1620, FirstBonus: 0.5},
+	"dm_600":    {ID: "dm_600",    AmountRMB: 6,   DarkMatter: 600,    Bonus: 0,     FirstBonus: 1.0},
+	"dm_3000":   {ID: "dm_3000",   AmountRMB: 30,  DarkMatter: 3000,   Bonus: 0,     FirstBonus: 1.0},
+	"dm_9800":   {ID: "dm_9800",   AmountRMB: 98,  DarkMatter: 9800,   Bonus: 0,     FirstBonus: 1.0},
+	"dm_19800":  {ID: "dm_19800",  AmountRMB: 198, DarkMatter: 19800,  Bonus: 1980,  FirstBonus: 1.0},
+	"dm_32800":  {ID: "dm_32800",  AmountRMB: 328, DarkMatter: 32800,  Bonus: 4920,  FirstBonus: 1.0},
+	"dm_64800":  {ID: "dm_64800",  AmountRMB: 648, DarkMatter: 64800,  Bonus: 16200, FirstBonus: 1.0},
 }
 
 // RechargeProductList is the ordered list for display.
-var RechargeProductList = []string{"dm_60", "dm_300", "dm_680", "dm_1280", "dm_3280", "dm_6480"}
+var RechargeProductList = []string{"dm_600", "dm_3000", "dm_9800", "dm_19800", "dm_32800", "dm_64800"}
 
 // MonthlyCards available for purchase.
 var MonthlyCards = map[string]MonthlyCard{
 	"small_monthly": {
 		ID: "small_monthly", Name: "小月卡", AmountRMB: 30,
-		DailyDM: 100, DurationDays: 30, VIPLevel: 1,
+		DailyDM: 200, DurationDays: 30, VIPLevel: 1,
 		Perks: []string{"build_queue_plus_1", "build_speed_10pct"},
 	},
 	"large_monthly": {
 		ID: "large_monthly", Name: "大月卡", AmountRMB: 68,
-		DailyDM: 200, DurationDays: 30, VIPLevel: 2,
-		Perks: []string{"attack_10pct", "defense_10pct", "fleet_speed_10pct"},
+		DailyDM: 300, DurationDays: 30, VIPLevel: 2,
+		Perks: []string{"attack_5pct", "defense_5pct", "fleet_speed_25pct"},
 	},
 }
 
@@ -110,5 +111,10 @@ var GiftPacks = []GiftPack{
 	},
 }
 
-// AccelerateCostPerHour is the DM cost to accelerate 60 minutes.
-const AccelerateCostPerHour int64 = 1
+// AccelerateCostPerHour is the DM cost to accelerate 60 minutes, per type.
+const (
+	AccelerateCostBuilding   int64 = 200 // 建筑加速: 200 DM/小时
+	AccelerateCostResearch   int64 = 250 // 研究加速: 250 DM/小时
+	AccelerateCostFleetBuild int64 = 300 // 造船加速: 300 DM/小时
+	AccelerateCostFleetTravel int64 = 300 // 舰队旅行加速: 300 DM/小时
+)

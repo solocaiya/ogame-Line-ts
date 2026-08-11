@@ -2526,9 +2526,9 @@ export default {
     perks: {
       build_queue_plus_1: 'Bauqueue +1',
       build_speed_10pct: 'Baugeschwindigkeit +10%',
-      attack_10pct: 'Angriff +10%',
-      defense_10pct: 'Verteidigung +10%',
-      fleet_speed_10pct: 'Flottengeschwindigkeit +10%',
+      attack_5pct: 'Angriff +5%',
+      defense_5pct: 'Verteidigung +5%',
+      fleet_speed_25pct: 'Flottengeschwindigkeit +25%',
       research_speed_10pct: 'Forschungsgeschwindigkeit +10%'
     },
     available: 'Verfügbar',
@@ -2546,7 +2546,7 @@ export default {
     confirm: 'Bestätigen',
     remaining: 'Verbleibend',
     skipTime: 'Überspringen',
-    costPerHour: '1 DM = 60 Minuten',
+    costPerHour: 'Kosten nach Typ: Gebäude 200 / Forschung 250 / Flotte 300 DM/h',
     insufficientDM: 'Nicht genug Dunkle Materie',
     success: 'Beschleunigt! {time} übersprungen',
     building: 'Gebäude beschleunigen',

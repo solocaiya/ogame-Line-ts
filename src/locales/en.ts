@@ -2654,9 +2654,9 @@ export default {
     perks: {
       build_queue_plus_1: 'Build Queue +1',
       build_speed_10pct: 'Build Speed +10%',
-      attack_10pct: 'Attack +10%',
-      defense_10pct: 'Defense +10%',
-      fleet_speed_10pct: 'Fleet Speed +10%',
+      attack_5pct: 'Attack +5%',
+      defense_5pct: 'Defense +5%',
+      fleet_speed_25pct: 'Fleet Speed +25%',
       research_speed_10pct: 'Research Speed +10%'
     },
     available: 'Available',
@@ -2674,7 +2674,7 @@ export default {
     confirm: 'Confirm',
     remaining: 'Remaining',
     skipTime: 'Skip',
-    costPerHour: '1 DM = 60 minutes',
+    costPerHour: 'Costs vary by type: building 200 / research 250 / fleet 300 DM/hr',
     insufficientDM: 'Not enough Dark Matter',
     success: 'Accelerated! Skipped {time}',
     building: 'Accelerate Building',

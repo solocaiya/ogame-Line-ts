@@ -57,10 +57,10 @@ func GetVIPBonus(vipLevel int, subExpiresAt, sub2ExpiresAt *time.Time) VIPBonus 
 	}
 
 	if largeActive {
-		// 大月卡: +10% attack, +10% defense, +10% fleet speed
-		b.AttackPct += 10.0
-		b.DefensePct += 10.0
-		b.FleetSpeedPct += 10.0
+		// 大月卡: +5% attack, +5% defense, +25% fleet speed
+		b.AttackPct += 5.0
+		b.DefensePct += 5.0
+		b.FleetSpeedPct += 25.0
 	}
 
 	return b

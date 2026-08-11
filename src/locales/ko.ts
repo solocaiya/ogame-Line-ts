@@ -2451,9 +2451,9 @@ export default {
     perks: {
       build_queue_plus_1: '건설 큐 +1',
       build_speed_10pct: '건설 속도 +10%',
-      attack_10pct: '공격력 +10%',
-      defense_10pct: '방어력 +10%',
-      fleet_speed_10pct: '함대 속도 +10%',
+      attack_5pct: '공격력 +5%',
+      defense_5pct: '방어력 +5%',
+      fleet_speed_25pct: '함대 속도 +25%',
       research_speed_10pct: '연구 속도 +10%'
     },
     available: '구매 가능',
@@ -2471,7 +2471,7 @@ export default {
     confirm: '확인',
     remaining: '남은 시간',
     skipTime: '건너뛰기',
-    costPerHour: '1 DM = 60분',
+    costPerHour: '유형별 비용: 건축 200/연구 250/함대 300 DM/시',
     insufficientDM: '암흑 물질이 부족합니다',
     success: '가속 완료! {time} 단축',
     building: '건축 가속',

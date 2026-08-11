@@ -2624,9 +2624,9 @@ export default {
     perks: {
       build_queue_plus_1: 'Cola de Construcción +1',
       build_speed_10pct: 'Velocidad de Construcción +10%',
-      attack_10pct: 'Ataque +10%',
-      defense_10pct: 'Defensa +10%',
-      fleet_speed_10pct: 'Velocidad de Flota +10%',
+      attack_5pct: 'Ataque +5%',
+      defense_5pct: 'Defensa +5%',
+      fleet_speed_25pct: 'Velocidad de Flota +25%',
       research_speed_10pct: 'Velocidad de Investigación +10%'
     },
     available: 'Disponible',
@@ -2644,7 +2644,7 @@ export default {
     confirm: 'Confirmar',
     remaining: 'Restante',
     skipTime: 'Saltar',
-    costPerHour: '1 DM = 60 minutos',
+    costPerHour: 'Varía por tipo: edificio 200 / investigación 250 / flota 300 DM/h',
     insufficientDM: 'Materia Oscura insuficiente',
     success: '¡Acelerado! Saltado {time}',
     building: 'Acelerar edificio',

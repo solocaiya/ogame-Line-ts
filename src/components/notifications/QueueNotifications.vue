@@ -329,7 +329,10 @@
   // 计算加速所需 DM 并格式化显示
   const getAccelerateCostLabel = (item: BuildQueueItem): string => {
     const remainingMs = Math.max(0, item.endTime - currentTime.value)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const costPerHour = item.type === 'technology'
+      ? accelerateLogic.ACCELERATE_COST_RESEARCH
+      : accelerateLogic.ACCELERATE_COST_BUILDING
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, costPerHour)
     return `${cost}DM`
   }
 
@@ -351,7 +354,10 @@
   // 加速处理
   const handleAccelerate = async (item: BuildQueueItem, tabValue: string) => {
     const remainingMs = Math.max(0, item.endTime - currentTime.value)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs)
+    const costPerHour = tabValue === 'research' || item.type === 'technology'
+      ? accelerateLogic.ACCELERATE_COST_RESEARCH
+      : accelerateLogic.ACCELERATE_COST_BUILDING
+    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, costPerHour)
     const balance = gameStore.darkMatterBalance || 0
 
     if (balance < cost) {
