@@ -150,6 +150,15 @@ func migrate() error {
 		// Display name (nickname) support
 		`ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''`,
 		`ALTER TABLE users ADD COLUMN rename_count INTEGER DEFAULT 0`,
+
+		// Dark matter balance (account-level, premium currency)
+		`ALTER TABLE users ADD COLUMN dark_matter_balance INTEGER DEFAULT 0`,
+
+		// Rename cooldown tracking
+		`ALTER TABLE users ADD COLUMN last_rename_at DATETIME`,
+
+		// Leaderboard display name (separate from username)
+		`ALTER TABLE leaderboard ADD COLUMN display_name TEXT DEFAULT ''`,
 	}
 
 	for _, m := range migrations {

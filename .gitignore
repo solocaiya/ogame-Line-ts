@@ -38,7 +38,11 @@ android/.idea
 android/*.iml
 android/app/*.iml
 
-# Server build artifacts
+# Server build artifacts (both root and server/ directory)
+ogame-server
+ogame.db
+ogame.db-shm
+ogame.db-wal
 server/ogame-server
 server/ogame.db
 server/ogame.db-shm

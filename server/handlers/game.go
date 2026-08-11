@@ -722,33 +722,67 @@ func (h *GameHandler) ScanGalaxy(c *gin.Context) {
 		AllianceName string `json:"allianceName"`
 	}
 
-	results := make([]planetResult, 0, len(planets))
+	// Batch owner lookups to avoid N+1 queries
+	ownerIDs := make([]string, 0)
 	for _, p := range planets {
-		ownerName := ""
-		allianceTag := ""
-		allianceName := ""
-
 		if p.OwnerID != "" {
-			// Look up username
-			if h.db != nil {
-				_ = h.db.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, p.OwnerID).Scan(&ownerName)
-				// Look up alliance info
-				_ = h.db.QueryRow(`
-					SELECT a.tag, a.name FROM alliance_members am
-					JOIN alliances a ON a.id = am.alliance_id
-					WHERE am.player_id = ?
-				`, p.OwnerID).Scan(&allianceTag, &allianceName)
+			ownerIDs = append(ownerIDs, p.OwnerID)
+		}
+	}
+
+	ownerNames := make(map[string]string)
+	allianceTags := make(map[string]string)
+	allianceNames := make(map[string]string)
+
+	if len(ownerIDs) > 0 && h.db != nil {
+		// Batch query owner names
+		placeholders := ""
+		args := make([]interface{}, len(ownerIDs))
+		for i, id := range ownerIDs {
+			if i > 0 {
+				placeholders += ","
 			}
+			placeholders += "?"
+			args[i] = id
+		}
+		rows, err := h.db.Query(`SELECT id, COALESCE(NULLIF(display_name,''), username) FROM users WHERE id IN (`+placeholders+`)`, args...)
+		if err == nil {
+			for rows.Next() {
+				var id, name string
+				if err := rows.Scan(&id, &name); err == nil {
+					ownerNames[id] = name
+				}
+			}
+			rows.Close()
 		}
 
+		// Batch query alliance info
+		rows, err = h.db.Query(`
+			SELECT am.player_id, a.tag, a.name FROM alliance_members am
+			JOIN alliances a ON a.id = am.alliance_id
+			WHERE am.player_id IN (`+placeholders+`)`, args...)
+		if err == nil {
+			for rows.Next() {
+				var pid, tag, name string
+				if err := rows.Scan(&pid, &tag, &name); err == nil {
+					allianceTags[pid] = tag
+					allianceNames[pid] = name
+				}
+			}
+			rows.Close()
+		}
+	}
+
+	results := make([]planetResult, 0, len(planets))
+	for _, p := range planets {
 		results = append(results, planetResult{
 			Position:     p.Position,
 			PlanetID:     p.PlanetID,
 			PlanetName:   p.PlanetName,
 			OwnerID:      p.OwnerID,
-			OwnerName:    ownerName,
-			AllianceTag:  allianceTag,
-			AllianceName: allianceName,
+			OwnerName:    ownerNames[p.OwnerID],
+			AllianceTag:  allianceTags[p.OwnerID],
+			AllianceName: allianceNames[p.OwnerID],
 		})
 	}
 
@@ -959,7 +993,8 @@ func (h *GameHandler) GetSettings(c *gin.Context) {
 }
 
 // UpdateProfile handles PUT /api/game/profile — change display name (nickname).
-// First rename is free; subsequent renames cost 2000 dark matter.
+// First rename is free; subsequent renames cost 2000 dark matter from account balance.
+// Enforces 24-hour cooldown between renames and display_name uniqueness.
 func (h *GameHandler) UpdateProfile(c *gin.Context) {
 	playerID := c.GetString("user_id")
 	if playerID == "" {
@@ -983,59 +1018,68 @@ func (h *GameHandler) UpdateProfile(c *gin.Context) {
 	}
 	defer tx.Rollback()
 
-	// Get current rename_count
+	// Get current user state: rename_count, last_rename_at, dark_matter_balance
 	var renameCount int
-	if err := tx.QueryRow(`SELECT COALESCE(rename_count, 0) FROM users WHERE id = ?`, playerID).Scan(&renameCount); err != nil {
+	var lastRenameAt sql.NullTime
+	var dmBalance int64
+	if err := tx.QueryRow(`SELECT COALESCE(rename_count, 0), last_rename_at, COALESCE(dark_matter_balance, 0) FROM users WHERE id = ?`, playerID).Scan(&renameCount, &lastRenameAt, &dmBalance); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
 		return
 	}
 
-	// If not the first rename, deduct 2000 dark matter from in-memory game state
 	cost := int64(0)
 	if renameCount > 0 {
-		cost = 2000
-		player, ok := h.gameState.GetPlayer(playerID)
-		if !ok || len(player.Planets) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient dark matter"})
+		// Check 24-hour cooldown since last rename
+		if lastRenameAt.Valid && time.Since(lastRenameAt.Time) < 24*time.Hour {
+			remaining := 24*time.Hour - time.Since(lastRenameAt.Time)
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":          "rename cooldown active",
+				"retry_after_ms": remaining.Milliseconds(),
+			})
 			return
 		}
-		// Find first planet with enough dark matter and deduct
-		deducted := false
-		for pid, planet := range player.Planets {
-			if planet.Resources.DarkMatter >= cost {
-				pidCopy := pid
-				h.gameState.UpdatePlanet(playerID, pidCopy, func(p *engine.PlanetState) error {
-					p.Resources.DarkMatter -= cost
-					return nil
-				})
-				deducted = true
-				break
-			}
-		}
-		if !deducted {
+
+		cost = 2000
+		if dmBalance < cost {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient dark matter"})
 			return
 		}
 	}
 
-	// Update display_name and increment rename_count
-	_, err = tx.Exec(`UPDATE users SET display_name = ?, rename_count = COALESCE(rename_count, 0) + 1 WHERE id = ?`,
-		req.DisplayName, playerID)
+	// Check display_name uniqueness (application-level since SQLite can't add UNIQUE to existing column)
+	var existingID string
+	err = tx.QueryRow(`SELECT id FROM users WHERE display_name = ? AND id != ?`, req.DisplayName, playerID).Scan(&existingID)
+	if err == nil {
+		// Found another user with this display_name
+		c.JSON(http.StatusConflict, gin.H{"error": "display name already taken"})
+		return
+	}
+	if err != sql.ErrNoRows {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+
+	// All validations passed — apply DB changes
+	_, err = tx.Exec(`UPDATE users SET display_name = ?, rename_count = COALESCE(rename_count, 0) + 1, last_rename_at = ? WHERE id = ?`,
+		req.DisplayName, time.Now(), playerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
 		return
 	}
 
-	// Update leaderboard entry immediately
-	displayName := req.DisplayName
-	if displayName == "" {
-		// Fallback to username
-		var uname string
-		tx.QueryRow(`SELECT COALESCE(NULLIF(display_name,''), username) FROM users WHERE id = ?`, playerID).Scan(&uname)
-		displayName = uname
+	// Deduct dark matter from account-level balance
+	if cost > 0 {
+		_, err = tx.Exec(`UPDATE users SET dark_matter_balance = dark_matter_balance - ? WHERE id = ?`, cost, playerID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to deduct dark matter"})
+			return
+		}
 	}
-	tx.Exec(`UPDATE leaderboard SET username = ? WHERE user_id = ?`, displayName, playerID)
 
+	// Update leaderboard entry with separate username/display_name
+	tx.Exec(`UPDATE leaderboard SET display_name = ? WHERE user_id = ?`, req.DisplayName, playerID)
+
+	// Commit DB transaction BEFORE mutating in-memory state
 	if err := tx.Commit(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save changes"})
 		return
