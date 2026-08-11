@@ -1078,6 +1078,7 @@ export const updateNPCGrowthByDistance = (
     let currentFleetPower = 0
     Object.entries(planet.fleet).forEach(([shipType, count]) => {
       const shipConfig = SHIPS[shipType as ShipType]
+      if (!shipConfig) return // 跳过已禁用的舰船类型（如暗物质采集船）
       const power = shipConfig.attack + shipConfig.shield + shipConfig.armor / 10
       currentFleetPower += power * (count as number)
     })

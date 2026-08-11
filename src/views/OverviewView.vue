@@ -248,7 +248,7 @@
       </CardHeader>
       <CardContent>
         <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div v-for="(count, shipType) in planet.fleet" :key="shipType">
+          <div v-for="(count, shipType) in planet.fleet" :key="shipType" v-if="SHIPS[shipType]">
             <p class="text-xs sm:text-sm text-muted-foreground">{{ SHIPS[shipType].name }}</p>
             <p class="text-lg sm:text-xl font-bold">{{ count }}</p>
           </div>

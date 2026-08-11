@@ -91,6 +91,7 @@
               <div
                 v-for="(count, shipType) in report.fleet"
                 :key="shipType"
+                v-if="SHIPS[shipType]"
                 class="flex items-center justify-between p-2 bg-white/50 dark:bg-black/20 rounded"
               >
                 <span class="text-sm text-muted-foreground truncate">{{ SHIPS[shipType].name }}</span>

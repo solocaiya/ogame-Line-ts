@@ -18,6 +18,7 @@ export const calculateFleetStorageUsage = (fleet: Fleet): number => {
   for (const shipType of Object.values(ShipType)) {
     const shipCount = fleet[shipType] || 0
     const shipConfig = SHIPS[shipType]
+    if (!shipConfig) continue // 跳过已禁用的舰船类型（如暗物质采集船）
     totalUsage += shipCount * shipConfig.storageUsage
   }
 
@@ -65,6 +66,7 @@ export const calculateQueueFleetStorageUsage = (buildQueue: Array<{ type: string
       const shipType = item.itemType as ShipType
       const quantity = item.quantity || 0
       const shipConfig = SHIPS[shipType]
+      if (!shipConfig) continue // 跳过已禁用的舰船类型
       queueUsage += quantity * shipConfig.storageUsage
     }
   }
@@ -89,7 +91,9 @@ export const hasEnoughFleetStorage = (
   const currentUsage = calculateFleetStorageUsage(planet.fleet)
   const queueUsage = calculateQueueFleetStorageUsage(planet.buildQueue)
   const maxStorage = calculateMaxFleetStorage(planet, technologies)
-  const newShipUsage = SHIPS[shipType].storageUsage * quantity
+  const shipConfig = SHIPS[shipType]
+  if (!shipConfig) return true // 已禁用的舰船类型不占用仓储
+  const newShipUsage = shipConfig.storageUsage * quantity
 
   return currentUsage + queueUsage + newShipUsage <= maxStorage
 }
@@ -105,7 +109,9 @@ export const getMaxBuildableShips = (planet: Planet, shipType: ShipType, technol
   const currentUsage = calculateFleetStorageUsage(planet.fleet)
   const maxStorage = calculateMaxFleetStorage(planet, technologies)
   const availableStorage = maxStorage - currentUsage
-  const shipStorageUsage = SHIPS[shipType].storageUsage
+  const shipConfig = SHIPS[shipType]
+  if (!shipConfig) return 0 // 已禁用的舰船类型无法建造
+  const shipStorageUsage = shipConfig.storageUsage
 
   if (shipStorageUsage === 0) return Number.MAX_SAFE_INTEGER
 
@@ -137,7 +143,9 @@ export const addFleetSafely = (
     if (count <= 0) continue
 
     const ship = shipType as ShipType
-    const shipStorageUsage = SHIPS[ship].storageUsage
+    const shipConfig = SHIPS[ship]
+    if (!shipConfig) continue // 跳过已禁用的舰船类型
+    const shipStorageUsage = shipConfig.storageUsage
 
     // 计算可以添加多少艘（不超过容量上限）
     const spaceAvailable = Math.max(0, maxStorage - currentUsage)

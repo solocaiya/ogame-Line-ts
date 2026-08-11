@@ -108,7 +108,7 @@
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div v-for="(count, shipType) in planet.fleet" :key="shipType" class="space-y-2">
+              <div v-for="(count, shipType) in planet.fleet" :key="shipType" v-if="SHIPS[shipType]" class="space-y-2">
                 <Label :for="`ship-${shipType}`" class="text-xs sm:text-sm">
                   {{ SHIPS[shipType].name }} ({{ t('fleetView.available') }}: {{ count }})
                 </Label>
@@ -328,7 +328,7 @@
             <div>
               <p class="text-xs sm:text-sm font-medium mb-2">{{ t('fleetView.fleetComposition') }}:</p>
               <div class="flex flex-wrap gap-2">
-                <Badge v-for="(count, shipType) in mission.fleet" :key="shipType" variant="outline">
+                <Badge v-for="(count, shipType) in mission.fleet" :key="shipType" v-if="SHIPS[shipType]" variant="outline">
                   {{ SHIPS[shipType].name }}: {{ count }}
                 </Badge>
               </div>
@@ -491,7 +491,7 @@
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div v-for="(count, shipType) in planet.fleet" :key="shipType" class="space-y-2">
+              <div v-for="(count, shipType) in planet.fleet" :key="shipType" v-if="SHIPS[shipType]" class="space-y-2">
                 <Label :for="`jump-ship-${shipType}`" class="text-xs sm:text-sm">
                   {{ SHIPS[shipType].name }} ({{ t('fleetView.available') }}: {{ count }})
                 </Label>

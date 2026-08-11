@@ -159,7 +159,7 @@
                   <Badge variant="secondary" class="text-xs">{{ getTotalLossCount(report.attackerLosses) }}</Badge>
                 </div>
                 <div class="space-y-1.5">
-                  <div v-for="(count, shipType) in report.attackerLosses" :key="shipType" class="flex items-center justify-between text-xs">
+                  <div v-for="(count, shipType) in report.attackerLosses" :key="shipType" v-if="SHIPS[shipType]" class="flex items-center justify-between text-xs">
                     <span class="text-muted-foreground truncate">{{ SHIPS[shipType].name }}</span>
                     <span class="font-medium text-destructive">-{{ count }}</span>
                   </div>
@@ -179,6 +179,7 @@
                   <div
                     v-for="(count, shipType) in report.defenderLosses.fleet"
                     :key="shipType"
+                    v-if="SHIPS[shipType]"
                     class="flex items-center justify-between text-xs"
                   >
                     <span class="text-muted-foreground truncate">{{ SHIPS[shipType].name }}</span>
@@ -220,6 +221,7 @@
                     <div
                       v-for="(count, shipType) in report.attackerRemaining"
                       :key="shipType"
+                      v-if="SHIPS[shipType]"
                       class="flex items-center justify-between p-1.5 bg-white/50 dark:bg-black/20 rounded text-xs"
                     >
                       <span class="text-muted-foreground truncate">{{ SHIPS[shipType].name }}</span>
@@ -249,6 +251,7 @@
                     <div
                       v-for="(count, shipType) in report.defenderRemaining.fleet"
                       :key="shipType"
+                      v-if="SHIPS[shipType]"
                       class="flex items-center justify-between p-1.5 bg-white/50 dark:bg-black/20 rounded text-xs"
                     >
                       <span class="text-muted-foreground truncate">{{ SHIPS[shipType].name }}</span>
@@ -421,6 +424,7 @@
                         <div
                           v-for="(count, shipType) in detail.attackerLosses"
                           :key="shipType"
+                          v-if="SHIPS[shipType]"
                           class="flex justify-between text-xs p-1 bg-white/50 dark:bg-black/20 rounded"
                         >
                           <span class="text-muted-foreground">{{ SHIPS[shipType].name }}</span>
@@ -439,6 +443,7 @@
                         <div
                           v-for="(count, shipType) in detail.defenderLosses.fleet"
                           :key="shipType"
+                          v-if="SHIPS[shipType]"
                           class="flex justify-between text-xs p-1 bg-white/50 dark:bg-black/20 rounded"
                         >
                           <span class="text-muted-foreground">{{ SHIPS[shipType].name }}</span>

@@ -69,6 +69,7 @@ export const calculateTechnologyPoints = (technologyType: TechnologyType, fromLe
  */
 export const calculateShipPoints = (shipType: ShipType, quantity: number): number => {
   const config = SHIPS[shipType]
+  if (!config) return 0 // 已禁用的舰船类型不计积分
   const resourceCost = calculateResourceCost(config.cost)
   const pointsPerShip = calculatePointsFromResources(resourceCost)
   return pointsPerShip * quantity
