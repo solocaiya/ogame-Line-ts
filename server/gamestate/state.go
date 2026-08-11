@@ -490,7 +490,7 @@ func (gs *GameState) processFleetArrival(player *engine.PlayerState, mission *en
 				// Add moon to defender's planets
 				defenderID := gs.findPlayerIDByPlanet(defenderPlanet.ID)
 				if defenderID != "" {
-					if defPlayer, ok := gs.Players[defenderID]; ok {
+					if defPlayer, ok := gs.players[defenderID]; ok {
 						defPlayer.Planets[moonID] = moonPlanet
 						defPlayer.Moons[defenderPlanet.ID] = moonID
 					}
@@ -748,8 +748,14 @@ func (gs *GameState) RecallFleet(playerID, missionID string) (*engine.FleetMissi
 		return nil, fmt.Errorf("player not found")
 	}
 
-	mission, ok := player.FleetMissions[missionID]
-	if !ok {
+	var mission *engine.FleetMission
+	for i := range player.FleetMissions {
+		if player.FleetMissions[i].ID == missionID {
+			mission = &player.FleetMissions[i]
+			break
+		}
+	}
+	if mission == nil {
 		return nil, fmt.Errorf("mission not found")
 	}
 

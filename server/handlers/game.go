@@ -334,7 +334,6 @@ func (h *GameHandler) SendFleet(c *gin.Context) {
 		}
 
 		// Check cargo affordability BEFORE any deductions (atomic validation)
-		totalDeuteriumNeeded := fuel + req.Cargo.Deuterium
 		if req.Cargo.Metal > 0 || req.Cargo.Crystal > 0 || req.Cargo.Deuterium > 0 {
 			// Check against resources after fuel deduction
 			availableAfterFuel := planet.Resources
