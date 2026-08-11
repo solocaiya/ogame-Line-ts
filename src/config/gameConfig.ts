@@ -1178,26 +1178,27 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     storageUsage: 1,
     requirements: { [BuildingType.Shipyard]: 1 }
   },
-  [ShipType.DarkMatterHarvester]: {
-    id: ShipType.DarkMatterHarvester,
-    name: '暗物质采集船',
-    description: '专门用于采集暗物质的特殊飞船',
-    icon: '/images/items/DarkMatterHarvester.png',
-    cost: { metal: 100000, crystal: 150000, deuterium: 50000, darkMatter: 0, energy: 0 },
-    buildTime: 120,
-    cargoCapacity: 1000, // 暗物质专用储存
-    attack: 10,
-    shield: 50,
-    armor: 2000,
-    speed: 5000,
-    fuelConsumption: 500,
-    storageUsage: 50,
-    requirements: {
-      [BuildingType.Shipyard]: 8,
-      [TechnologyType.HyperspaceDrive]: 5,
-      [TechnologyType.DarkMatterTechnology]: 1
-    }
-  },
+  // 暗物质采集船 — 功能未实现，暂时禁用
+  // [ShipType.DarkMatterHarvester]: {
+  //   id: ShipType.DarkMatterHarvester,
+  //   name: '暗物质采集船',
+  //   description: '专门用于采集暗物质的特殊飞船',
+  //   icon: '/images/items/DarkMatterHarvester.png',
+  //   cost: { metal: 100000, crystal: 150000, deuterium: 50000, darkMatter: 0, energy: 0 },
+  //   buildTime: 120,
+  //   cargoCapacity: 1000,
+  //   attack: 10,
+  //   shield: 50,
+  //   armor: 2000,
+  //   speed: 5000,
+  //   fuelConsumption: 500,
+  //   storageUsage: 50,
+  //   requirements: {
+  //     [BuildingType.Shipyard]: 8,
+  //     [TechnologyType.HyperspaceDrive]: 5,
+  //     [TechnologyType.DarkMatterTechnology]: 1
+  //   }
+  // },
   [ShipType.Deathstar]: {
     id: ShipType.Deathstar,
     name: '死星',
@@ -1232,7 +1233,7 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
       [ShipType.Recycler]: 250,
       [ShipType.EspionageProbe]: 1250,
       [ShipType.SolarSatellite]: 1250,
-      [ShipType.DarkMatterHarvester]: 50,
+      // [ShipType.DarkMatterHarvester]: 50, // 暗物质采集船 — 功能未实现，暂时禁用
       // 对所有防御设施的快速射击
       [DefenseType.RocketLauncher]: 200,
       [DefenseType.LightLaser]: 200,

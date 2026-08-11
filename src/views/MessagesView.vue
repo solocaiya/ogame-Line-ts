@@ -1126,7 +1126,7 @@
       [MissionType.Recycle]: t('fleetView.recycle'),
       [MissionType.Destroy]: t('fleetView.destroy'),
       [MissionType.MissileAttack]: t('galaxyView.missileAttack'),
-      [MissionType.HarvestDarkMatter]: t('fleetView.harvestDarkMatter'),
+      // [MissionType.HarvestDarkMatter]: t('fleetView.harvestDarkMatter'), // 暗物质采集 — 功能未实现，暂时禁用
       [MissionType.Station]: t('fleetView.station')
     }
     return typeMap[missionType] || missionType

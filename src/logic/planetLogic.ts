@@ -55,7 +55,7 @@ export const createInitialPlanet = (playerId: string, planetName: string = 'Home
       [ShipType.Recycler]: 0,
       [ShipType.EspionageProbe]: 0,
       [ShipType.SolarSatellite]: 0,
-      [ShipType.DarkMatterHarvester]: 0,
+      // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
       [ShipType.Deathstar]: 0
     },
     defense: {
@@ -129,7 +129,7 @@ export const createNPCPlanet = (
       [ShipType.Recycler]: 0,
       [ShipType.EspionageProbe]: 0,
       [ShipType.SolarSatellite]: Math.floor(Math.random() * 20),
-      [ShipType.DarkMatterHarvester]: 0,
+      // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
       [ShipType.Deathstar]: 0
     },
     defense: {
@@ -224,7 +224,7 @@ export const createMoon = (
       [ShipType.Recycler]: 0,
       [ShipType.EspionageProbe]: 0,
       [ShipType.SolarSatellite]: 0,
-      [ShipType.DarkMatterHarvester]: 0,
+      // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
       [ShipType.Deathstar]: 0
     },
     defense: {

@@ -108,11 +108,11 @@ var ShipDefs = map[string]ShipDef{
 		CargoCapacity: 0, Attack: 1, Shield: 1, Armor: 200,
 		Speed: 1, FuelConsumption: 0, StorageUsage: 1,
 	},
-	"darkMatterHarvester": {
-		Cost: CostEntry{Metal: 100000, Crystal: 150000, Deuterium: 50000}, BuildTime: 120,
-		CargoCapacity: 1000, Attack: 10, Shield: 50, Armor: 2000,
-		Speed: 5000, FuelConsumption: 500, StorageUsage: 50,
-	},
+	// "darkMatterHarvester": { // 暗物质采集船 — 功能未实现，暂时禁用
+	// 	Cost: CostEntry{Metal: 100000, Crystal: 150000, Deuterium: 50000}, BuildTime: 120,
+	// 	CargoCapacity: 1000, Attack: 10, Shield: 50, Armor: 2000,
+	// 	Speed: 5000, FuelConsumption: 500, StorageUsage: 50,
+	// },
 	"deathstar": {
 		Cost: CostEntry{Metal: 50000000, Crystal: 40000000, Deuterium: 10000000, DarkMatter: 20000}, BuildTime: 600,
 		CargoCapacity: 1000000, Attack: 200000, Shield: 50000, Armor: 900000,
@@ -122,7 +122,7 @@ var ShipDefs = map[string]ShipDef{
 			"heavyFighter": 100, "cruiser": 33, "battleship": 30,
 			"battlecruiser": 15, "bomber": 25, "destroyer": 5,
 			"colonyShip": 250, "recycler": 250, "espionageProbe": 1250,
-			"solarSatellite": 1250, "darkMatterHarvester": 50,
+			"solarSatellite": 1250, // "darkMatterHarvester": 50, // 暗物质采集船 — 功能未实现，暂时禁用
 			"rocketLauncher": 200, "lightLaser": 200, "heavyLaser": 100,
 			"gaussCannon": 50, "ionCannon": 100, "plasmaTurret": 10,
 			"smallShieldDome": 1250, "largeShieldDome": 1250,

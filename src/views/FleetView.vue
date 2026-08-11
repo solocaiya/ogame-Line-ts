@@ -700,7 +700,7 @@
     [ShipType.ColonyShip]: 0,
     [ShipType.Recycler]: 0,
     [ShipType.EspionageProbe]: 0,
-    [ShipType.DarkMatterHarvester]: 0,
+    // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
     [ShipType.Deathstar]: 0
   })
 
@@ -810,7 +810,7 @@
     [ShipType.ColonyShip]: 0,
     [ShipType.Recycler]: 0,
     [ShipType.EspionageProbe]: 0,
-    [ShipType.DarkMatterHarvester]: 0,
+    // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
     [ShipType.Deathstar]: 0
   })
 

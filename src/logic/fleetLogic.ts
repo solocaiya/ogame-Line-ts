@@ -435,7 +435,7 @@ export const processColonizeArrival = (
       [ShipType.Recycler]: 0,
       [ShipType.EspionageProbe]: 0,
       [ShipType.SolarSatellite]: 0,
-      [ShipType.DarkMatterHarvester]: 0,
+      // [ShipType.DarkMatterHarvester]: 0, // 暗物质采集船 — 功能未实现，暂时禁用
       [ShipType.Deathstar]: 0
     },
     defense: {
@@ -900,7 +900,7 @@ const getShipCargoCapacity = (shipType: ShipType): number => {
     [ShipType.Recycler]: 20000,
     [ShipType.EspionageProbe]: 5,
     [ShipType.SolarSatellite]: 0,
-    [ShipType.DarkMatterHarvester]: 1000,
+    // [ShipType.DarkMatterHarvester]: 1000, // 暗物质采集船 — 功能未实现，暂时禁用
     [ShipType.Deathstar]: 1000000
   }
   return cargoCapacities[shipType] || 0

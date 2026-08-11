@@ -178,7 +178,7 @@ export const ShipType = {
   Recycler: 'recycler',
   EspionageProbe: 'espionageProbe',
   SolarSatellite: 'solarSatellite', // 太阳能卫星
-  DarkMatterHarvester: 'darkMatterHarvester', // 暗物质采集船
+  // DarkMatterHarvester: 'darkMatterHarvester', // 暗物质采集船 — 功能未实现，暂时禁用
   Deathstar: 'deathstar' // 死星
 } as const
 
@@ -220,7 +220,7 @@ export interface Fleet {
   [ShipType.Recycler]: number
   [ShipType.EspionageProbe]: number
   [ShipType.SolarSatellite]: number
-  [ShipType.DarkMatterHarvester]: number
+  // [ShipType.DarkMatterHarvester]: number // 暗物质采集船 — 功能未实现，暂时禁用
   [ShipType.Deathstar]: number
 }
 
@@ -232,7 +232,7 @@ export const MissionType = {
   Spy: 'spy',
   Deploy: 'deploy',
   Expedition: 'expedition',
-  HarvestDarkMatter: 'harvestDarkMatter', // 暗物质采集
+  // HarvestDarkMatter: 'harvestDarkMatter', // 暗物质采集 — 功能未实现，暂时禁用
   Recycle: 'recycle', // 回收残骸
   Destroy: 'destroy', // 行星毁灭
   MissileAttack: 'missileAttack', // 导弹攻击

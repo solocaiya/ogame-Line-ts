@@ -910,7 +910,7 @@ export const initializeNPCByDistance = (npc: NPC, homeworldPosition: { galaxy: n
     [ShipType.Recycler]: 30,
     [ShipType.EspionageProbe]: 2,
     [ShipType.SolarSatellite]: 1,
-    [ShipType.DarkMatterHarvester]: 50,
+    // [ShipType.DarkMatterHarvester]: 50, // 暗物质采集船 — 功能未实现，暂时禁用
     [ShipType.Deathstar]: 100
   }
 
@@ -953,9 +953,9 @@ export const initializeNPCByDistance = (npc: NPC, homeworldPosition: { galaxy: n
   if (effectiveLevel >= 4) {
     addShips(ShipType.ColonyShip, 3) // 3-27
   }
-  if (effectiveLevel >= 5) {
-    addShips(ShipType.DarkMatterHarvester, 10) // 10-90
-  }
+  // if (effectiveLevel >= 5) {
+  //   addShips(ShipType.DarkMatterHarvester, 10) // 10-90 // 暗物质采集船 — 功能未实现，暂时禁用
+  // }
   if (effectiveLevel >= 8) {
     addShips(ShipType.Deathstar, 2) // 2-18
   }

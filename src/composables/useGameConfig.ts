@@ -62,7 +62,7 @@ export const useGameConfig = () => {
     [ShipType.Recycler]: 'recycler',
     [ShipType.EspionageProbe]: 'espionageProbe',
     [ShipType.SolarSatellite]: 'solarSatellite',
-    [ShipType.DarkMatterHarvester]: 'darkMatterHarvester',
+    // [ShipType.DarkMatterHarvester]: 'darkMatterHarvester', // 暗物质采集船 — 功能未实现，暂时禁用
     [ShipType.Deathstar]: 'deathstar'
   }
 
