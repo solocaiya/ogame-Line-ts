@@ -2627,6 +2627,7 @@ export default {
       attack_5pct: 'Ataque +5%',
       defense_5pct: 'Defensa +5%',
       fleet_speed_25pct: 'Velocidad de Flota +25%',
+      research_queue_plus_1: 'Cola de Investigación +1',
       research_speed_10pct: 'Velocidad de Investigación +10%'
     },
     available: 'Disponible',

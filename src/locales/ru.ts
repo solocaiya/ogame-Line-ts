@@ -2515,6 +2515,7 @@ export default {
       attack_5pct: 'Атака +5%',
       defense_5pct: 'Защита +5%',
       fleet_speed_25pct: 'Скорость флота +25%',
+      research_queue_plus_1: 'Очередь исследований +1',
       research_speed_10pct: 'Скорость исследований +10%'
     },
     available: 'Доступно',

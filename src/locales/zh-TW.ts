@@ -2694,6 +2694,7 @@ export default {
       attack_5pct: '攻擊力 +5%',
       defense_5pct: '防禦力 +5%',
       fleet_speed_25pct: '艦隊速度 +25%',
+      research_queue_plus_1: '科研隊列 +1',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '可購買',

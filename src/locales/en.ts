@@ -2657,6 +2657,7 @@ export default {
       attack_5pct: 'Attack +5%',
       defense_5pct: 'Defense +5%',
       fleet_speed_25pct: 'Fleet Speed +25%',
+      research_queue_plus_1: 'Research Queue +1',
       research_speed_10pct: 'Research Speed +10%'
     },
     available: 'Available',

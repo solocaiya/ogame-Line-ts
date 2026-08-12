@@ -2454,6 +2454,7 @@ export default {
       attack_5pct: '공격력 +5%',
       defense_5pct: '방어력 +5%',
       fleet_speed_25pct: '함대 속도 +25%',
+      research_queue_plus_1: '연구 대기열 +1',
       research_speed_10pct: '연구 속도 +10%'
     },
     available: '구매 가능',

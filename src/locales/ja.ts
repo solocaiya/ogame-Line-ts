@@ -2513,6 +2513,7 @@ export default {
       attack_5pct: '攻撃力 +5%',
       defense_5pct: '防御力 +5%',
       fleet_speed_25pct: '艦隊速度 +25%',
+      research_queue_plus_1: '研究キュー +1',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '利用可能',
