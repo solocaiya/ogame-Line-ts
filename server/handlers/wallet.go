@@ -256,7 +256,10 @@ func (h *WalletHandler) ConfirmPayment(c *gin.Context) {
 	if isFirstRecharge {
 		txType = "recharge_first"
 	}
-	desc := fmt.Sprintf("充值 %d DM (%s)", product.DarkMatter+product.Bonus, product.ID)
+	desc := fmt.Sprintf("充值 %d DM", orderDM)
+	if p, ok := engine.RechargeProducts[orderProductID]; ok {
+		desc = fmt.Sprintf("充值 %d DM (%s)", p.DarkMatter+p.Bonus, p.ID)
+	}
 	if isFirstRecharge {
 		desc = "首充奖励 " + desc
 	}
@@ -593,7 +596,7 @@ func (h *WalletHandler) ClaimDailyDM(c *gin.Context) {
 		dailyDM += engine.MonthlyCards["large_monthly"].DailyDM
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339)
+	nowStr := time.Now().UTC().Format(time.RFC3339)
 	txID := uuid.New().String()
 
 	tx, err := h.db.Begin()
@@ -622,7 +625,7 @@ func (h *WalletHandler) ClaimDailyDM(c *gin.Context) {
 	_, err = tx.Exec(`
 		INSERT INTO dark_matter_transactions (id, user_id, amount, balance_after, type, ref_id, description, created_at)
 		VALUES (?, ?, ?, ?, 'daily_claim', ?, ?, ?)
-	`, txID, playerID, dailyDM, newBalance, fmt.Sprintf("vip_%d", vipLevel), fmt.Sprintf("每日领取 %d DM", dailyDM), now)
+	`, txID, playerID, dailyDM, newBalance, fmt.Sprintf("vip_%d", vipLevel), fmt.Sprintf("每日领取 %d DM", dailyDM), nowStr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log transaction"})
 		return
@@ -665,7 +668,6 @@ func (h *WalletHandler) GetGrowthFund(c *gin.Context) {
 	// Build stage list with claim status
 	stages := make([]gin.H, 0, len(engine.GrowthFundStages))
 	for _, stage := range engine.GrowthFundStages {
-		claimed := totalClaimed >= stage.RewardDM // simplified check
 		achievable := totalPoints >= stage.PointsReq
 
 		// More precise: check if this specific stage was claimed
