@@ -2482,7 +2482,15 @@ export default {
     incomingInvites: 'Empfangene Einladungen',
     autoAcceptHint: 'Alle Beitrittsanfragen automatisch annehmen',
     requireApprovalHint: 'Beitrittsanfragen erfordern Genehmigung',
-    kickConfirmName: 'Bist du sicher, dass du dieses Mitglied entfernen möchtest?'
+    kickConfirmName: 'Bist du sicher, dass du dieses Mitglied entfernen möchtest?',
+    errors: {
+      alreadyInAlliance: 'Du bist bereits in einer Allianz',
+      allianceNotFound: 'Allianz nicht gefunden',
+      playerNotFound: 'Spieler nicht gefunden',
+      notAuthorized: 'Nicht autorisiert',
+      nameTaken: 'Allianzname bereits vergeben',
+      tagTaken: 'Allianzkennung bereits vergeben',
+    },
   },
 
   chat: {
@@ -2586,6 +2594,7 @@ export default {
     reward: 'Belohnung: {amount} DM',
     statusClaimed: 'Erhalten',
     statusClaimable: 'Verfügbar',
-    statusLocked: 'Gesperrt'
+    statusLocked: 'Gesperrt',
+    stagesPreview: 'Belohnungsstufen Übersicht',
   }
 }

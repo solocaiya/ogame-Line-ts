@@ -2468,7 +2468,15 @@ export default {
     incomingInvites: 'Входящие приглашения',
     autoAcceptHint: 'Автоматически принимать все заявки на вступление',
     requireApprovalHint: 'Заявки на вступление требуют одобрения офицером или лидером',
-    kickConfirmName: 'Вы уверены, что хотите исключить этого участника?'
+    kickConfirmName: 'Вы уверены, что хотите исключить этого участника?',
+    errors: {
+      alreadyInAlliance: 'Вы уже состоите в альянсе',
+      allianceNotFound: 'Альянс не найден',
+      playerNotFound: 'Игрок не найден',
+      notAuthorized: 'Нет прав для этого действия',
+      nameTaken: 'Название альянса уже занято',
+      tagTaken: 'Тег альянса уже занят',
+    }
   },
 
   chat: {
@@ -2572,6 +2580,7 @@ export default {
     reward: 'Награда: {amount} DM',
     statusClaimed: 'Получено',
     statusClaimable: 'Доступно',
-    statusLocked: 'Заблокировано'
+    statusLocked: 'Заблокировано',
+    stagesPreview: 'Обзор этапов наград'
   }
 }

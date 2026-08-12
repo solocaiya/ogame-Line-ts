@@ -2580,7 +2580,15 @@ export default {
     incomingInvites: 'Invitaciones recibidas',
     autoAcceptHint: 'Aceptar automáticamente todas las solicitudes',
     requireApprovalHint: 'Las solicitudes requieren aprobación',
-    kickConfirmName: '¿Estás seguro de que quieres expulsar a este miembro?'
+    kickConfirmName: '¿Estás seguro de que quieres expulsar a este miembro?',
+    errors: {
+      alreadyInAlliance: 'Ya estás en una alianza',
+      allianceNotFound: 'Alianza no encontrada',
+      playerNotFound: 'Jugador no encontrado',
+      notAuthorized: 'No autorizado',
+      nameTaken: 'Nombre de alianza ya en uso',
+      tagTaken: 'Etiqueta de alianza ya en uso',
+    },
   },
 
   chat: {
@@ -2684,6 +2692,7 @@ export default {
     reward: 'Recompensa: {amount} DM',
     statusClaimed: 'Reclamado',
     statusClaimable: 'Disponible',
-    statusLocked: 'Bloqueado'
+    statusLocked: 'Bloqueado',
+    stagesPreview: 'Resumen de etapas de recompensa',
   }
 }

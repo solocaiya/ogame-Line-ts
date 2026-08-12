@@ -2407,7 +2407,15 @@ export default {
     incomingInvites: '받은 초대',
     autoAcceptHint: '모든 참여 신청을 자동 수락',
     requireApprovalHint: '참여 신청에 장교 또는 리더의 승인이 필요',
-    kickConfirmName: '이 멤버를 추방하시겠습니까?'
+    kickConfirmName: '이 멤버를 추방하시겠습니까?',
+    errors: {
+      alreadyInAlliance: '이미 연합에 소속되어 있습니다',
+      allianceNotFound: '연합을 찾을 수 없습니다',
+      playerNotFound: '플레이어를 찾을 수 없습니다',
+      notAuthorized: '권한이 없습니다',
+      nameTaken: '연합 이름이 이미 사용 중입니다',
+      tagTaken: '연합 태그가 이미 사용 중입니다',
+    },
   },
 
   chat: {
@@ -2511,6 +2519,7 @@ export default {
     reward: '보상: {amount} DM',
     statusClaimed: '수령 완료',
     statusClaimable: '수령 가능',
-    statusLocked: '미달성'
+    statusLocked: '미달성',
+    stagesPreview: '보상 단계 일람',
   }
 }

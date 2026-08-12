@@ -2510,7 +2510,15 @@ export default {
     incomingInvites: '收到的邀请',
     autoAcceptHint: '自动接受所有加入申请',
     requireApprovalHint: '加入申请需要官员或领袖审批',
-    kickConfirmName: '确定要踢出该成员吗？'
+    kickConfirmName: '确定要踢出该成员吗？',
+    errors: {
+      alreadyInAlliance: '你已经在联盟中',
+      allianceNotFound: '联盟不存在',
+      playerNotFound: '玩家不存在',
+      notAuthorized: '无权限操作',
+      nameTaken: '联盟名称已被使用',
+      tagTaken: '联盟标签已被使用'
+    }
   },
 
   chat: {
@@ -2557,6 +2565,7 @@ export default {
       attack_5pct: '攻击力 +5%',
       defense_5pct: '防御力 +5%',
       fleet_speed_25pct: '舰队速度 +25%',
+      research_queue_plus_1: '科研队列 +1',
       research_speed_10pct: '研究速度 +10%'
     },
     available: '可购买',
@@ -2613,6 +2622,7 @@ export default {
     reward: '奖励 {amount} DM',
     statusClaimed: '已领取',
     statusClaimable: '可领取',
-    statusLocked: '未达成'
+    statusLocked: '未达成',
+    stagesPreview: '奖励阶段一览'
   }
 }

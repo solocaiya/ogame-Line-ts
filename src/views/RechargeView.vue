@@ -313,7 +313,7 @@ onMounted(loadData)
                 </CardTitle>
               </CardHeader>
 
-              <CardContent class="space-y-3">
+              <CardContent class="flex flex-col space-y-3">
                 <!-- Price + daily DM -->
                 <div class="flex items-end justify-between">
                   <div>
@@ -346,10 +346,10 @@ onMounted(loadData)
                   {{ t('recharge.expiresIn', { days: getExpiryDays(card.expiresAt) }) }}
                 </div>
 
-                <!-- Buy button -->
+                <!-- Buy button (pushed to bottom) -->
                 <Button
                   v-if="!card.active"
-                  class="w-full"
+                  class="w-full mt-auto"
                   size="sm"
                   :disabled="processingId !== null"
                   @click="handleBuyMonthlyCard(card.id)"
@@ -358,7 +358,7 @@ onMounted(loadData)
                   <CreditCard v-else class="w-4 h-4 mr-1" />
                   {{ t('recharge.buyCard') }}
                 </Button>
-                <div v-else class="text-center text-xs text-green-400 py-1.5 flex items-center justify-center gap-1">
+                <div v-else class="text-center text-xs text-green-400 py-1.5 flex items-center justify-center gap-1 mt-auto">
                   <CheckCircle class="w-3.5 h-3.5" />
                   {{ t('recharge.active') }}
                 </div>
@@ -402,7 +402,7 @@ onMounted(loadData)
               </CardTitle>
             </CardHeader>
 
-            <CardContent class="space-y-3">
+            <CardContent class="flex flex-col space-y-3">
               <!-- Contents -->
               <div class="text-sm text-muted-foreground">
                 {{ getTotalContents(pack) }}
@@ -427,10 +427,10 @@ onMounted(loadData)
                 {{ t('recharge.unavailable') }}
               </div>
 
-              <!-- Buy button -->
+              <!-- Buy button (pushed to bottom) -->
               <Button
                 v-if="pack.available"
-                class="w-full"
+                class="w-full mt-auto"
                 size="sm"
                 :disabled="processingId !== null"
                 @click="handleBuyGiftPack(pack)"

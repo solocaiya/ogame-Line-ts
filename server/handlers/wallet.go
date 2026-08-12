@@ -422,8 +422,8 @@ func (h *WalletHandler) BuyMonthlyCard(c *gin.Context) {
 		return
 	}
 
-	// Cost in DM (mock: 1 RMB = 100 DM)
-	costDM := card.AmountRMB * 100
+	// Mock flow: monthly cards are free (design says ¥30/¥68 RMB, but we don't charge DM)
+	costDM := int64(0)
 
 	tx, err := h.db.Begin()
 	if err != nil {
@@ -718,8 +718,8 @@ func (h *WalletHandler) BuyGrowthFund(c *gin.Context) {
 		return
 	}
 
-	// Cost in DM (mock: 1 RMB = 100 DM)
-	costDM := int64(engine.GrowthFundCostRMB * 100)
+	// Mock flow: growth fund is free (design says ¥98 RMB, but we don't charge DM)
+	costDM := int64(0)
 
 	tx, err := h.db.Begin()
 	if err != nil {

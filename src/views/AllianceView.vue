@@ -4,7 +4,7 @@
 
     <!-- Error display -->
     <div v-if="allianceStore.error" class="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-      {{ allianceStore.error }}
+      {{ translatedError }}
     </div>
 
     <!-- Loading state -->
@@ -507,7 +507,24 @@ async function saveSettings() {
   }
 }
 
+// Translate raw backend error strings
+const translatedError = computed(() => {
+  const err = allianceStore.error
+  if (!err) return ''
+  const map: Record<string, string> = {
+    'already in an alliance': t('alliance.errors.alreadyInAlliance'),
+    'alliance not found': t('alliance.errors.allianceNotFound'),
+    'player not found': t('alliance.errors.playerNotFound'),
+    'not authorized': t('alliance.errors.notAuthorized'),
+    'name already taken': t('alliance.errors.nameTaken'),
+    'tag already taken': t('alliance.errors.tagTaken'),
+  }
+  return map[err] || err
+})
+
 onMounted(() => {
   allianceStore.clearError()
+  // Refresh alliance state in case user joined/left via another path
+  allianceStore.fetchMyAlliance()
 })
 </script>

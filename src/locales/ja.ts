@@ -2466,7 +2466,15 @@ export default {
     incomingInvites: '受信した招待',
     autoAcceptHint: 'すべての参加申請を自動承認',
     requireApprovalHint: '参加申請には役員またはリーダーの承認が必要',
-    kickConfirmName: 'このメンバーをキックしますか？'
+    kickConfirmName: 'このメンバーをキックしますか？',
+    errors: {
+      alreadyInAlliance: 'すでに聯盟に所属しています',
+      allianceNotFound: '聯盟が見つかりません',
+      playerNotFound: 'プレイヤーが見つかりません',
+      notAuthorized: '権限がありません',
+      nameTaken: '聯盟名は既に使用されています',
+      tagTaken: '聯盟タグは既に使用されています',
+    },
   },
 
   chat: {
@@ -2570,6 +2578,7 @@ export default {
     reward: '報酬: {amount} DM',
     statusClaimed: '受取済み',
     statusClaimable: '受取可能',
-    statusLocked: '未達成'
+    statusLocked: '未達成',
+    stagesPreview: '報酬ステージ一覧',
   }
 }

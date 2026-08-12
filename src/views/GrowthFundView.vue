@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import {
-  TrendingUp, Gift, CheckCircle, Lock, Loader2, Sparkles, Crown
+  TrendingUp, Gift, CheckCircle, Lock, Loader2, Sparkles, Crown, Gem
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 
@@ -182,6 +182,32 @@ function getStageVariant(stage: GrowthFundStageStatus) {
           </div>
           <div class="p-3 rounded-lg border border-dashed border-amber-500/30 text-sm text-muted-foreground">
             {{ t('growthFund.howItWorks') }}
+          </div>
+          <!-- Stages preview (visible before purchase) -->
+          <div class="space-y-2">
+            <div class="text-sm font-semibold text-amber-400">{{ t('growthFund.stagesPreview') }}</div>
+            <div
+              v-for="stage in fundStatus.stages"
+              :key="stage.id"
+              class="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50"
+            >
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                  :class="stage.claimed ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'"
+                >
+                  {{ stage.stageNumber }}
+                </div>
+                <div>
+                  <div class="text-sm font-medium">{{ stage.name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ stage.conditionText }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 text-sm font-bold text-amber-500">
+                <Gem class="w-3.5 h-3.5" />
+                +{{ formatNumber(stage.rewardDM) }}
+              </div>
+            </div>
           </div>
           <Button
             class="w-full text-base py-6"

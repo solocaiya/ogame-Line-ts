@@ -2647,7 +2647,15 @@ export default {
     incomingInvites: '收到的邀請',
     autoAcceptHint: '自動接受所有加入申請',
     requireApprovalHint: '加入申請需要官員或領袖審批',
-    kickConfirmName: '確定要踢出該成員嗎？'
+    kickConfirmName: '確定要踢出該成員嗎？',
+    errors: {
+      alreadyInAlliance: '你已經在聯盟中',
+      allianceNotFound: '聯盟不存在',
+      playerNotFound: '玩家不存在',
+      notAuthorized: '無權限操作',
+      nameTaken: '聯盟名稱已被使用',
+      tagTaken: '聯盟標籤已被使用',
+    },
   },
 
   chat: {
@@ -2751,6 +2759,7 @@ export default {
     reward: '獎勵 {amount} DM',
     statusClaimed: '已領取',
     statusClaimable: '可領取',
-    statusLocked: '未達成'
+    statusLocked: '未達成',
+    stagesPreview: '獎勵階段一覽',
   }
 }

@@ -2610,7 +2610,15 @@ export default {
     incomingInvites: 'Incoming Invites',
     autoAcceptHint: 'Automatically accept all join requests',
     requireApprovalHint: 'Join requests require officer or leader approval',
-    kickConfirmName: 'Are you sure you want to kick this member?'
+    kickConfirmName: 'Are you sure you want to kick this member?',
+    errors: {
+      alreadyInAlliance: 'You are already in an alliance',
+      allianceNotFound: 'Alliance not found',
+      playerNotFound: 'Player not found',
+      notAuthorized: 'Not authorized',
+      nameTaken: 'Alliance name already taken',
+      tagTaken: 'Alliance tag already taken',
+    },
   },
 
   chat: {
@@ -2714,6 +2722,7 @@ export default {
     reward: 'Reward: {amount} DM',
     statusClaimed: 'Claimed',
     statusClaimable: 'Claimable',
-    statusLocked: 'Locked'
+    statusLocked: 'Locked',
+    stagesPreview: 'Reward Stages Overview',
   }
 }
