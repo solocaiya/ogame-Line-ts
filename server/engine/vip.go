@@ -74,7 +74,7 @@ func GetVIPBonus(vipLevel int, subExpiresAt, sub2ExpiresAt *time.Time) VIPBonus 
 		b.AttackPct += 5.0
 		b.DefensePct += 5.0
 		b.FleetSpeedPct += 25.0
-		b.TradeBonusPct += 10.0
+		b.TradeBonusPct += 100.0
 		b.AutoUpgrade = true
 		b.MaxQueueCap += 3
 	}
