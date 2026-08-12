@@ -20,22 +20,30 @@ const (
 // VIPBonus holds all active VIP/subscription bonuses for a player.
 // Zero values mean no bonus for that attribute.
 type VIPBonus struct {
-	BuildQueueBonus  int     // extra building queue slots
-	BuildSpeedPct    float64 // percentage reduction in build time (e.g. 10 = 10% faster)
-	ResearchSpeedPct float64 // percentage reduction in research time
-	AttackPct        float64 // attack power bonus %
-	DefensePct       float64 // defense power bonus %
-	FleetSpeedPct    float64 // fleet travel speed bonus %
+	BuildQueueBonus    int     // extra building queue slots
+	ResearchQueueBonus int     // extra research queue slots
+	BuildSpeedPct      float64 // percentage reduction in build time (e.g. 10 = 10% faster)
+	ResearchSpeedPct   float64 // percentage reduction in research time
+	AttackPct          float64 // attack power bonus %
+	DefensePct         float64 // defense power bonus %
+	FleetSpeedPct      float64 // fleet travel speed bonus %
+	TradeBonusPct      float64 // trader exchange rate bonus % (e.g. 10 = 10% better rates)
+	AutoUpgrade        bool    // auto-upgrade buildings when resources available
+	MaxQueueCap        int     // extra max queue length (added to base cap)
 }
 
 // IsZero reports whether no VIP bonuses are active.
 func (b VIPBonus) IsZero() bool {
 	return b.BuildQueueBonus == 0 &&
+		b.ResearchQueueBonus == 0 &&
 		b.BuildSpeedPct == 0 &&
 		b.ResearchSpeedPct == 0 &&
 		b.AttackPct == 0 &&
 		b.DefensePct == 0 &&
-		b.FleetSpeedPct == 0
+		b.FleetSpeedPct == 0 &&
+		b.TradeBonusPct == 0 &&
+		!b.AutoUpgrade &&
+		b.MaxQueueCap == 0
 }
 
 // GetVIPBonus computes the active VIP bonuses for a player.
@@ -54,13 +62,21 @@ func GetVIPBonus(vipLevel int, subExpiresAt, sub2ExpiresAt *time.Time) VIPBonus 
 		// 小月卡: +1 build queue, +10% build speed
 		b.BuildQueueBonus += 1
 		b.BuildSpeedPct += 10.0
+		b.MaxQueueCap += 2
 	}
 
 	if largeActive {
-		// 大月卡: +5% attack, +5% defense, +25% fleet speed
+		// 大月卡: +1 research queue, +10% research speed,
+		// +5% attack, +5% defense, +25% fleet speed,
+		// +10% trade bonus, auto-upgrade
+		b.ResearchQueueBonus += 1
+		b.ResearchSpeedPct += 10.0
 		b.AttackPct += 5.0
 		b.DefensePct += 5.0
 		b.FleetSpeedPct += 25.0
+		b.TradeBonusPct += 10.0
+		b.AutoUpgrade = true
+		b.MaxQueueCap += 3
 	}
 
 	return b

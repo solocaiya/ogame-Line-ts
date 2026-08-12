@@ -480,7 +480,8 @@ func (h *AccelerateHandler) AccelerateFleetTravel(c *gin.Context) {
 		skipMs = remainingMs
 	}
 
-	costDM := calcAccelerateCost(skipMs, engine.AccelerateCostFleetTravel)
+	// Fleet travel: flat 500 DM per trip (not per-hour)
+	costDM := engine.AccelerateCostFleetTravel
 	if costDM <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nothing to accelerate"})
 		return
@@ -636,7 +637,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 		}
 	}
 
-	// Fleet missions in transit
+	// Fleet missions in transit (flat 500 DM/trip, not per-hour)
 	for _, m := range player.FleetMissions {
 		var targetTime int64
 		switch m.Status {
@@ -654,7 +655,7 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 				MissionID:   m.ID,
 				ItemName:    m.MissionType,
 				RemainingMs: remaining,
-				CostDM:      calcAccelerateCost(remaining, engine.AccelerateCostFleetTravel),
+				CostDM:      engine.AccelerateCostFleetTravel,
 			})
 		}
 	}

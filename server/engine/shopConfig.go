@@ -64,32 +64,28 @@ var RechargeProductList = []string{"dm_600", "dm_3000", "dm_9800", "dm_19800", "
 var MonthlyCards = map[string]MonthlyCard{
 	"small_monthly": {
 		ID: "small_monthly", Name: "小月卡", AmountRMB: 30,
-		DailyDM: 200, DurationDays: 30, VIPLevel: 1,
+		DailyDM: 217, DurationDays: 30, VIPLevel: 1, // 217×30 = 6500 DM total
 		Perks: []string{"build_queue_plus_1", "build_speed_10pct"},
 	},
 	"large_monthly": {
 		ID: "large_monthly", Name: "大月卡", AmountRMB: 68,
-		DailyDM: 300, DurationDays: 30, VIPLevel: 2,
-		Perks: []string{"attack_5pct", "defense_5pct", "fleet_speed_25pct"},
+		DailyDM: 367, DurationDays: 30, VIPLevel: 2, // 367×30 = 11000 DM total
+		Perks: []string{"attack_5pct", "defense_5pct", "fleet_speed_25pct", "research_queue_plus_1", "research_speed_10pct"},
 	},
 }
 
 // MonthlyCardList is the ordered list for display.
 var MonthlyCardList = []string{"small_monthly", "large_monthly"}
 
-// GrowthFundStages defines the 10 claimable stages.
+// GrowthFundStages defines the 6 claimable stages.
 // Total return: 22000 DM for ¥98.
 var GrowthFundStages = []GrowthFundStage{
-	{ID: "stage_1", PointsReq: 1000, RewardDM: 500, Description: "总积分达到 1,000"},
-	{ID: "stage_2", PointsReq: 5000, RewardDM: 1000, Description: "总积分达到 5,000"},
-	{ID: "stage_3", PointsReq: 10000, RewardDM: 1500, Description: "总积分达到 10,000"},
-	{ID: "stage_4", PointsReq: 25000, RewardDM: 2000, Description: "总积分达到 25,000"},
-	{ID: "stage_5", PointsReq: 50000, RewardDM: 2500, Description: "总积分达到 50,000"},
-	{ID: "stage_6", PointsReq: 100000, RewardDM: 3000, Description: "总积分达到 100,000"},
-	{ID: "stage_7", PointsReq: 200000, RewardDM: 3000, Description: "总积分达到 200,000"},
-	{ID: "stage_8", PointsReq: 500000, RewardDM: 3000, Description: "总积分达到 500,000"},
-	{ID: "stage_9", PointsReq: 1000000, RewardDM: 2500, Description: "总积分达到 1,000,000"},
-	{ID: "stage_10", PointsReq: 2000000, RewardDM: 3000, Description: "总积分达到 2,000,000"},
+	{ID: "stage_1", PointsReq: 5000, RewardDM: 2000, Description: "总积分达到 5,000"},
+	{ID: "stage_2", PointsReq: 25000, RewardDM: 3000, Description: "总积分达到 25,000"},
+	{ID: "stage_3", PointsReq: 100000, RewardDM: 4000, Description: "总积分达到 100,000"},
+	{ID: "stage_4", PointsReq: 500000, RewardDM: 4500, Description: "总积分达到 500,000"},
+	{ID: "stage_5", PointsReq: 1000000, RewardDM: 4000, Description: "总积分达到 1,000,000"},
+	{ID: "stage_6", PointsReq: 2000000, RewardDM: 4500, Description: "总积分达到 2,000,000"},
 }
 
 // GrowthFundCostRMB is the one-time purchase price.
@@ -113,8 +109,8 @@ var GiftPacks = []GiftPack{
 
 // AccelerateCostPerHour is the DM cost to accelerate 60 minutes, per type.
 const (
-	AccelerateCostBuilding   int64 = 200 // 建筑加速: 200 DM/小时
-	AccelerateCostResearch   int64 = 250 // 研究加速: 250 DM/小时
-	AccelerateCostFleetBuild int64 = 300 // 造船加速: 300 DM/小时
-	AccelerateCostFleetTravel int64 = 300 // 舰队旅行加速: 300 DM/小时
+	AccelerateCostBuilding    int64 = 200 // 建筑加速: 200 DM/小时
+	AccelerateCostResearch    int64 = 250 // 研究加速: 250 DM/小时
+	AccelerateCostFleetBuild  int64 = 300 // 造船加速: 300 DM/小时
+	AccelerateCostFleetTravel int64 = 500 // 舰队旅行加速: 500 DM/次 (固定费用,不按小时计)
 )
