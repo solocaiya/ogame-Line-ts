@@ -2471,7 +2471,7 @@ export default {
     confirm: '확인',
     remaining: '남은 시간',
     skipTime: '건너뛰기',
-    costPerHour: '유형별 비용: 건축 200/연구 250/함대 300 DM/시',
+    costPerHour: '유형별 비용: 건축 200/연구 250/조선 300 DM/시, 함대 이동 500 DM/회(고정)',
     insufficientDM: '암흑 물질이 부족합니다',
     success: '가속 완료! {time} 단축',
     building: '건축 가속',

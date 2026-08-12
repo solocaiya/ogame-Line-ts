@@ -2546,7 +2546,7 @@ export default {
     confirm: 'Bestätigen',
     remaining: 'Verbleibend',
     skipTime: 'Überspringen',
-    costPerHour: 'Kosten nach Typ: Gebäude 200 / Forschung 250 / Flotte 300 DM/h',
+    costPerHour: 'Kosten nach Typ: Gebäude 200 / Forschung 250 / Schiffbau 300 DM/h, Flottenreise 500 DM/Fahrt (pauschal)',
     insufficientDM: 'Nicht genug Dunkle Materie',
     success: 'Beschleunigt! {time} übersprungen',
     building: 'Gebäude beschleunigen',

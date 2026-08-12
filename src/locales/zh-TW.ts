@@ -2711,7 +2711,7 @@ export default {
     confirm: '確認',
     remaining: '剩餘時間',
     skipTime: '跳過',
-    costPerHour: '加速費用按類型區分：建築200/研究250/艦隊300 DM/時',
+    costPerHour: '加速費用按類型區分：建築200/研究250/造船300 DM/時，艦隊旅行500 DM/次(固定)',
     insufficientDM: '暗物質不足',
     success: '加速成功！跳過 {time}',
     building: '加速建築',

@@ -2530,7 +2530,7 @@ export default {
     confirm: '確認',
     remaining: '残り時間',
     skipTime: 'スキップ',
-    costPerHour: 'タイプ別コスト: 建築200/研究250/艦隊300 DM/時',
+    costPerHour: 'タイプ別コスト: 建築200/研究250/造船300 DM/時、艦隊旅行500 DM/回(固定)',
     insufficientDM: 'ダークマターが不足しています',
     success: '加速完了！{time}スキップ',
     building: '建築を加速',

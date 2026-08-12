@@ -2644,7 +2644,7 @@ export default {
     confirm: 'Confirmar',
     remaining: 'Restante',
     skipTime: 'Saltar',
-    costPerHour: 'Varía por tipo: edificio 200 / investigación 250 / flota 300 DM/h',
+    costPerHour: 'Varía por tipo: edificio 200 / investigación 250 / construcción 300 DM/h, viaje de flota 500 DM/viaje (fijo)',
     insufficientDM: 'Materia Oscura insuficiente',
     success: '¡Acelerado! Saltado {time}',
     building: 'Acelerar edificio',

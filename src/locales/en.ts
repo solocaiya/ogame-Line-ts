@@ -2674,7 +2674,7 @@ export default {
     confirm: 'Confirm',
     remaining: 'Remaining',
     skipTime: 'Skip',
-    costPerHour: 'Costs vary by type: building 200 / research 250 / fleet 300 DM/hr',
+    costPerHour: 'Costs vary by type: building 200 / research 250 / ship 300 DM/hr, fleet travel 500 DM/trip (flat)',
     insufficientDM: 'Not enough Dark Matter',
     success: 'Accelerated! Skipped {time}',
     building: 'Accelerate Building',

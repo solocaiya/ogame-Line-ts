@@ -9,7 +9,8 @@
 export const ACCELERATE_COST_BUILDING = 200
 export const ACCELERATE_COST_RESEARCH = 250
 export const ACCELERATE_COST_FLEET_BUILD = 300
-export const ACCELERATE_COST_FLEET_TRAVEL = 300
+/** 舰队旅行加速: 固定 500 DM/次，不按小时计（与后端 AccelerateCostFleetTravel 一致） */
+export const ACCELERATE_COST_FLEET_TRAVEL = 500
 
 /** @deprecated 使用按类型区分的常量 */
 export const ACCELERATE_COST_PER_HOUR = ACCELERATE_COST_BUILDING
@@ -25,6 +26,14 @@ export function calculateAccelerateCost(remainingMs: number, costPerHour: number
   const remainingMinutes = remainingMs / 60000
   const hours = Math.ceil(remainingMinutes / 60)
   return Math.max(1, hours) * costPerHour
+}
+
+/**
+ * 计算舰队旅行加速费用（固定 500 DM/次，不按时间计）
+ * 与后端 accelerate.go fleet-travel 逻辑一致
+ */
+export function calculateFleetTravelCost(): number {
+  return ACCELERATE_COST_FLEET_TRAVEL
 }
 
 /**

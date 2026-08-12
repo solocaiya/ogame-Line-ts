@@ -1455,17 +1455,16 @@
     return Math.max(0, targetTime - now)
   }
 
-  // 获取舰队加速费用标签
+  // 获取舰队加速费用标签（固定 500 DM/次）
   const getFleetAccelerateCost = (mission: any): string => {
-    const remainingMs = getFleetRemainingMs(mission)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, accelerateLogic.ACCELERATE_COST_FLEET_TRAVEL)
+    const cost = accelerateLogic.calculateFleetTravelCost()
     return `${cost}DM`
   }
 
   // 处理舰队加速
   const handleAccelerateFleet = async (mission: any) => {
     const remainingMs = getFleetRemainingMs(mission)
-    const cost = accelerateLogic.calculateAccelerateCost(remainingMs, accelerateLogic.ACCELERATE_COST_FLEET_TRAVEL)
+    const cost = accelerateLogic.calculateFleetTravelCost()
     const balance = gameStore.darkMatterBalance || 0
 
     if (balance < cost) {
