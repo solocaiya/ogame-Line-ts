@@ -158,57 +158,44 @@ function getStageVariant(stage: GrowthFundStageStatus) {
     </div>
 
     <template v-else-if="fundStatus">
-      <!-- Not purchased: Hero card -->
+      <!-- Summary: different content based on purchase status, but same layout -->
+      <div class="grid grid-cols-3 gap-3">
+        <Card>
+          <CardContent class="pt-4 text-center">
+            <div class="text-lg font-bold" :class="fundStatus.purchased ? 'text-green-500' : 'text-muted-foreground'">
+              {{ fundStatus.purchased ? formatNumber(claimedDM) : '0' }}
+            </div>
+            <div class="text-xs text-muted-foreground">{{ t('growthFund.claimed') }}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent class="pt-4 text-center">
+            <div class="text-lg font-bold" :class="fundStatus.purchased ? 'text-amber-500' : 'text-muted-foreground'">
+              {{ fundStatus.purchased ? formatNumber(remainingDM) : formatNumber(totalRewardDM) }}
+            </div>
+            <div class="text-xs text-muted-foreground">
+              {{ fundStatus.purchased ? t('growthFund.remaining') : t('growthFund.totalReturn') }}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent class="pt-4 text-center">
+            <div class="text-lg font-bold">
+              {{ fundStatus.purchased ? formatNumber(fundStatus.playerPoints) : '980' }}
+            </div>
+            <div class="text-xs text-muted-foreground">
+              {{ fundStatus.purchased ? t('growthFund.myPoints') : t('growthFund.cost') }}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Buy button (only shown before purchase) -->
       <Card v-if="!fundStatus.purchased" class="border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-purple-500/5">
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2 text-xl">
-            <Sparkles class="h-5 w-5 text-amber-500" />
-            {{ t('growthFund.heroTitle') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-4">
-          <p class="text-muted-foreground">
+        <CardContent class="pt-4 space-y-3">
+          <p class="text-sm text-muted-foreground text-center">
             {{ t('growthFund.heroDesc') }}
           </p>
-          <div class="grid grid-cols-2 gap-4 text-center">
-            <div class="p-3 rounded-lg bg-muted/50">
-              <div class="text-2xl font-bold text-amber-500">{{ formatNumber(totalRewardDM) }}</div>
-              <div class="text-xs text-muted-foreground">{{ t('growthFund.totalReturn') }}</div>
-            </div>
-            <div class="p-3 rounded-lg bg-muted/50">
-              <div class="text-2xl font-bold">980</div>
-              <div class="text-xs text-muted-foreground">{{ t('growthFund.cost') }} (DM)</div>
-            </div>
-          </div>
-          <div class="p-3 rounded-lg border border-dashed border-amber-500/30 text-sm text-muted-foreground">
-            {{ t('growthFund.howItWorks') }}
-          </div>
-          <!-- Stages preview (visible before purchase) -->
-          <div class="space-y-2">
-            <div class="text-sm font-semibold text-amber-400">{{ t('growthFund.stagesPreview') }}</div>
-            <div
-              v-for="stage in fundStatus.stages"
-              :key="stage.id"
-              class="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50"
-            >
-              <div class="flex items-center gap-2">
-                <div
-                  class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                  :class="stage.claimed ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'"
-                >
-                  {{ stage.stageNumber }}
-                </div>
-                <div>
-                  <div class="text-sm font-medium">{{ stage.name }}</div>
-                  <div class="text-xs text-muted-foreground">{{ stage.conditionText }}</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-1 text-sm font-bold text-amber-500">
-                <Gem class="w-3.5 h-3.5" />
-                +{{ formatNumber(stage.rewardDM) }}
-              </div>
-            </div>
-          </div>
           <Button
             class="w-full text-base py-6"
             size="lg"
@@ -222,117 +209,93 @@ function getStageVariant(stage: GrowthFundStageStatus) {
         </CardContent>
       </Card>
 
-      <!-- Purchased: Status overview -->
-      <template v-else>
-        <!-- Summary cards -->
-        <div class="grid grid-cols-3 gap-3">
-          <Card>
-            <CardContent class="pt-4 text-center">
-              <div class="text-lg font-bold text-green-500">{{ formatNumber(claimedDM) }}</div>
-              <div class="text-xs text-muted-foreground">{{ t('growthFund.claimed') }}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent class="pt-4 text-center">
-              <div class="text-lg font-bold text-amber-500">{{ formatNumber(remainingDM) }}</div>
-              <div class="text-xs text-muted-foreground">{{ t('growthFund.remaining') }}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent class="pt-4 text-center">
-              <div class="text-lg font-bold">{{ formatNumber(fundStatus.playerPoints) }}</div>
-              <div class="text-xs text-muted-foreground">{{ t('growthFund.myPoints') }}</div>
-            </CardContent>
-          </Card>
-        </div>
+      <!-- Progress to next stage (only shown after purchase) -->
+      <Card v-else-if="nextStage">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-sm flex items-center justify-between">
+            <span>{{ t('growthFund.nextStage') }}</span>
+            <span class="text-muted-foreground">
+              {{ formatNumber(fundStatus.playerPoints) }} / {{ formatNumber(nextStage.pointsReq) }}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Progress :model-value="nextStageProgress" class="h-3" />
+          <p class="text-xs text-muted-foreground mt-2">
+            {{ t('growthFund.nextStageReward', { amount: formatNumber(nextStage.rewardDM) }) }}
+          </p>
+        </CardContent>
+      </Card>
 
-        <!-- Progress to next stage -->
-        <Card v-if="nextStage">
-          <CardHeader class="pb-2">
-            <CardTitle class="text-sm flex items-center justify-between">
-              <span>{{ t('growthFund.nextStage') }}</span>
-              <span class="text-muted-foreground">
-                {{ formatNumber(fundStatus.playerPoints) }} / {{ formatNumber(nextStage.pointsReq) }}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress :model-value="nextStageProgress" class="h-3" />
-            <p class="text-xs text-muted-foreground mt-2">
-              {{ t('growthFund.nextStageReward', { amount: formatNumber(nextStage.rewardDM) }) }}
-            </p>
+      <!-- All stages complete -->
+      <Card v-else-if="fundStatus.purchased && !nextStage" class="border-green-500/30 bg-green-500/5">
+        <CardContent class="pt-4 text-center space-y-2">
+          <Crown class="h-10 w-10 text-amber-500 mx-auto" />
+          <p class="font-bold text-lg">{{ t('growthFund.allClaimed') }}</p>
+          <p class="text-sm text-muted-foreground">
+            {{ t('growthFund.totalClaimedAmount', { amount: formatNumber(claimedDM) }) }}
+          </p>
+        </CardContent>
+      </Card>
+
+      <!-- Unified stages list (always visible) -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-muted-foreground px-1">
+          {{ t('growthFund.stages') }}
+        </h3>
+        <Card
+          v-for="stage in fundStatus.stages"
+          :key="stage.id"
+          :class="[
+            stage.claimable ? 'border-amber-500/40 bg-amber-500/5' : '',
+            stage.claimed ? 'opacity-70' : '',
+            !fundStatus.purchased ? 'opacity-60' : ''
+          ]"
+        >
+          <CardContent class="py-3 flex items-center gap-3">
+            <!-- Icon -->
+            <component
+              :is="getStageIcon(stage)"
+              class="h-5 w-5 shrink-0"
+              :class="getStageIconClass(stage)"
+            />
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium truncate">{{ stage.description }}</span>
+                <Badge :variant="getStageVariant(stage)" class="shrink-0 text-[10px] h-4 px-1.5">
+                  {{ stage.claimed ? t('growthFund.statusClaimed') : stage.claimable ? t('growthFund.statusClaimable') : t('growthFund.statusLocked') }}
+                </Badge>
+              </div>
+              <div class="text-xs text-muted-foreground mt-0.5">
+                {{ t('growthFund.pointsReq', { points: formatNumber(stage.pointsReq) }) }}
+                ·
+                {{ t('growthFund.reward', { amount: formatNumber(stage.rewardDM) }) }}
+              </div>
+            </div>
+
+            <!-- Action -->
+            <Button
+              v-if="stage.claimable"
+              size="sm"
+              :disabled="claimingStageId === stage.id"
+              @click="handleClaim(stage)"
+              class="shrink-0"
+            >
+              <Loader2 v-if="claimingStageId === stage.id" class="h-3 w-3 animate-spin" />
+              <Gift v-else class="h-3 w-3" />
+              <span class="ml-1">{{ t('growthFund.claim') }}</span>
+            </Button>
+            <div v-else-if="stage.claimed" class="shrink-0 flex items-center justify-center gap-1 text-xs text-green-500/70 px-2 min-h-[32px]">
+              <CheckCircle class="h-3.5 w-3.5" />
+            </div>
+            <div v-else class="shrink-0 flex items-center justify-center gap-1 text-xs text-muted-foreground/50 px-2 min-h-[32px]">
+              <Lock class="h-3.5 w-3.5" />
+            </div>
           </CardContent>
         </Card>
-
-        <!-- All stages complete -->
-        <Card v-else class="border-green-500/30 bg-green-500/5">
-          <CardContent class="pt-4 text-center space-y-2">
-            <Crown class="h-10 w-10 text-amber-500 mx-auto" />
-            <p class="font-bold text-lg">{{ t('growthFund.allClaimed') }}</p>
-            <p class="text-sm text-muted-foreground">
-              {{ t('growthFund.totalClaimedAmount', { amount: formatNumber(claimedDM) }) }}
-            </p>
-          </CardContent>
-        </Card>
-
-        <!-- Stages list -->
-        <div class="space-y-2">
-          <h3 class="text-sm font-semibold text-muted-foreground px-1">
-            {{ t('growthFund.stages') }}
-          </h3>
-          <Card
-            v-for="stage in fundStatus.stages"
-            :key="stage.id"
-            :class="[
-              stage.claimable ? 'border-amber-500/40 bg-amber-500/5' : '',
-              stage.claimed ? 'opacity-70' : ''
-            ]"
-          >
-            <CardContent class="py-3 flex items-center gap-3">
-              <!-- Icon -->
-              <component
-                :is="getStageIcon(stage)"
-                class="h-5 w-5 shrink-0"
-                :class="getStageIconClass(stage)"
-              />
-
-              <!-- Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium truncate">{{ stage.description }}</span>
-                  <Badge :variant="getStageVariant(stage)" class="shrink-0 text-[10px] h-4 px-1.5">
-                    {{ stage.claimed ? t('growthFund.statusClaimed') : stage.claimable ? t('growthFund.statusClaimable') : t('growthFund.statusLocked') }}
-                  </Badge>
-                </div>
-                <div class="text-xs text-muted-foreground mt-0.5">
-                  {{ t('growthFund.pointsReq', { points: formatNumber(stage.pointsReq) }) }}
-                  ·
-                  {{ t('growthFund.reward', { amount: formatNumber(stage.rewardDM) }) }}
-                </div>
-              </div>
-
-              <!-- Action -->
-              <Button
-                v-if="stage.claimable"
-                size="sm"
-                :disabled="claimingStageId === stage.id"
-                @click="handleClaim(stage)"
-                class="shrink-0"
-              >
-                <Loader2 v-if="claimingStageId === stage.id" class="h-3 w-3 animate-spin" />
-                <Gift v-else class="h-3 w-3" />
-                <span class="ml-1">{{ t('growthFund.claim') }}</span>
-              </Button>
-              <div v-else-if="stage.claimed" class="shrink-0 flex items-center justify-center gap-1 text-xs text-green-500/70 px-2 min-h-[32px]">
-                <CheckCircle class="h-3.5 w-3.5" />
-              </div>
-              <div v-else class="shrink-0 flex items-center justify-center gap-1 text-xs text-muted-foreground/50 px-2 min-h-[32px]">
-                <Lock class="h-3.5 w-3.5" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </template>
+      </div>
     </template>
   </div>
 </template>
