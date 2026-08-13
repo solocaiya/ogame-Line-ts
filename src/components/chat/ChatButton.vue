@@ -18,7 +18,7 @@
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        class="w-96 p-0"
+        class="w-96 max-w-[calc(100vw-2rem)] p-0 sm:max-w-none"
         align="end"
         :side-offset="8"
       >
@@ -71,7 +71,7 @@
         </div>
 
         <!-- Messages area -->
-        <ScrollArea class="h-80">
+        <ScrollArea class="h-64 sm:h-80 max-h-[50vh]">
           <div class="p-3">
             <!-- Load more button -->
             <div v-if="chatStore.hasMore" class="mb-2">
@@ -116,22 +116,24 @@
         </ScrollArea>
 
         <!-- Input area -->
-        <div class="border-t p-3">
+        <div class="border-t p-2 sm:p-3">
           <div class="flex gap-2">
             <Input
               v-model="messageInput"
               :placeholder="t('chat.inputPlaceholder')"
-              class="h-8 text-xs flex-1"
+              class="h-9 sm:h-8 text-xs flex-1"
               maxlength="500"
+              inputmode="text"
               @keydown.enter="sendMessage"
             />
             <Button
               size="sm"
-              class="h-8 px-3"
+              class="h-9 w-9 sm:h-8 sm:w-auto sm:px-3"
               :disabled="!messageInput.trim()"
               @click="sendMessage"
             >
-              <Send class="h-3 w-3" />
+              <Send class="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+              <span class="hidden sm:inline sm:ml-1">{{ t('chat.send') }}</span>
             </Button>
           </div>
         </div>
@@ -142,7 +144,7 @@
     <Transition name="fade">
       <div
         v-if="showBubble && !popoverOpen"
-        class="absolute bottom-12 right-0 bg-popover border rounded-lg shadow-lg px-3 py-2 max-w-48 z-50"
+        class="absolute bottom-12 right-0 bg-popover border rounded-lg shadow-lg px-3 py-2 max-w-[calc(100vw-4rem)] sm:max-w-48 z-50"
       >
         <p class="text-xs">
           <span class="font-semibold">{{ chatStore.lastSenderName }}</span>
