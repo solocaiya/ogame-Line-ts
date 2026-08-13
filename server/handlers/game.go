@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -130,14 +131,30 @@ func (h *GameHandler) InitPlayer(c *gin.Context) {
 		return
 	}
 
-	// Create starting planet [1:1:4]
+	// Create starting planet at a random position to spread players out
 	now := time.Now().UnixMilli()
-	startPos := 4
+	startGalaxy := rand.Intn(5) + 1   // galaxy 1-5
+	startSystem := rand.Intn(500) + 1  // system 1-500
+	startPos := 0
+	// Find an unoccupied position (positions 1-15 per system)
+	for attempt := 0; attempt < 100; attempt++ {
+		candidate := rand.Intn(15) + 1
+		coord := engine.Coordinate{Galaxy: startGalaxy, System: startSystem, Position: candidate}
+		if !h.gameState.IsCoordOccupied(coord) {
+			startPos = candidate
+			break
+		}
+	}
+	if startPos == 0 {
+		// All positions in this system are full — pick a new system
+		startSystem = rand.Intn(500) + 1
+		startPos = rand.Intn(15) + 1
+	}
 	startMaxTemp := int(math.Round(240.0 - float64(startPos-1)*31.4))
 	planet := &engine.PlanetState{
-		ID:   "1-1-4",
+		ID:   fmt.Sprintf("%d-%d-%d", startGalaxy, startSystem, startPos),
 		Name: "Homeworld",
-		Coordinate: engine.Coordinate{Galaxy: 1, System: 1, Position: startPos},
+		Coordinate: engine.Coordinate{Galaxy: startGalaxy, System: startSystem, Position: startPos},
 		MaxTemp:      startMaxTemp,
 		Buildings:     map[string]int{"metalMine": 1, "crystalMine": 1, "deuteriumSynthesizer": 1, "solarPlant": 1},
 		Technologies:  map[string]int{},

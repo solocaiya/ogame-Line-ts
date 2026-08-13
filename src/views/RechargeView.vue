@@ -439,6 +439,9 @@ onMounted(loadData)
                 <Gift v-else class="w-4 h-4 mr-1" />
                 {{ t('recharge.buyGift') }}
               </Button>
+              <div v-else class="mt-auto text-center text-xs text-muted-foreground py-2">
+                {{ pack.purchased ? t('recharge.purchased') : t('recharge.unavailable') }}
+              </div>
             </CardContent>
           </Card>
         </div>

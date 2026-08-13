@@ -163,6 +163,8 @@ func (gs *GameState) UpdatePlanet(playerID, planetID string, fn func(planet *eng
 }
 
 // UpdatePlayer atomically reads and modifies a player's state.
+// Re-indexes the player's planets in coordIndex after the callback completes,
+// so any planets added/removed/changed by the callback remain visible to ScanSystem.
 func (gs *GameState) UpdatePlayer(playerID string, fn func(player *engine.PlayerState) error) error {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
@@ -170,7 +172,20 @@ func (gs *GameState) UpdatePlayer(playerID string, fn func(player *engine.Player
 	if !ok {
 		return fmt.Errorf("player not found: %s", playerID)
 	}
-	return fn(p)
+	// Snapshot old coords so we can remove stale index entries
+	oldCoords := make([]engine.Coordinate, 0, len(p.Planets))
+	for _, pl := range p.Planets {
+		oldCoords = append(oldCoords, pl.Coordinate)
+	}
+	err := fn(p)
+	// Re-index: remove old entries, add current entries
+	for _, coord := range oldCoords {
+		delete(gs.coordIndex, gs.coordKey(coord))
+	}
+	for _, planet := range p.Planets {
+		gs.coordIndex[gs.coordKey(planet.Coordinate)] = planet
+	}
+	return err
 }
 
 // EnsurePlayer ensures a player entry exists, creating one if needed.
@@ -952,6 +967,14 @@ func (gs *GameState) coordKey(c engine.Coordinate) string {
 // findPlanetByCoord looks up a planet by coordinate using the O(1) index.
 func (gs *GameState) findPlanetByCoord(coord engine.Coordinate) *engine.PlanetState {
 	return gs.coordIndex[gs.coordKey(coord)]
+}
+
+// IsCoordOccupied returns true if any planet exists at the given coordinate.
+func (gs *GameState) IsCoordOccupied(coord engine.Coordinate) bool {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+	_, ok := gs.coordIndex[gs.coordKey(coord)]
+	return ok
 }
 
 func (gs *GameState) processFleetReturn(player *engine.PlayerState, mission *engine.FleetMission, now int64) {

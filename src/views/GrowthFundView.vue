@@ -323,6 +323,12 @@ function getStageVariant(stage: GrowthFundStageStatus) {
                 <Gift v-else class="h-3 w-3" />
                 <span class="ml-1">{{ t('growthFund.claim') }}</span>
               </Button>
+              <div v-else-if="stage.claimed" class="shrink-0 flex items-center justify-center gap-1 text-xs text-green-500/70 px-2 min-h-[32px]">
+                <CheckCircle class="h-3.5 w-3.5" />
+              </div>
+              <div v-else class="shrink-0 flex items-center justify-center gap-1 text-xs text-muted-foreground/50 px-2 min-h-[32px]">
+                <Lock class="h-3.5 w-3.5" />
+              </div>
             </CardContent>
           </Card>
         </div>

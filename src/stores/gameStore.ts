@@ -302,7 +302,7 @@ export const useGameStore = defineStore('game', {
     async refreshWalletBalance() {
       try {
         const balance = await apiService.getWalletBalance()
-        this.darkMatterBalance = balance.darkMatter
+        this.darkMatterBalance = balance.darkMatterBalance
         this.consumptionPoints = balance.consumptionPoints
         this.vipLevel = balance.vipLevel
         this.subscriptionExpiresAt = balance.subscriptionExpiresAt

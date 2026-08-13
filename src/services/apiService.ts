@@ -51,7 +51,7 @@ interface SaveInfo {
 // --- Wallet types ---
 
 interface WalletBalance {
-  darkMatter: number
+  darkMatterBalance: number
   consumptionPoints: number
   vipLevel: number
   subscriptionExpiresAt: string
