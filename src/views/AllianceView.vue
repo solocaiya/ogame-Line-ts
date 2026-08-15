@@ -81,7 +81,7 @@
               class="flex-1"
               @keydown.enter="handleSearch"
             />
-            <Button variant="outline" :disabled="!searchQuery.trim()" @click="handleSearch">
+            <Button variant="outline" class="h-9" :disabled="!searchQuery.trim()" @click="handleSearch">
               <Search class="h-4 w-4" />
             </Button>
           </div>
@@ -122,7 +122,7 @@
               </p>
               <p v-if="allianceStore.alliance.description" class="text-sm mt-2">{{ allianceStore.alliance.description }}</p>
             </div>
-            <Button variant="destructive" size="sm" @click="showLeaveConfirm = true">
+            <Button variant="destructive" size="sm" class="h-9" @click="showLeaveConfirm = true">
               {{ t('alliance.leave') }}
             </Button>
           </div>
