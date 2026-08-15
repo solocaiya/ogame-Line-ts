@@ -7,10 +7,10 @@
 
     <!-- 分类标签 -->
     <Tabs v-model="activeCategory" class="w-full">
-      <TabsList class="w-full grid grid-cols-5 h-10">
+      <TabsList class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
         <TabsTrigger v-for="category in categories" :key="category.value" :value="category.value" class="text-xs sm:text-sm">
           {{ t(`achievements.categories.${category.value}`) }}
-          <Badge v-if="getCategoryUnlockedCount(category.value) > 0" class="ml-1 h-5 px-1.5 text-[10px] bg-primary text-primary-foreground">
+          <Badge v-if="getCategoryUnlockedCount(category.value) > 0" class="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
             {{ getCategoryUnlockedCount(category.value) }}
           </Badge>
         </TabsTrigger>

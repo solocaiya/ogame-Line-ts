@@ -12,7 +12,7 @@
           <Button
             variant="ghost"
             size="sm"
-            class="h-8 px-2 rounded-r-none"
+            class="h-9 px-2 rounded-r-none"
             :class="{ 'bg-accent': viewMode === 'list' }"
             @click="viewMode = 'list'"
             :title="t('diplomacy.viewMode.list')"
@@ -22,7 +22,7 @@
           <Button
             variant="ghost"
             size="sm"
-            class="h-8 px-2 rounded-l-none border-l"
+            class="h-9 px-2 rounded-l-none border-l"
             :class="{ 'bg-accent': viewMode === 'card' }"
             @click="viewMode = 'card'"
             :title="t('diplomacy.viewMode.card')"
@@ -192,7 +192,7 @@
       <!-- 排序控制 -->
       <div class="flex gap-2">
         <Select v-model="sortBy">
-          <SelectTrigger class="w-[140px]">
+          <SelectTrigger class="w-full sm:w-[140px]">
             <SelectValue :placeholder="t('diplomacy.sort.label')" />
           </SelectTrigger>
           <SelectContent>
@@ -216,7 +216,7 @@
 
     <!-- 关系状态过滤标签 -->
     <Tabs v-model="activeTab" class="w-full">
-      <TabsList class="grid w-full grid-cols-4">
+      <TabsList class="grid w-full grid-cols-2 sm:grid-cols-4">
         <TabsTrigger value="all">
           {{ t('diplomacy.tabs.all') }}
           <Badge

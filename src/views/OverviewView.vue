@@ -38,10 +38,10 @@
 
           <!-- 操作按钮 -->
           <div class="flex items-center gap-2 mt-3">
-            <Button v-if="!planet.isMoon && moon" @click="switchToMoon" variant="secondary" size="sm" class="text-xs h-7">
+            <Button v-if="!planet.isMoon && moon" @click="switchToMoon" variant="secondary" size="sm" class="text-xs h-9">
               {{ t('planet.switchToMoon') }}
             </Button>
-            <Button v-if="planet.isMoon" @click="switchToParentPlanet" variant="secondary" size="sm" class="text-xs h-7">
+            <Button v-if="planet.isMoon" @click="switchToParentPlanet" variant="secondary" size="sm" class="text-xs h-9">
               {{ t('planet.backToPlanet') }}
             </Button>
             <Button
@@ -49,7 +49,7 @@
               @click="showAbandonDialog = true"
               variant="destructive"
               size="sm"
-              class="text-xs h-7"
+              class="text-xs h-9"
             >
               {{ t('planet.abandonColony') }}
             </Button>
@@ -105,6 +105,7 @@
           </TabsList>
           <!-- 概览标签页 -->
           <TabsContent value="overview" class="mt-4">
+            <div class="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -142,6 +143,7 @@
                 </TableRow>
               </TableBody>
             </Table>
+            </div>
           </TabsContent>
 
           <!-- 产量详情标签页 -->

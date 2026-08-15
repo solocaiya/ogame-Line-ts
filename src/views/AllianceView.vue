@@ -30,10 +30,10 @@
               <p class="text-xs text-muted-foreground">{{ invite.inviterName }}</p>
             </div>
             <div class="flex gap-2">
-              <Button size="sm" class="h-7 text-xs" @click="acceptInvite(invite.id)">
+              <Button size="sm" class="h-9 text-xs" @click="acceptInvite(invite.id)">
                 {{ t('alliance.accept') }}
               </Button>
-              <Button size="sm" variant="outline" class="h-7 text-xs" @click="rejectInvite(invite.id)">
+              <Button size="sm" variant="outline" class="h-9 text-xs" @click="rejectInvite(invite.id)">
                 {{ t('alliance.reject') }}
               </Button>
             </div>
@@ -97,7 +97,7 @@
                 <p class="font-medium text-sm">{{ a.name }} <span class="text-muted-foreground">[{{ a.tag }}]</span></p>
                 <p class="text-xs text-muted-foreground">{{ a.members?.length || 0 }} / {{ a.maxMembers || 30 }} {{ t('alliance.members') }}</p>
               </div>
-              <Button size="sm" variant="outline" class="h-7 text-xs" @click="requestJoin(a.id)">
+              <Button size="sm" variant="outline" class="h-9 text-xs" @click="requestJoin(a.id)">
                 {{ t('alliance.requestToJoin') }}
               </Button>
             </div>
@@ -135,7 +135,7 @@
           <TabsTrigger value="members">{{ t('alliance.members') }}</TabsTrigger>
           <TabsTrigger value="requests" :disabled="!allianceStore.isOfficerOrLeader">
             {{ t('alliance.requests') }}
-            <Badge v-if="allianceStore.pendingRequestCount > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-[9px]">
+            <Badge v-if="allianceStore.pendingRequestCount > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-xs">
               {{ allianceStore.pendingRequestCount }}
             </Badge>
           </TabsTrigger>
@@ -155,7 +155,7 @@
                   class="flex items-center justify-between p-3 border rounded-md"
                 >
                   <div class="flex items-center gap-3">
-                    <Badge :variant="roleVariant(member.role)" class="text-[10px]">
+                    <Badge :variant="roleVariant(member.role)" class="text-xs">
                       {{ t(`alliance.role.${member.role}`) }}
                     </Badge>
                     <span class="text-muted-foreground text-xs">[{{ allianceStore.alliance.tag }}]</span>
@@ -164,16 +164,16 @@
                   <!-- Actions for officers/leader (not on self) -->
                   <div v-if="allianceStore.isOfficerOrLeader && member.playerId !== currentPlayerId" class="flex gap-1">
                     <template v-if="allianceStore.isLeader && member.role === 'member'">
-                      <Button size="sm" variant="ghost" class="h-7 text-xs" @click="promote(member.playerId)">
+                      <Button size="sm" variant="ghost" class="h-9 text-xs" @click="promote(member.playerId)">
                         {{ t('alliance.promote') }}
                       </Button>
                     </template>
                     <template v-if="allianceStore.isLeader && member.role === 'officer'">
-                      <Button size="sm" variant="ghost" class="h-7 text-xs" @click="demote(member.playerId)">
+                      <Button size="sm" variant="ghost" class="h-9 text-xs" @click="demote(member.playerId)">
                         {{ t('alliance.demote') }}
                       </Button>
                     </template>
-                    <Button size="sm" variant="ghost" class="h-7 text-xs text-destructive" @click="confirmKick(member)">
+                    <Button size="sm" variant="ghost" class="h-9 text-xs text-destructive" @click="confirmKick(member)">
                       {{ t('alliance.kick') }}
                     </Button>
                   </div>
@@ -201,10 +201,10 @@
                     <p v-if="req.message" class="text-xs text-muted-foreground mt-1">"{{ req.message }}"</p>
                   </div>
                   <div class="flex gap-2">
-                    <Button size="sm" class="h-7 text-xs" @click="acceptRequest(req.id)">
+                    <Button size="sm" class="h-9 text-xs" @click="acceptRequest(req.id)">
                       {{ t('alliance.accept') }}
                     </Button>
-                    <Button size="sm" variant="outline" class="h-7 text-xs" @click="rejectRequest(req.id)">
+                    <Button size="sm" variant="outline" class="h-9 text-xs" @click="rejectRequest(req.id)">
                       {{ t('alliance.reject') }}
                     </Button>
                   </div>

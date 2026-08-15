@@ -9,7 +9,7 @@
         <CardDescription>{{ t('trader.exchangeRatesDesc') }}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div class="grid grid-cols-3 gap-4 text-center">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
             <div class="text-xs text-muted-foreground">{{ t('resources.metal') }}</div>
             <div class="text-lg font-bold text-amber-600">1 : {{ TRADER_RATES.metal }}</div>
@@ -63,7 +63,7 @@
         <!-- 预览 -->
         <div v-if="darkMatterInput > 0" class="p-4 bg-muted rounded-lg space-y-2">
           <p class="text-sm font-medium">{{ t('trader.preview') }}</p>
-          <div class="grid grid-cols-3 gap-3 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
             <div v-for="res in resourceTypes" :key="res.key" class="text-center">
               <div class="text-xs text-muted-foreground">{{ t(`resources.${res.key}`) }}</div>
               <div class="font-bold" :class="res.color">
@@ -77,7 +77,7 @@
         </div>
 
         <!-- 交易按钮 -->
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Button
             v-for="res in resourceTypes"
             :key="res.key"

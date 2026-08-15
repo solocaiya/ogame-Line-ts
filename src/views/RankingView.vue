@@ -19,7 +19,7 @@
 
     <!-- 分类标签 -->
     <Tabs v-model="activeCategory" class="w-full">
-      <TabsList class="w-full grid grid-cols-5 h-10">
+      <TabsList class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
         <TabsTrigger v-for="category in categories" :key="category.value" :value="category.value" class="text-xs sm:text-sm">
           <component :is="getCategoryIcon(category.value)" class="h-4 w-4 mr-1 hidden sm:inline" />
           {{ t(`ranking.categories.${category.value}`) }}
@@ -53,7 +53,7 @@
                   <span class="font-medium truncate" :class="{ 'text-primary': entry.isPlayer }">
                     {{ entry.name }}
                   </span>
-                  <Badge v-if="entry.isPlayer" variant="outline" class="text-[10px] px-1 shrink-0">
+                  <Badge v-if="entry.isPlayer" variant="outline" class="text-xs px-1 shrink-0">
                     {{ t('ranking.you') }}
                   </Badge>
                 </div>

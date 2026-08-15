@@ -159,7 +159,7 @@ function getStageVariant(stage: GrowthFundStageStatus) {
 
     <template v-else-if="fundStatus">
       <!-- Summary: different content based on purchase status, but same layout -->
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent class="pt-4 text-center">
             <div class="text-lg font-bold" :class="fundStatus.purchased ? 'text-green-500' : 'text-muted-foreground'">
@@ -264,7 +264,7 @@ function getStageVariant(stage: GrowthFundStageStatus) {
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
                 <span class="text-sm font-medium truncate">{{ stage.description }}</span>
-                <Badge :variant="getStageVariant(stage)" class="shrink-0 text-[10px] h-4 px-1.5">
+                <Badge :variant="getStageVariant(stage)" class="shrink-0 text-xs h-4 px-1.5">
                   {{ stage.claimed ? t('growthFund.statusClaimed') : stage.claimable ? t('growthFund.statusClaimable') : t('growthFund.statusLocked') }}
                 </Badge>
               </div>

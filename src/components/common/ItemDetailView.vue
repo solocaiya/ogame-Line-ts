@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-4">
     <!-- 建筑/科技：等级范围表格 -->
-    <div v-if="type === 'building' || type === 'technology'" class="border rounded-lg">
-      <Table>
+    <div v-if="type === 'building' || type === 'technology'" class="border rounded-lg overflow-x-auto">
+      <Table class="min-w-[600px]">
         <TableHeader>
           <TableRow>
             <TableHead class="w-20 text-center">{{ t(`${typeKey}.levelRange`) }}</TableHead>

@@ -11,7 +11,7 @@
           <MessageCircle :class="['h-5 w-5', hasUnread ? 'text-blue-400' : '']" />
           <Badge
             v-if="hasUnread"
-            class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+            class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
           >
             {{ displayUnread }}
           </Badge>
@@ -29,7 +29,7 @@
             <Button
               variant="ghost"
               size="icon"
-              class="h-7 w-7"
+              class="h-9 w-7"
               @click="showDND = !showDND"
             >
               <BellOff :class="['h-4 w-4', isAnyMuted ? 'text-yellow-500' : '']" />
@@ -40,7 +40,7 @@
           <div v-if="showDND" class="mb-2 p-2 bg-muted/50 rounded-md">
             <p class="text-xs text-muted-foreground mb-1">{{ t('chat.dnd.title') }}</p>
             <Select :model-value="chatStore.dndMode" @update:model-value="(v: string) => chatStore.setDNDMode(v as any)">
-              <SelectTrigger class="h-7 text-xs">
+              <SelectTrigger class="h-9 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -56,13 +56,13 @@
             <TabsList class="grid w-full grid-cols-2">
               <TabsTrigger value="world" class="text-xs">
                 {{ t('chat.world') }}
-                <Badge v-if="chatStore.unreadWorld > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-[9px]">
+                <Badge v-if="chatStore.unreadWorld > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-xs">
                   {{ chatStore.unreadWorld }}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="alliance" class="text-xs" :disabled="!chatStore.canUseAllianceChannel">
                 {{ t('chat.alliance') }}
-                <Badge v-if="chatStore.unreadAlliance > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-[9px]">
+                <Badge v-if="chatStore.unreadAlliance > 0" variant="destructive" class="ml-1 h-4 min-w-4 px-1 text-xs">
                   {{ chatStore.unreadAlliance }}
                 </Badge>
               </TabsTrigger>
@@ -78,7 +78,7 @@
               <Button
                 variant="ghost"
                 size="sm"
-                class="w-full text-xs h-7"
+                class="w-full text-xs h-9"
                 :disabled="loadingMore"
                 @click="loadMore"
               >
@@ -105,7 +105,7 @@
                     <span v-if="msg.senderTag" class="text-muted-foreground">[{{ msg.senderTag }}]</span>
                     {{ msg.senderName }}
                   </span>
-                  <span class="text-muted-foreground text-[10px]">
+                  <span class="text-muted-foreground text-xs">
                     {{ formatTime(msg.timestamp) }}
                   </span>
                 </div>

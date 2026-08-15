@@ -88,7 +88,7 @@
             <div class="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
               <div class="flex gap-2 w-full sm:w-auto">
                 <Select v-model="selectedPresets[section.tabValue]">
-                  <SelectTrigger class="w-[200px]">
+                  <SelectTrigger class="w-full sm:w-[200px]">
                     <SelectValue :placeholder="t('gmView.choosePreset') || 'Choose Preset'" />
                   </SelectTrigger>
                   <SelectContent>
@@ -110,7 +110,7 @@
                 </Button>
               </div>
               <div class="flex gap-2 w-full sm:w-auto ml-auto">
-                <Input v-model="presetNames[section.tabValue]" :placeholder="t('gmView.presetName') || 'Preset Name'" class="w-[150px]" />
+                <Input v-model="presetNames[section.tabValue]" :placeholder="t('gmView.presetName') || 'Preset Name'" class="w-full sm:w-[150px]" />
                 <Button @click="handleSavePreset(section)" variant="outline">{{ t('gmView.savePreset') || 'Save' }}</Button>
               </div>
             </div>

@@ -41,7 +41,7 @@
           <Badge
             v-if="getChapterProgress(chapter.number) === 100"
             variant="default"
-            class="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+            class="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs"
           >
             <Check class="h-3 w-3" />
           </Badge>

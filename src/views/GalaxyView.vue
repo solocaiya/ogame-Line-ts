@@ -91,11 +91,11 @@
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-0.5">
                           <span class="truncate font-medium text-sm">{{ p.name }}</span>
-                          <Badge v-if="p.isMoon" variant="outline" class="text-[10px] px-1 py-0 h-4">
+                          <Badge v-if="p.isMoon" variant="outline" class="text-xs px-1 py-0 h-4">
                             {{ t('planet.moon') }}
                           </Badge>
                         </div>
-                        <div class="text-[11px] text-muted-foreground">
+                        <div class="text-xs text-muted-foreground">
                           [{{ p.position.galaxy }}:{{ p.position.system }}:{{ p.position.position }}]
                         </div>
                       </div>
@@ -140,7 +140,7 @@
                       <span v-else class="text-base shrink-0 mt-0.5">🪐</span>
                       <div class="flex-1 min-w-0">
                         <div class="truncate font-medium text-sm mb-0.5">{{ p.name }}</div>
-                        <div class="text-[11px] text-muted-foreground">
+                        <div class="text-xs text-muted-foreground">
                           [{{ p.position.galaxy }}:{{ p.position.system }}:{{ p.position.position }}]
                         </div>
                       </div>
@@ -378,7 +378,7 @@
                 <TooltipProvider :delay-duration="300">
                   <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet)">
                     <TooltipTrigger as-child>
-                      <Button @click="showPlanetActions(slot.planet, 'spy')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showPlanetActions(slot.planet, 'spy')" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Eye class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -388,7 +388,7 @@
                   </Tooltip>
                   <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet)">
                     <TooltipTrigger as-child>
-                      <Button @click="showPlanetActions(slot.planet, 'attack')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showPlanetActions(slot.planet, 'attack')" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Sword class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -398,7 +398,7 @@
                   </Tooltip>
                   <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && hasInterplanetaryMissiles">
                     <TooltipTrigger as-child>
-                      <Button @click="showMissileAttackDialog(slot.planet)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showMissileAttackDialog(slot.planet)" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Bomb class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -408,7 +408,7 @@
                   </Tooltip>
                   <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && getPlanetNPC(slot.planet)">
                     <TooltipTrigger as-child>
-                      <Button @click="showPlanetActions(slot.planet, 'gift')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showPlanetActions(slot.planet, 'gift')" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Gift class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -418,7 +418,7 @@
                   </Tooltip>
                   <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && canScanPlanet(slot.planet)">
                     <TooltipTrigger as-child>
-                      <Button @click="showPhalanxScanDialog(slot.planet)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showPhalanxScanDialog(slot.planet)" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Radar class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -428,7 +428,7 @@
                   </Tooltip>
                   <Tooltip v-if="!slot.planet">
                     <TooltipTrigger as-child>
-                      <Button @click="showPlanetActions(null, 'colonize', slot.position)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="showPlanetActions(null, 'colonize', slot.position)" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Rocket class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -438,7 +438,7 @@
                   </Tooltip>
                   <Tooltip v-if="slot.planet && isMyPlanet(slot.planet)">
                     <TooltipTrigger as-child>
-                      <Button @click="switchToPlanet(slot.planet.id)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                      <Button @click="switchToPlanet(slot.planet.id)" variant="outline" size="sm" class="h-9 w-9 p-0">
                         <Home class="h-3 w-3" />
                       </Button>
                     </TooltipTrigger>
@@ -452,7 +452,7 @@
                         @click="showPlanetActions(slot.planet, 'recycle', slot.position)"
                         variant="outline"
                         size="sm"
-                        class="h-8 w-8 p-0"
+                        class="h-9 w-9 p-0"
                       >
                         <Recycle class="h-3 w-3" />
                       </Button>
@@ -467,7 +467,7 @@
                         @click="openBookmarkDialog(slot.planet)"
                         variant="outline"
                         size="sm"
-                        class="h-8 w-8 p-0"
+                        class="h-9 w-9 p-0"
                         :class="isPlanetBookmarked(slot.planet) ? 'text-yellow-500 border-yellow-500' : ''"
                       >
                         <Star class="h-3 w-3" :class="isPlanetBookmarked(slot.planet) ? 'fill-yellow-500' : ''" />
