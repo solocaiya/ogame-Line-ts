@@ -297,8 +297,13 @@ const startAudioElement = (audio: HTMLAudioElement, scene: BgmSceneConfig) => {
   if (scene.loopMode === 'seamless') {
     // 无缝循环：HTMLAudioElement 原生 loop
     audio.loop = true
-    audio.play().catch(() => {})
-    bgmPlaying = true
+    bgmPlaying = true // 先标记，play 失败时修正
+    audio.play().then(() => {
+      bgmPlaying = true
+    }).catch(() => {
+      // 浏览器 autoplay 策略拦截，等用户交互后 unlockAudio 会重试
+      bgmPlaying = false
+    })
   } else {
     // 间隔循环：播放一次，结束后静音 N 秒再重播
     audio.loop = false
@@ -314,8 +319,12 @@ const startAudioElement = (audio: HTMLAudioElement, scene: BgmSceneConfig) => {
       }, gapMs + jitter)
     }
     audio.addEventListener('ended', scheduleGapReplay)
-    audio.play().catch(() => {})
     bgmPlaying = true
+    audio.play().then(() => {
+      bgmPlaying = true
+    }).catch(() => {
+      bgmPlaying = false
+    })
   }
 }
 

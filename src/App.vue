@@ -2769,8 +2769,8 @@
       // 初始化音频系统（注册用户交互监听器以解锁 AudioContext + 路由监听自动切换 BGM）
       initAudio(router)
 
-      // 同步 BGM 音量到 soundManager
-      if (gameStore.player.musicEnabled) {
+      // 同步 BGM 音量到 soundManager（新玩家默认开启 BGM）
+      if (gameStore.player.musicEnabled !== false) {
         setBgmVolume(gameStore.player.musicVolume ?? 0.5)
         playBgm()
       }
