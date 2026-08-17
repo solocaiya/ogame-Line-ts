@@ -46,17 +46,18 @@ export const unlockAudio = () => {
   }
   audioUnlocked = true
 
-  // 如果 BGM 已启用但尚未播放，现在尝试播放
+  // 如果 BGM 已启用但尚未播放，现在尝试恢复当前场景 BGM
   if (bgmEnabled && !bgmPlaying) {
-    startBgmOscillators()
+    resumeCurrentBgm()
   }
 }
 
 /**
  * 初始化音频系统 — 在 App 挂载时调用
  * 注册全局用户交互监听器以解锁 AudioContext
+ * 注册路由监听器以自动切换 BGM 场景
  */
-export const initAudio = () => {
+export const initAudio = (router?: { afterEach: (cb: (to: { name?: string | symbol }) => void) => void }) => {
   if (typeof window === 'undefined') return
 
   // 监听首次用户交互以解锁音频
@@ -70,6 +71,15 @@ export const initAudio = () => {
   window.addEventListener('click', unlock, { once: false })
   window.addEventListener('keydown', unlock, { once: false })
   window.addEventListener('touchstart', unlock, { once: false })
+
+  // 注册路由监听 — 自动切换 BGM 场景
+  if (router) {
+    router.afterEach((to) => {
+      if (to.name) {
+        switchBgm(to.name)
+      }
+    })
+  }
 }
 
 // 生成简单的合成音效
@@ -162,92 +172,210 @@ const soundPlayers: Record<SoundType, (volume: number) => void> = {
   }
 }
 
-// ============ 背景音乐（BGM）— Web Audio API 合成环境音乐 ============
+// ============ 多场景背景音乐（BGM）— HTMLAudioElement 场景切换 ============
 
-let bgmEnabled = false
-let bgmPlaying = false
-let bgmVolume = 0.3
-let bgmGainNode: GainNode | null = null
-let bgmOscillators: OscillatorNode[] = []
+/** BGM 循环模式 */
+export type BgmLoopMode = 'seamless' | 'gap'
 
-/**
- * 启动 BGM 振荡器 — 生成柔和的太空环境音乐
- * 使用多个低频正弦波叠加产生氛围感
- */
-const startBgmOscillators = () => {
-  const ctx = getAudioContext()
-  if (!ctx || bgmPlaying) return
-  if (ctx.state === 'suspended') {
-    ctx.resume().catch(() => {})
-  }
-
-  // 主增益节点
-  bgmGainNode = ctx.createGain()
-  bgmGainNode.gain.setValueAtTime(bgmVolume * 0.15, ctx.currentTime) // 降低基础音量
-  bgmGainNode.connect(ctx.destination)
-
-  // 环境和弦：C3 + E3 + G3 + B3 叠加，产生柔和的太空感
-  const frequencies = [130.81, 164.81, 196.00, 246.94] // C3, E3, G3, B3
-  const types: OscillatorType[] = ['sine', 'sine', 'sine', 'triangle']
-
-  frequencies.forEach((freq, i) => {
-    const osc = ctx.createOscillator()
-    const oscGain = ctx.createGain()
-
-    osc.type = types[i]
-    osc.frequency.setValueAtTime(freq, ctx.currentTime)
-
-    // 每个振荡器音量递减
-    oscGain.gain.setValueAtTime(0.3 - i * 0.05, ctx.currentTime)
-
-    // 添加缓慢的 LFO 调制，产生呼吸感
-    const lfo = ctx.createOscillator()
-    const lfoGain = ctx.createGain()
-    lfo.type = 'sine'
-    lfo.frequency.setValueAtTime(0.1 + i * 0.05, ctx.currentTime) // 非常缓慢
-    lfoGain.gain.setValueAtTime(0.1, ctx.currentTime)
-    lfo.connect(lfoGain)
-    lfoGain.connect(oscGain.gain)
-    lfo.start(ctx.currentTime)
-
-    osc.connect(oscGain)
-    oscGain.connect(bgmGainNode!)
-    osc.start(ctx.currentTime)
-
-    bgmOscillators.push(osc)
-  })
-
-  bgmPlaying = true
+/** BGM 场景配置 */
+export interface BgmSceneConfig {
+  /** 场景标识 */
+  id: string
+  /** 音频文件路径（相对于 public/） */
+  src: string
+  /** 循环模式：seamless = 无缝循环，gap = 播放后间隔静音再重播 */
+  loopMode: BgmLoopMode
+  /** gap 模式下的静音间隔秒数（仅 gap 模式有效） */
+  gapSeconds?: number
 }
 
 /**
- * 停止 BGM 振荡器
+ * 7 个 BGM 场景配置
+ * - 4 个无缝循环（seamless）：主菜单、星系图、舰队/战斗、商店/充值
+ * - 3 个间隔循环（gap）：建筑/资源、科研、联盟
  */
-const stopBgmOscillators = () => {
-  bgmOscillators.forEach(osc => {
-    try { osc.stop() } catch { /* already stopped */ }
-  })
-  bgmOscillators = []
-  if (bgmGainNode) {
-    bgmGainNode.disconnect()
-    bgmGainNode = null
+export const BGM_SCENES: Record<string, BgmSceneConfig> = {
+  main: {
+    id: 'main',
+    src: '/audio/bgm/main.mp3',
+    loopMode: 'seamless'
+  },
+  galaxy: {
+    id: 'galaxy',
+    src: '/audio/bgm/galaxy.mp3',
+    loopMode: 'seamless'
+  },
+  buildings: {
+    id: 'buildings',
+    src: '/audio/bgm/buildings.mp3',
+    loopMode: 'gap',
+    gapSeconds: 9 // 8-10s 间隔
+  },
+  research: {
+    id: 'research',
+    src: '/audio/bgm/research.mp3',
+    loopMode: 'gap',
+    gapSeconds: 12 // 10-15s 间隔
+  },
+  fleet: {
+    id: 'fleet',
+    src: '/audio/bgm/fleet.mp3',
+    loopMode: 'seamless'
+  },
+  alliance: {
+    id: 'alliance',
+    src: '/audio/bgm/alliance.mp3',
+    loopMode: 'gap',
+    gapSeconds: 10 // 8-12s 间隔
+  },
+  shop: {
+    id: 'shop',
+    src: '/audio/bgm/shop.mp3',
+    loopMode: 'seamless'
+  }
+}
+
+/**
+ * 路由名称 → BGM 场景映射
+ * 未映射的路由不会触发 BGM 切换（保持当前场景）
+ */
+const ROUTE_TO_SCENE: Record<string, string> = {
+  // 主菜单/登录
+  login: 'main',
+  home: 'main',
+  // 星系图
+  galaxy: 'galaxy',
+  // 建筑/资源（含星球队列）
+  buildings: 'buildings',
+  overview: 'buildings',
+  shipyard: 'buildings',
+  defense: 'buildings',
+  planet: 'buildings',
+  'planet-queue': 'buildings',
+  // 科研
+  research: 'research',
+  // 舰队/战斗
+  fleet: 'fleet',
+  'battle-simulator': 'fleet',
+  'battle-reports': 'fleet',
+  // 联盟/外交
+  alliance: 'alliance',
+  diplomacy: 'alliance',
+  // 商店/充值
+  trader: 'shop',
+  recharge: 'shop',
+  'growth-fund': 'shop'
+}
+
+// BGM 状态
+let bgmEnabled = false
+let bgmVolume = 0.3
+let bgmCurrentScene: string | null = null
+let bgmAudioElement: HTMLAudioElement | null = null
+let bgmGapTimer: ReturnType<typeof setTimeout> | null = null
+let bgmPlaying = false
+
+/** 停止当前 BGM 播放（内部） */
+const stopBgmPlayback = () => {
+  if (bgmGapTimer) {
+    clearTimeout(bgmGapTimer)
+    bgmGapTimer = null
+  }
+  if (bgmAudioElement) {
+    bgmAudioElement.pause()
+    bgmAudioElement.removeAttribute('src')
+    bgmAudioElement.load() // 释放资源
+    bgmAudioElement = null
   }
   bgmPlaying = false
 }
 
+/** 启动音频元素播放（内部） */
+const startAudioElement = (audio: HTMLAudioElement, scene: BgmSceneConfig) => {
+  audio.volume = bgmVolume
+
+  if (scene.loopMode === 'seamless') {
+    // 无缝循环：HTMLAudioElement 原生 loop
+    audio.loop = true
+    audio.play().catch(() => {})
+    bgmPlaying = true
+  } else {
+    // 间隔循环：播放一次，结束后静音 N 秒再重播
+    audio.loop = false
+    const scheduleGapReplay = () => {
+      const gapMs = (scene.gapSeconds ?? 10) * 1000
+      // 添加 ±20% 随机抖动，避免机械感
+      const jitter = gapMs * 0.2 * (Math.random() * 2 - 1)
+      bgmGapTimer = setTimeout(() => {
+        if (bgmEnabled && bgmCurrentScene === scene.id) {
+          audio.currentTime = 0
+          audio.play().catch(() => {})
+        }
+      }, gapMs + jitter)
+    }
+    audio.addEventListener('ended', scheduleGapReplay)
+    audio.play().catch(() => {})
+    bgmPlaying = true
+  }
+}
+
 /**
- * 播放背景音乐
+ * 根据路由名称切换 BGM 场景
+ * 在 router.afterEach 中调用，实现自动场景切换
+ */
+export const switchBgm = (routeName: string | symbol | undefined) => {
+  if (!bgmEnabled || !routeName || typeof routeName === 'symbol') return
+
+  const sceneId = ROUTE_TO_SCENE[routeName]
+  if (!sceneId || sceneId === bgmCurrentScene) return
+
+  const scene = BGM_SCENES[sceneId]
+  if (!scene) return
+
+  // 停止当前 BGM
+  stopBgmPlayback()
+
+  // 创建新的音频元素
+  bgmCurrentScene = sceneId
+  bgmAudioElement = new Audio(scene.src)
+  bgmAudioElement.preload = 'auto'
+
+  // 音频加载失败时静默处理
+  bgmAudioElement.addEventListener('error', () => {
+    bgmPlaying = false
+  })
+
+  startAudioElement(bgmAudioElement, scene)
+}
+
+/** 恢复当前场景 BGM（音频解锁后调用） */
+const resumeCurrentBgm = () => {
+  if (!bgmCurrentScene || bgmPlaying) return
+  const scene = BGM_SCENES[bgmCurrentScene]
+  if (!scene) return
+
+  if (!bgmAudioElement) {
+    bgmAudioElement = new Audio(scene.src)
+    bgmAudioElement.preload = 'auto'
+    bgmAudioElement.addEventListener('error', () => {
+      bgmPlaying = false
+    })
+  }
+  startAudioElement(bgmAudioElement, scene)
+}
+
+/**
+ * 播放背景音乐（从当前路由开始）
  */
 export const playBgm = () => {
   bgmEnabled = true
-  const ctx = getAudioContext()
-  if (!ctx) return
-
-  // 如果音频已解锁，直接启动
-  if (ctx.state === 'running') {
-    startBgmOscillators()
+  // 从当前路由推断场景
+  let currentRoute = ''
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace('#/', '').replace('#', '')
+    currentRoute = hash || 'home'
   }
-  // 否则等 unlockAudio() 调用时再启动
+  switchBgm(currentRoute)
 }
 
 /**
@@ -255,7 +383,8 @@ export const playBgm = () => {
  */
 export const pauseBgm = () => {
   bgmEnabled = false
-  stopBgmOscillators()
+  stopBgmPlayback()
+  bgmCurrentScene = null
 }
 
 /**
@@ -274,11 +403,8 @@ export const toggleBgm = () => {
  */
 export const setBgmVolume = (vol: number) => {
   bgmVolume = Math.max(0, Math.min(1, vol))
-  if (bgmGainNode) {
-    const ctx = getAudioContext()
-    if (ctx) {
-      bgmGainNode.gain.setValueAtTime(bgmVolume * 0.15, ctx.currentTime)
-    }
+  if (bgmAudioElement) {
+    bgmAudioElement.volume = bgmVolume
   }
 }
 
@@ -288,7 +414,8 @@ export const setBgmVolume = (vol: number) => {
 export const getBgmState = () => ({
   playing: bgmPlaying,
   volume: bgmVolume,
-  enabled: bgmEnabled
+  enabled: bgmEnabled,
+  currentScene: bgmCurrentScene
 })
 
 /**

@@ -2766,8 +2766,8 @@
       // 初始化游戏（创建初始星球、检查月球礼物等）
       await initGame()
 
-      // 初始化音频系统（注册用户交互监听器以解锁 AudioContext）
-      initAudio()
+      // 初始化音频系统（注册用户交互监听器以解锁 AudioContext + 路由监听自动切换 BGM）
+      initAudio(router)
 
       // 同步 BGM 音量到 soundManager
       if (gameStore.player.musicEnabled) {
