@@ -150,7 +150,7 @@
                   <Button
                     variant="ghost"
                     size="icon"
-                    class="h-7 w-7"
+                    class="h-9 w-9"
                     :disabled="index === 0"
                     @click="moveUp(planet.id, item.id)"
                   >
@@ -159,7 +159,7 @@
                   <Button
                     variant="ghost"
                     size="icon"
-                    class="h-7 w-7"
+                    class="h-9 w-9"
                     :disabled="index === planet.waitingBuildQueue!.length - 1"
                     @click="moveDown(planet.id, item.id)"
                   >
@@ -168,7 +168,7 @@
                   <Button
                     variant="ghost"
                     size="icon"
-                    class="h-7 w-7 text-destructive"
+                    class="h-9 w-9 text-destructive"
                     @click="removeWaitingItem(planet.id, item.id)"
                   >
                     <X class="h-4 w-4" />
@@ -442,9 +442,17 @@
       return
     }
 
+    // 检查每日加速上限
+    const dailyRemaining = gameStore.dailyAccelRemaining ?? 0
+    if (dailyRemaining < cost) {
+      toast.error(t('accelerate.dailyCapExceeded', { remaining: dailyRemaining }))
+      return
+    }
+
     const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const skipMinutes = Math.ceil(remainingMs / 60000)
     const confirmed = window.confirm(
-      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}\n${t('accelerate.dailyCapRemaining', { remaining: dailyRemaining - cost })}`
     )
     if (!confirmed) return
 
@@ -453,18 +461,25 @@
     try {
       let result
       if (item.type === 'ship') {
-        result = await apiService.accelerateFleetBuild(planet.id, idx)
+        result = await apiService.accelerateFleetBuild(planet.id, idx, skipMinutes)
       } else {
-        result = await apiService.accelerateBuilding(planet.id, idx)
+        result = await apiService.accelerateBuilding(planet.id, idx, skipMinutes)
       }
 
       if (result.success) {
         const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
         toast.success(t('accelerate.success', { time: skippedLabel }))
         gameStore.darkMatterBalance = result.newBalance
+        await gameStore.refreshDailyCapStatus()
       }
-    } catch {
-      toast.error('Accelerate failed')
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('daily') || msg.includes('cap')) {
+        await gameStore.refreshDailyCapStatus()
+        toast.error(t('accelerate.dailyCapExceeded', { remaining: gameStore.dailyAccelRemaining ?? 0 }))
+      } else {
+        toast.error('Accelerate failed')
+      }
     }
   }
 

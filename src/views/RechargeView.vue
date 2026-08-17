@@ -191,12 +191,12 @@ onMounted(loadData)
     </div>
 
     <Tabs default-value="recharge" class="space-y-4">
-      <TabsList class="grid w-full grid-cols-3">
+      <TabsList class="grid w-full grid-cols-1 sm:grid-cols-3">
         <TabsTrigger value="recharge">{{ t('recharge.tabRecharge') }}</TabsTrigger>
         <TabsTrigger value="monthly">{{ t('recharge.tabMonthly') }}</TabsTrigger>
         <TabsTrigger value="gifts">
           {{ t('recharge.tabGifts') }}
-          <Badge v-if="giftPacks.some(p => p.available)" variant="default" class="ml-1 h-4 text-[10px] px-1">
+          <Badge v-if="giftPacks.some(p => p.available)" variant="default" class="ml-1 h-4 text-xs px-1">
             {{ giftPacks.filter(p => p.available).length }}
           </Badge>
         </TabsTrigger>
@@ -218,7 +218,7 @@ onMounted(loadData)
             <!-- First-recharge bonus banner -->
             <div
               v-if="firstRecharge && product.firstBonus > 0"
-              class="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl"
+              class="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl"
             >
               <Sparkles class="w-3 h-3 inline mr-0.5" />
               {{ t('recharge.firstBonus') }} +{{ formatNumber(product.firstBonus) }}
@@ -235,7 +235,7 @@ onMounted(loadData)
                 +{{ formatNumber(product.bonus) }} {{ t('recharge.bonus') }}
               </div>
               <!-- Unit price -->
-              <div class="text-[11px] text-muted-foreground">
+              <div class="text-xs text-muted-foreground">
                 ≈ {{ (product.amountRMB / product.darkMatter).toFixed(2) }} ¥/DM
               </div>
               <!-- Price -->
@@ -295,7 +295,7 @@ onMounted(loadData)
             <Card
               v-for="card in monthlyCards"
               :key="card.id"
-              class="relative overflow-hidden"
+              class="relative overflow-hidden flex flex-col h-full"
               :class="card.active ? 'border-amber-500/40 bg-amber-950/10' : ''"
             >
               <!-- Active badge -->
@@ -313,7 +313,7 @@ onMounted(loadData)
                 </CardTitle>
               </CardHeader>
 
-              <CardContent class="flex flex-col space-y-3">
+              <CardContent class="flex flex-col flex-1 space-y-3">
                 <!-- Price + daily DM -->
                 <div class="flex items-end justify-between">
                   <div>

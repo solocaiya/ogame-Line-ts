@@ -25,6 +25,29 @@ interface IncomingInvite {
   createdAt: number
 }
 
+/**
+ * Normalize server alliance field names (snake_case) to client camelCase.
+ * Server getAllianceFull() returns: leader_id, max_members, auto_accept,
+ * require_approval, created_at, pending_requests — but the frontend
+ * AllianceData interface expects camelCase.
+ * Members and pendingRequests items are already camelCase from the server.
+ */
+function normalizeAllianceFromServer(raw: any): AllianceData {
+  return {
+    id: raw.id,
+    name: raw.name,
+    tag: raw.tag,
+    description: raw.description ?? '',
+    leaderId: raw.leaderId ?? raw.leader_id,
+    members: raw.members ?? [],
+    pendingRequests: raw.pendingRequests ?? raw.pending_requests ?? [],
+    maxMembers: raw.maxMembers ?? raw.max_members ?? 50,
+    autoAccept: raw.autoAccept ?? raw.auto_accept ?? false,
+    requireApproval: raw.requireApproval ?? raw.require_approval ?? true,
+    createdAt: raw.createdAt ?? raw.created_at ?? 0,
+  }
+}
+
 export const useAllianceStore = defineStore('alliance', {
   state: () => ({
     alliance: null as AllianceData | null,
@@ -148,7 +171,9 @@ export const useAllianceStore = defineStore('alliance', {
       this.error = null
       try {
         const res = await apiService.getMyAlliance()
-        this.alliance = res.alliance || null
+        // Backend GetMyAlliance returns the alliance object directly (not wrapped in { alliance: ... })
+        // Normalize snake_case server fields → camelCase client fields
+        this.alliance = normalizeAllianceFromServer(res)
       } catch (e: any) {
         // 404 or no alliance is fine
         if (e?.message?.includes('404') || e?.message?.includes('not in')) {
@@ -166,7 +191,8 @@ export const useAllianceStore = defineStore('alliance', {
       this.error = null
       try {
         const res = await apiService.createAlliance(name, tag)
-        this.alliance = res.alliance || null
+        // Backend Create wraps in { alliance: {...} } with snake_case fields
+        this.alliance = res.alliance ? normalizeAllianceFromServer(res.alliance) : null
         return res
       } catch (e: any) {
         this.error = e.message || 'Failed to create alliance'

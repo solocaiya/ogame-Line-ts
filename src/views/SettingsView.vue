@@ -292,7 +292,7 @@
                 }}
               </p>
             </div>
-            <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" class="h-9 w-9 p-0">
               <component :is="isTypesExpanded ? ChevronUp : ChevronDown" class="h-4 w-4" />
             </Button>
           </div>

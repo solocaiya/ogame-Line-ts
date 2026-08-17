@@ -667,7 +667,7 @@
               <TooltipProvider :delay-duration="300">
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet)">
                   <TooltipTrigger as-child>
-                    <Button @click="showPlanetActions(slot.planet, 'spy')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showPlanetActions(slot.planet, 'spy')" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Eye class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -677,7 +677,7 @@
                 </Tooltip>
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet)">
                   <TooltipTrigger as-child>
-                    <Button @click="showPlanetActions(slot.planet, 'attack')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showPlanetActions(slot.planet, 'attack')" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Sword class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -687,7 +687,7 @@
                 </Tooltip>
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && hasInterplanetaryMissiles">
                   <TooltipTrigger as-child>
-                    <Button @click="showMissileAttackDialog(slot.planet)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showMissileAttackDialog(slot.planet)" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Bomb class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -697,7 +697,7 @@
                 </Tooltip>
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && getPlanetNPC(slot.planet)">
                   <TooltipTrigger as-child>
-                    <Button @click="showPlanetActions(slot.planet, 'gift')" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showPlanetActions(slot.planet, 'gift')" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Gift class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -707,7 +707,7 @@
                 </Tooltip>
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet) && canScanPlanet(slot.planet)">
                   <TooltipTrigger as-child>
-                    <Button @click="showPhalanxScanDialog(slot.planet)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showPhalanxScanDialog(slot.planet)" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Radar class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -717,7 +717,7 @@
                 </Tooltip>
                 <Tooltip v-if="!slot.planet">
                   <TooltipTrigger as-child>
-                    <Button @click="showPlanetActions(null, 'colonize', slot.position)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="showPlanetActions(null, 'colonize', slot.position)" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Rocket class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -727,7 +727,7 @@
                 </Tooltip>
                 <Tooltip v-if="slot.planet && isMyPlanet(slot.planet)">
                   <TooltipTrigger as-child>
-                    <Button @click="switchToPlanet(slot.planet.id)" variant="outline" size="sm" class="h-8 w-8 p-0">
+                    <Button @click="switchToPlanet(slot.planet.id)" variant="outline" size="sm" class="h-9 w-9 p-0">
                       <Home class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -741,7 +741,7 @@
                       @click="showPlanetActions(slot.planet, 'recycle', slot.position)"
                       variant="outline"
                       size="sm"
-                      class="h-8 w-8 p-0"
+                      class="h-9 w-9 p-0"
                     >
                       <Recycle class="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
@@ -756,7 +756,7 @@
                       @click="openBookmarkDialog(slot.planet)"
                       variant="outline"
                       size="sm"
-                      class="h-8 w-8 p-0"
+                      class="h-9 w-9 p-0"
                       :class="isPlanetBookmarked(slot.planet) ? 'text-yellow-500 border-yellow-500' : ''"
                     >
                       <Star class="h-3 w-3 sm:h-4 sm:w-4" :class="isPlanetBookmarked(slot.planet) ? 'fill-yellow-500' : ''" />
@@ -979,7 +979,7 @@
                     {{ fleet.status === 'outbound' ? t('galaxyView.phalanxStatusOutbound') : t('galaxyView.phalanxStatusReturning') }}
                   </Badge>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div>
                     <span class="text-muted-foreground">{{ t('galaxyView.phalanxOrigin') }}:</span>
                     <span class="ml-1">
@@ -1432,7 +1432,7 @@
   // 获取星球的坐标key（g:s:p格式）
   const getPlanetCoordKey = (planet: Planet | null): string | null => {
     if (!planet) return null
-    const coord = planet.coordinate
+    const coord = planet.position
     if (!coord) return null
     return `${coord.galaxy}:${coord.system}:${coord.position}`
   }

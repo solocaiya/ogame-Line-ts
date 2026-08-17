@@ -20,6 +20,8 @@ const (
 	minSkipMinutes int64 = 1
 	// maxSkipMinutes is the maximum allowed acceleration skip (24 hours).
 	maxSkipMinutes int64 = 1440
+	// DailyAccelCapDefault is the default maximum DM spendable on acceleration per day (UTC).
+	DailyAccelCapDefault int64 = 5000
 )
 
 // AccelerateHandler handles acceleration endpoints for building, research,
@@ -52,8 +54,12 @@ func calcAccelerateCost(remainingMs int64, costPerHour int64) int64 {
 	return int64(hours) * costPerHour
 }
 
+// ErrDailyAccelCapExceeded is returned when the player has reached their daily acceleration spending limit.
+var ErrDailyAccelCapExceeded = fmt.Errorf("daily acceleration spending cap reached (limit: %d DM/day)", DailyAccelCapDefault)
+
 // deductDM deducts the given amount from the player's dark matter balance and
-// logs the transaction. Returns the new balance. Caller must hold the DB tx.
+// logs the transaction. Enforces the daily acceleration spending cap.
+// Returns the new balance. Caller must hold the DB tx.
 func (h *AccelerateHandler) deductDM(tx *sql.Tx, playerID string, amount int64, refType, refID string) (int64, error) {
 	// Check balance
 	var balance int64
@@ -65,9 +71,37 @@ func (h *AccelerateHandler) deductDM(tx *sql.Tx, playerID string, amount int64, 
 		return 0, fmt.Errorf("insufficient dark matter")
 	}
 
+	// ── Daily acceleration cap check ──────────────────────────────────────────
+	today := time.Now().UTC().Format("2006-01-02")
+	var dailySpent int64
+	var resetDate sql.NullString
+	err = tx.QueryRow(`SELECT daily_accel_spent, daily_accel_reset_date FROM users WHERE id = ?`, playerID).
+		Scan(&dailySpent, &resetDate)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read daily accel state: %w", err)
+	}
+
+	// Reset counter if the day has changed (or first use after migration)
+	if !resetDate.Valid || resetDate.String != today {
+		dailySpent = 0
+	}
+
+	if dailySpent+amount > DailyAccelCapDefault {
+		remaining := DailyAccelCapDefault - dailySpent
+		if remaining < 0 {
+			remaining = 0
+		}
+		return 0, fmt.Errorf("%w (spent %d/%d today, remaining %d DM)",
+			ErrDailyAccelCapExceeded, dailySpent, DailyAccelCapDefault, remaining)
+	}
+	// ──────────────────────────────────────────────────────────────────────────
+
 	newBalance := balance - amount
-	_, err = tx.Exec(`UPDATE users SET dark_matter_balance = ?, consumption_points = consumption_points + ? WHERE id = ?`,
-		newBalance, amount, playerID)
+	newDailySpent := dailySpent + amount
+
+	_, err = tx.Exec(`UPDATE users SET dark_matter_balance = ?, consumption_points = consumption_points + ?,
+		daily_accel_spent = ?, daily_accel_reset_date = ? WHERE id = ?`,
+		newBalance, amount, newDailySpent, today, playerID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to update balance: %w", err)
 	}
@@ -662,5 +696,39 @@ func (h *AccelerateHandler) GetAvailable(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"items": items,
+	})
+}
+
+// ─── Daily Cap Status ────────────────────────────────────────────────────────
+
+// GetDailyCapStatus returns the player's current daily acceleration spending status.
+func (h *AccelerateHandler) GetDailyCapStatus(c *gin.Context) {
+	playerID := c.GetString("user_id")
+
+	today := time.Now().UTC().Format("2006-01-02")
+	var dailySpent int64
+	var resetDate sql.NullString
+	err := h.db.QueryRow(`SELECT daily_accel_spent, daily_accel_reset_date FROM users WHERE id = ?`, playerID).
+		Scan(&dailySpent, &resetDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read daily cap status"})
+		return
+	}
+
+	// If the day has changed or never set, treat as 0 spent
+	if !resetDate.Valid || resetDate.String != today {
+		dailySpent = 0
+	}
+
+	remaining := DailyAccelCapDefault - dailySpent
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"dailyCap":    DailyAccelCapDefault,
+		"dailySpent":  dailySpent,
+		"remaining":   remaining,
+		"resetDate":   today,
 	})
 }

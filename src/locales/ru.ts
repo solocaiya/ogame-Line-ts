@@ -2551,7 +2551,9 @@ export default {
     defense: 'Ускорить оборону',
     hours: '{count}ч',
     minutes: '{count}мин',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: 'Остаток дневного лимита: {remaining} DM',
+    dailyCapExceeded: 'Дневной лимит ускорения исчерпан, осталось {remaining} DM'
   },
 
   growthFund: {

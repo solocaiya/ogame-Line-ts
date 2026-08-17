@@ -98,7 +98,7 @@
       </CardHeader>
       <CardContent>
         <Tabs default-value="overview" class="w-full">
-          <TabsList class="grid w-full grid-cols-3">
+          <TabsList class="grid w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="overview">{{ t('overview.tabOverview') }}</TabsTrigger>
             <TabsTrigger value="production">{{ t('overview.tabProduction') }}</TabsTrigger>
             <TabsTrigger value="consumption">{{ t('overview.tabConsumption') }}</TabsTrigger>

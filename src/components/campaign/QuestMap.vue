@@ -73,13 +73,13 @@
 
     <!-- 地图控制 -->
     <div class="absolute bottom-4 right-4 flex gap-2">
-      <Button variant="outline" size="icon-sm" @click="zoomIn">
+      <Button variant="outline" size="icon" class="h-9 w-9" @click="zoomIn">
         <ZoomIn class="h-4 w-4" />
       </Button>
-      <Button variant="outline" size="icon-sm" @click="zoomOut">
+      <Button variant="outline" size="icon" class="h-9 w-9" @click="zoomOut">
         <ZoomOut class="h-4 w-4" />
       </Button>
-      <Button variant="outline" size="icon-sm" @click="resetView">
+      <Button variant="outline" size="icon" class="h-9 w-9" @click="resetView">
         <Maximize2 class="h-4 w-4" />
       </Button>
     </div>

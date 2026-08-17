@@ -145,6 +145,13 @@ interface AccelerationResult {
   newBalance: number
 }
 
+interface DailyCapStatus {
+  dailyCap: number
+  dailySpent: number
+  remaining: number
+  resetDate: string
+}
+
 class ApiService {
   private accessToken: string | null = null
   private refreshToken: string | null = null
@@ -530,6 +537,10 @@ class ApiService {
     return this.request<AccelerationResult>('POST', '/accelerate/fleet-travel', { missionId, skipMinutes })
   }
 
+  async getDailyCapStatus(): Promise<DailyCapStatus> {
+    return this.request<DailyCapStatus>('GET', '/accelerate/daily-cap')
+  }
+
   // --- Health ---
 
   async health(): Promise<{ status: string; time: string }> {
@@ -542,5 +553,5 @@ export type {
   UserInfo, SaveGameResponse, LoadGameResponse, SaveInfo,
   WalletBalance, RechargeProduct, DMTransaction, MonthlyCardInfo,
   GrowthFundStatus, GrowthFundStage, GiftPackInfo,
-  AccelerationItem, AccelerationResult
+  AccelerationItem, AccelerationResult, DailyCapStatus
 }

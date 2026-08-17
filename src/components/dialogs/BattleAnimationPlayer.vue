@@ -59,7 +59,7 @@
                 :class="{ 'exploding': isShipExploding('attacker', shipType as ShipType) }"
               >
                 <Rocket class="h-4 w-4 text-red-400" />
-                <span class="text-[10px] text-red-300">{{ formatNumber(count, 0) }}</span>
+                <span class="text-xs text-red-300">{{ formatNumber(count, 0) }}</span>
               </div>
             </div>
             <div class="mt-2 text-xs text-red-400/80">{{ t('messagesView.power') }}: {{ formatNumber(currentAttackerPower) }}</div>
@@ -102,7 +102,7 @@
                 :class="{ 'exploding': isShipExploding('defender', shipType as string) }"
               >
                 <component :is="isDefenseType(String(shipType)) ? Shield : Rocket" class="h-4 w-4 text-blue-400" />
-                <span class="text-[10px] text-blue-300">{{ formatNumber(count, 0) }}</span>
+                <span class="text-xs text-blue-300">{{ formatNumber(count, 0) }}</span>
               </div>
             </div>
             <div class="mt-2 text-xs text-blue-400/80 text-right">

@@ -2549,7 +2549,9 @@ export default {
     defense: '防御を加速',
     hours: '{count}時間',
     minutes: '{count}分',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: '本日の残り枠: {remaining} DM',
+    dailyCapExceeded: '本日の加速上限に達しました、残り {remaining} DM'
   },
 
   growthFund: {

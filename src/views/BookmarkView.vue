@@ -64,13 +64,13 @@
               <CardTitle class="text-sm">{{ bm.name }}</CardTitle>
             </div>
             <div class="flex items-center gap-1">
-              <Button variant="ghost" size="icon" class="h-7 w-7" @click="toggleStar(bm.id)">
+              <Button variant="ghost" size="icon" class="h-9 w-9" @click="toggleStar(bm.id)">
                 <Star class="h-4 w-4" :class="bm.starred ? 'fill-yellow-400 text-yellow-400' : ''" />
               </Button>
-              <Button variant="ghost" size="icon" class="h-7 w-7" @click="openEdit(bm)">
+              <Button variant="ghost" size="icon" class="h-9 w-9" @click="openEdit(bm)">
                 <Pencil class="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="icon" class="h-7 w-7" @click="remove(bm.id)">
+              <Button variant="ghost" size="icon" class="h-9 w-9" @click="remove(bm.id)">
                 <Trash2 class="h-3 w-3 text-red-500" />
               </Button>
             </div>
@@ -99,7 +99,7 @@
             <Label>{{ t('bookmark.name') }}</Label>
             <Input v-model="form.name" :placeholder="t('bookmark.namePlaceholder')" />
           </div>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div class="space-y-2">
               <Label>{{ t('bookmark.galaxy') }}</Label>
               <Input v-model.number="form.galaxy" type="number" :min="1" />
@@ -139,7 +139,7 @@
               <button
                 v-for="color in BOOKMARK_COLORS"
                 :key="color"
-                class="h-7 w-7 rounded-full border-2 transition-transform"
+                class="h-9 w-9 rounded-full border-2 transition-transform"
                 :class="{ 'border-white scale-110': form.color === color }"
                 :style="{ backgroundColor: color }"
                 @click="form.color = color"

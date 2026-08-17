@@ -99,11 +99,12 @@
                   </SelectContent>
                 </Select>
                 <Button @click="handleApplyPreset(section)">{{ t('gmView.applyPreset') || 'Apply' }}</Button>
-                <Button 
+                <Button
                   v-if="selectedPresets[section.tabValue] !== 'default'"
                   @click="handleDeletePreset(section)"
                   variant="destructive"
                   size="icon"
+                  class="h-9 w-9"
                   :title="t('gmView.deletePreset') || 'Delete Preset'"
                 >
                   <Trash2 class="h-4 w-4" />
@@ -190,7 +191,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <Button @click="testNPCSpy" variant="outline" class="w-full" :disabled="!selectedNPC">
             {{ t('gmView.testSpy') || 'Test Spy' }}
           </Button>

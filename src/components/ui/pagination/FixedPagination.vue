@@ -18,7 +18,7 @@
           v-for="pageNum in pageNumbers"
           :key="pageNum"
           @click="emit('update:page', pageNum)"
-          class="h-8 min-w-8 px-2 rounded-full text-sm font-medium transition-colors"
+          class="h-9 min-w-9 px-2 rounded-full text-sm font-medium transition-colors"
           :class="pageNum === currentPage ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
         >
           {{ pageNum }}

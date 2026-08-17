@@ -7,7 +7,7 @@
 
     <!-- 标签切换 -->
     <Tabs v-model="activeTab" class="w-full">
-      <TabsList :class="['grid', 'w-full', showJumpGateTab ? 'grid-cols-3' : 'grid-cols-2']">
+      <TabsList :class="['grid', 'w-full', showJumpGateTab ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2']">
         <TabsTrigger v-for="tab in visibleTabs" :key="tab.value" :value="tab.value">
           {{ t(`fleetView.${tab.labelKey}`) }}
           <Badge v-if="tab.value === 'missions' && totalMissionsCount > 0" variant="destructive" class="ml-1">
@@ -135,7 +135,7 @@
             <CardTitle>{{ t('fleetView.targetCoordinates') }}</CardTitle>
           </CardHeader>
           <CardContent class="space-y-4">
-            <div class="grid grid-cols-3 gap-2 sm:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
               <div v-for="coord in coordinateFields" :key="coord.key" class="space-y-2">
                 <Label :for="coord.key" class="text-xs sm:text-sm">{{ t(`fleetView.${coord.key}`) }}</Label>
                 <Input :id="coord.key" v-model.number="targetPosition[coord.key]" type="number" :min="1" :max="coord.max" placeholder="1" />
@@ -1472,21 +1472,36 @@
       return
     }
 
+    // 检查每日加速上限
+    const dailyRemaining = gameStore.dailyAccelRemaining ?? 0
+    if (dailyRemaining < cost) {
+      toast.error(t('accelerate.dailyCapExceeded', { remaining: dailyRemaining }))
+      return
+    }
+
     const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const skipMinutes = Math.ceil(remainingMs / 60000)
     const confirmed = window.confirm(
-      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}\n${t('accelerate.dailyCapRemaining', { remaining: dailyRemaining - cost })}`
     )
     if (!confirmed) return
 
     try {
-      const result = await apiService.accelerateFleetTravel(mission.id)
+      const result = await apiService.accelerateFleetTravel(mission.id, skipMinutes)
       if (result.success) {
         const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
         toast.success(t('accelerate.success', { time: skippedLabel }))
         gameStore.darkMatterBalance = result.newBalance
+        await gameStore.refreshDailyCapStatus()
       }
-    } catch {
-      toast.error('Accelerate failed')
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('daily') || msg.includes('cap')) {
+        await gameStore.refreshDailyCapStatus()
+        toast.error(t('accelerate.dailyCapExceeded', { remaining: gameStore.dailyAccelRemaining ?? 0 }))
+      } else {
+        toast.error('Accelerate failed')
+      }
     }
   }
 

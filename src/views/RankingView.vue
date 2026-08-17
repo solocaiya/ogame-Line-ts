@@ -28,6 +28,7 @@
 
       <!-- 排行榜列表 -->
       <TabsContent v-for="category in categories" :key="category.value" :value="category.value" class="mt-4">
+        <div class="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -75,6 +76,7 @@
             </TableRow>
           </TableBody>
         </Table>
+        </div>
       </TabsContent>
     </Tabs>
     <!-- 分页 -->

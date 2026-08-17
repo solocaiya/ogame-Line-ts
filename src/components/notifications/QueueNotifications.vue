@@ -26,7 +26,7 @@
             class="text-xs px-1 py-1.5 flex items-center justify-center gap-0.5 whitespace-nowrap data-[state=active]:bg-muted"
           >
             <span class="truncate">{{ t(`queue.tabs.${tab.value}`) }}</span>
-            <Badge v-if="tab.items.length > 0" variant="secondary" class="shrink-0 h-4 px-1 text-[10px]">
+            <Badge v-if="tab.items.length > 0" variant="secondary" class="shrink-0 h-4 px-1 text-xs">
               {{ tab.items.length }}
             </Badge>
           </TabsTrigger>
@@ -48,7 +48,7 @@
                     <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                       <div class="h-2 w-2 rounded-full shrink-0" :class="getStatusDotClass(item)" />
                       <span class="font-medium truncate">{{ getItemName(item) }}</span>
-                      <span class="text-muted-foreground text-[10px] sm:text-xs">
+                      <span class="text-muted-foreground text-xs">
                         {{
                           item.type === 'ship' || item.type === 'defense'
                             ? `→ ${t('queue.quantity')} ${item.quantity}`
@@ -60,7 +60,7 @@
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                       <span
-                        class="text-[10px] sm:text-xs whitespace-nowrap"
+                        class="text-xs whitespace-nowrap"
                         :class="isWaitingItemResourcesReady(item as WaitingQueueItem) ? 'text-green-500' : 'text-yellow-500'"
                       >
                         {{
@@ -70,7 +70,7 @@
                       <Button
                         variant="ghost"
                         size="sm"
-                        class="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
+                        class="h-7 sm:h-8 px-1.5 sm:px-2 text-xs"
                         @click.stop="handleCancel(item)"
                       >
                         {{ t('queue.remove') }}
@@ -78,7 +78,7 @@
                     </div>
                   </div>
                   <!-- 预估成本显示 -->
-                  <div class="flex gap-2 text-[10px] text-muted-foreground ml-4">
+                  <div class="flex gap-2 text-xs text-muted-foreground ml-4">
                     <span v-if="getWaitingItemCost(item as WaitingQueueItem).metal > 0">
                       {{ t('resources.metal') }}: {{ formatNumber(getWaitingItemCost(item as WaitingQueueItem).metal) }}
                     </span>
@@ -98,7 +98,7 @@
                     <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                       <div class="h-2 w-2 rounded-full animate-pulse shrink-0" :class="getStatusDotClass(item)" />
                       <span class="font-medium truncate">{{ getItemName(item) }}</span>
-                      <span class="text-muted-foreground text-[10px] sm:text-xs">
+                      <span class="text-muted-foreground text-xs">
                         {{
                           item.type === 'ship' || item.type === 'defense'
                             ? `→ ${t('queue.quantity')} ${item.quantity}`
@@ -109,14 +109,14 @@
                       </span>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <span class="text-muted-foreground text-[10px] sm:text-xs whitespace-nowrap">
+                      <span class="text-muted-foreground text-xs whitespace-nowrap">
                         {{ formatTime(getRemainingTime(item as BuildQueueItem)) }}
                       </span>
                       <Button
                         v-if="canAccelerate(item as BuildQueueItem, tab.value)"
                         variant="ghost"
                         size="sm"
-                        class="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs text-amber-500 hover:text-amber-400 gap-0.5"
+                        class="h-7 sm:h-8 px-1.5 sm:px-2 text-xs text-amber-500 hover:text-amber-400 gap-0.5"
                         @click.stop="handleAccelerate(item as BuildQueueItem, tab.value)"
                       >
                         <Zap class="h-3 w-3" />
@@ -125,7 +125,7 @@
                       <Button
                         variant="ghost"
                         size="sm"
-                        class="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
+                        class="h-7 sm:h-8 px-1.5 sm:px-2 text-xs"
                         @click.stop="handleCancel(item)"
                       >
                         {{ t('queue.cancel') }}
@@ -365,9 +365,17 @@
       return
     }
 
+    // 检查每日加速上限
+    const dailyRemaining = gameStore.dailyAccelRemaining ?? 0
+    if (dailyRemaining < cost) {
+      toast.error(t('accelerate.dailyCapExceeded', { remaining: dailyRemaining }))
+      return
+    }
+
     const timeLabel = accelerateLogic.formatRemainingTime(remainingMs)
+    const skipMinutes = Math.ceil(remainingMs / 60000)
     const confirmed = window.confirm(
-      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}`
+      `${t('accelerate.confirm')}\n${t('accelerate.cost', { amount: cost })}\n${t('accelerate.skipTime')}: ${timeLabel}\n${t('accelerate.dailyCapRemaining', { remaining: dailyRemaining - cost })}`
     )
     if (!confirmed) return
 
@@ -378,24 +386,31 @@
       let result
       if (tabValue === 'research' || item.type === 'technology') {
         const idx = getSubQueueIndex(item)
-        result = await apiService.accelerateResearch(idx)
+        result = await apiService.accelerateResearch(planetId || '', idx, skipMinutes)
       } else if (tabValue === 'ships' || item.type === 'ship') {
         const idx = getSubQueueIndex(item)
-        result = await apiService.accelerateFleetBuild(planetId!, idx)
+        result = await apiService.accelerateFleetBuild(planetId!, idx, skipMinutes)
       } else {
         // buildings tab
         const idx = getSubQueueIndex(item)
-        result = await apiService.accelerateBuilding(planetId!, idx)
+        result = await apiService.accelerateBuilding(planetId!, idx, skipMinutes)
       }
 
       if (result.success) {
         const skippedLabel = accelerateLogic.formatRemainingTime(result.skippedMs)
         toast.success(t('accelerate.success', { time: skippedLabel }))
-        // 刷新余额
+        // 刷新余额和每日上限
         gameStore.darkMatterBalance = result.newBalance
+        await gameStore.refreshDailyCapStatus()
       }
-    } catch {
-      toast.error('Accelerate failed')
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('daily') || msg.includes('cap')) {
+        await gameStore.refreshDailyCapStatus()
+        toast.error(t('accelerate.dailyCapExceeded', { remaining: gameStore.dailyAccelRemaining ?? 0 }))
+      } else {
+        toast.error('Accelerate failed')
+      }
     }
   }
 

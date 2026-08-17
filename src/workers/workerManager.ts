@@ -53,7 +53,7 @@ class WorkerManager {
   private battleWorker: Worker | null = null
   private pendingTasks: Map<string, WorkerTask> = new Map()
   private messageIdCounter = 0
-  private readonly defaultTimeout = 10000 // 30秒超时
+  private readonly defaultTimeout = 10000 // 10秒超时
 
   /**
    * 初始化战斗 Worker

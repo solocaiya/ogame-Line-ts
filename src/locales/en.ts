@@ -2693,7 +2693,9 @@ export default {
     defense: 'Accelerate Defense',
     hours: '{count}h',
     minutes: '{count}m',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: 'Daily cap remaining: {remaining} DM',
+    dailyCapExceeded: 'Daily acceleration cap reached, {remaining} DM remaining'
   },
 
   growthFund: {

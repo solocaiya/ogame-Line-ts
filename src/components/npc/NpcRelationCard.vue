@@ -28,7 +28,7 @@
           <Button
             variant="ghost"
             size="sm"
-            class="h-8 w-8 p-0"
+            class="h-9 w-9 p-0"
             @click="openNoteDialog"
             :title="npc.note ? t('diplomacy.actions.editNote') : t('diplomacy.actions.addNote')"
           >

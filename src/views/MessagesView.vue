@@ -69,7 +69,7 @@
                   {{ getBattleResultText(report) }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteBattleReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteBattleReport(report.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -104,7 +104,7 @@
                 <Badge v-if="!report.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
                 <Badge variant="outline" class="text-xs">{{ getSpyReportTargetName(report) }}</Badge>
               </div>
-              <Button @click.stop="deleteSpyReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteSpyReport(report.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -131,7 +131,7 @@
                   {{ notification.detectionSuccess ? t('messagesView.detected') : t('messagesView.undetected') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteSpiedNotification(notification.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteSpiedNotification(notification.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -179,7 +179,7 @@
                   {{ t('npcBehavior.trade.expired') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteTradeOffer(offer.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteTradeOffer(offer.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -240,7 +240,7 @@
                 <Badge v-if="!intel.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
                 <Badge variant="outline" class="text-xs">{{ t(`npcBehavior.intel.types.${intel.intelType}`) }}</Badge>
               </div>
-              <Button @click.stop="deleteIntelReport(intel.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteIntelReport(intel.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -269,7 +269,7 @@
                   {{ t('npcBehavior.jointAttack.expired') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteJointAttackInvite(invite.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteJointAttackInvite(invite.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -313,7 +313,7 @@
                 <CardTitle class="text-base sm:text-lg">{{ t('messagesView.npcRecycleActivity') }}</CardTitle>
                 <Badge v-if="!notification.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button @click.stop="deleteNPCActivityNotification(notification.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteNPCActivityNotification(notification.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -344,7 +344,7 @@
                 </CardTitle>
                 <Badge v-if="!gift.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button @click.stop="deleteGiftNotification(gift.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteGiftNotification(gift.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -354,7 +354,7 @@
             <div class="space-y-3">
               <div class="text-sm">
                 <div class="font-semibold mb-1">{{ t('messagesView.giftResources') }}:</div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <template v-for="res in basicResourceFields" :key="res.key">
                     <div v-if="gift.resources[res.key] > 0">
                       {{ t(`resources.${res.key}`) }}: {{ gift.resources[res.key].toLocaleString() }}
@@ -396,7 +396,7 @@
                 </CardTitle>
                 <Badge v-if="!rejection.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button @click.stop="deleteGiftRejectedNotification(rejection.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteGiftRejectedNotification(rejection.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -406,7 +406,7 @@
             <div class="space-y-2">
               <div class="text-sm">
                 <div class="font-semibold mb-1">{{ t('messagesView.rejectedResources') }}:</div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <template v-for="res in basicResourceFields" :key="res.key">
                     <div v-if="rejection.rejectedResources[res.key] > 0">
                       {{ t(`resources.${res.key}`) }}: {{ rejection.rejectedResources[res.key].toLocaleString() }}
@@ -451,7 +451,7 @@
                   {{ report.success ? t('messagesView.success') : t('messagesView.failed') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteMissionReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+              <Button @click.stop="deleteMissionReport(report.id)" variant="ghost" size="icon" class="h-9 w-9 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>

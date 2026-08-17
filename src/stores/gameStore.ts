@@ -23,6 +23,83 @@ import { encryptData, decryptData } from '@/utils/crypto'
 import { apiService } from '@/services/apiService'
 
 /**
+ * Normalize server planet field names to match client Planet type.
+ * Server uses different JSON field names than the client TypeScript interface:
+ *   ships → fleet, defenses → defense, coordinate → position,
+ *   buildingQueue/shipQueue/defenseQueue → unified buildQueue
+ */
+function normalizePlanetFromServer(planet: any): any {
+  if (!planet) return planet
+
+  // ships → fleet
+  if (planet.ships && !planet.fleet) {
+    planet.fleet = planet.ships
+    delete planet.ships
+  }
+  // defenses → defense
+  if (planet.defenses && !planet.defense) {
+    planet.defense = planet.defenses
+    delete planet.defenses
+  }
+  // coordinate → position
+  if (planet.coordinate && !planet.position) {
+    planet.position = planet.coordinate
+    delete planet.coordinate
+  }
+  // Merge separate server queues into unified client buildQueue
+  const buildQueue: any[] = []
+  if (Array.isArray(planet.buildingQueue)) {
+    for (const q of planet.buildingQueue) {
+      buildQueue.push({
+        id: q.id || `b-${q.type}-${q.endTime}`,
+        type: q.demolish ? 'demolish' : 'building',
+        itemType: q.type,
+        targetLevel: q.targetLevel,
+        startTime: q.startTime || 0,
+        endTime: q.endTime,
+        paused: false,
+        remainingOnPause: 0
+      })
+    }
+    delete planet.buildingQueue
+  }
+  if (Array.isArray(planet.shipQueue)) {
+    for (const q of planet.shipQueue) {
+      buildQueue.push({
+        id: q.id || `s-${q.type}-${q.endTime}`,
+        type: 'ship',
+        itemType: q.type,
+        count: q.count,
+        startTime: q.startTime || 0,
+        endTime: q.endTime,
+        paused: false,
+        remainingOnPause: 0
+      })
+    }
+    delete planet.shipQueue
+  }
+  if (Array.isArray(planet.defenseQueue)) {
+    for (const q of planet.defenseQueue) {
+      buildQueue.push({
+        id: q.id || `d-${q.type}-${q.endTime}`,
+        type: 'defense',
+        itemType: q.type,
+        count: q.count,
+        startTime: q.startTime || 0,
+        endTime: q.endTime,
+        paused: false,
+        remainingOnPause: 0
+      })
+    }
+    delete planet.defenseQueue
+  }
+  if (buildQueue.length > 0) {
+    planet.buildQueue = buildQueue
+  }
+  return planet
+}
+
+/**
  * Deep-replace properties of `target` with values from `source`,
  * preserving Vue reactivity (mutates target in-place).
  * Arrays are replaced wholesale (splice+push) rather than shallow-merged.
@@ -97,6 +174,11 @@ export const useGameStore = defineStore('game', {
     consumptionPoints: 0,
     vipLevel: 0,
     subscriptionExpiresAt: '' as string,
+    // Daily acceleration cap tracking
+    dailyAccelCap: 5000,
+    dailyAccelSpent: 0,
+    dailyAccelRemaining: 5000,
+    dailyAccelResetDate: '' as string,
     // Server sync state
     _lastSyncTime: 0,
     _pendingSync: false,
@@ -141,8 +223,15 @@ export const useGameStore = defineStore('game', {
       try {
         const response = await apiService.getGameState()
         if (response && response.player) {
-          // Merge server player state into local store
+          // Normalize server field names → client field names (ships→fleet, defenses→defense, etc.)
+          /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
           const serverPlayer = response.player
+          if (serverPlayer?.planets) {
+            for (let i = 0; i < serverPlayer.planets.length; i++) {
+              normalizePlanetFromServer(serverPlayer.planets[i])
+            }
+          }
+          /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
           // Preserve local-only fields that server doesn't manage
           const localOnly = {
             achievementStats: this.player.achievementStats,
@@ -204,12 +293,12 @@ export const useGameStore = defineStore('game', {
         case 'shipComplete': {
           const planet = this.player.planets.find(p => p.id === data.planetId)
           if (planet) {
-            planet.ships = planet.ships || {}
-            planet.ships[data.type] = (planet.ships[data.type] || 0) + data.count
-            // Remove from ship queue if present
-            const idx = planet.shipQueue?.findIndex(q => q.type === data.type)
+            planet.fleet = planet.fleet || {}
+            planet.fleet[data.type] = (planet.fleet[data.type] || 0) + data.count
+            // Remove from build queue if present
+            const idx = planet.buildQueue?.findIndex(q => q.type === 'ship' && q.itemType === data.type)
             if (idx !== undefined && idx >= 0) {
-              planet.shipQueue.splice(idx, 1)
+              planet.buildQueue.splice(idx, 1)
             }
           }
           break
@@ -217,12 +306,12 @@ export const useGameStore = defineStore('game', {
         case 'defenseComplete': {
           const planet = this.player.planets.find(p => p.id === data.planetId)
           if (planet) {
-            planet.defenses = planet.defenses || {}
-            planet.defenses[data.type] = (planet.defenses[data.type] || 0) + data.count
-            // Remove from defense queue if present
-            const idx = planet.defenseQueue?.findIndex(q => q.type === data.type)
+            planet.defense = planet.defense || {}
+            planet.defense[data.type] = (planet.defense[data.type] || 0) + data.count
+            // Remove from build queue if present
+            const idx = planet.buildQueue?.findIndex(q => q.type === 'defense' && q.itemType === data.type)
             if (idx !== undefined && idx >= 0) {
-              planet.defenseQueue.splice(idx, 1)
+              planet.buildQueue.splice(idx, 1)
             }
           }
           break
@@ -309,6 +398,19 @@ export const useGameStore = defineStore('game', {
       } catch (e) {
         // Wallet balance is non-critical — don't break the app if it fails
         console.warn('[GameStore] refreshWalletBalance failed:', e)
+      }
+    },
+
+    /** Fetch daily acceleration cap status from server. */
+    async refreshDailyCapStatus() {
+      try {
+        const status = await apiService.getDailyCapStatus()
+        this.dailyAccelCap = status.dailyCap
+        this.dailyAccelSpent = status.dailySpent
+        this.dailyAccelRemaining = status.remaining
+        this.dailyAccelResetDate = status.resetDate
+      } catch (e) {
+        console.warn('[GameStore] refreshDailyCapStatus failed:', e)
       }
     }
   },

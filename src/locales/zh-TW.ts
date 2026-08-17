@@ -2730,7 +2730,9 @@ export default {
     defense: '加速防禦',
     hours: '{count} 小時',
     minutes: '{count} 分鐘',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: '今日剩餘額度: {remaining} DM',
+    dailyCapExceeded: '今日加速額度已用盡，剩餘 {remaining} DM'
   },
 
   growthFund: {

@@ -43,7 +43,7 @@
             <!-- 科技等级 -->
             <div>
               <h3 class="text-sm font-medium mb-3">{{ t('simulatorView.techLevels') }}</h3>
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div v-for="techType in techTypes" :key="techType" class="space-y-1">
                   <Label :for="`attacker-${techType}`" class="text-xs">{{ t(`simulatorView.${techType}`) }}</Label>
                   <Input :id="`attacker-${techType}`" v-model.number="attackerTech[techType]" type="number" min="0" class="h-8" />
@@ -107,7 +107,7 @@
             <!-- 科技等级 -->
             <div>
               <h3 class="text-sm font-medium mb-3">{{ t('simulatorView.techLevels') }}</h3>
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div v-for="techType in techTypes" :key="techType" class="space-y-1">
                   <Label :for="`defender-${techType}`" class="text-xs">{{ t(`simulatorView.${techType}`) }}</Label>
                   <Input :id="`defender-${techType}`" v-model.number="defenderTech[techType]" type="number" min="0" class="h-8" />
@@ -118,7 +118,7 @@
             <!-- 防守方资源 -->
             <div>
               <h3 class="text-sm font-medium mb-3">{{ t('simulatorView.defenderResources') }}</h3>
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div v-for="resourceType in resourceTypes" :key="resourceType.key" class="space-y-1">
                   <Label :for="`defender-${resourceType.key}`" class="text-xs flex items-center gap-1">
                     <ResourceIcon :type="resourceType.key" size="sm" />
@@ -219,6 +219,7 @@
   import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import BattleReportDialog from '@/components/dialogs/BattleReportDialog.vue'
   import { Sword, Shield, Zap, RotateCcw, FileDown } from 'lucide-vue-next'
+  import { toast } from 'vue-sonner'
   import * as planetLogic from '@/logic/planetLogic'
 
   const { t } = useI18n()
@@ -288,67 +289,72 @@
 
   // 运行模拟（使用 Web Worker 进行计算）
   const runSimulation = async () => {
-    // 使用 toRaw 将 Vue 响应式对象转换为普通对象，以便传递给 Worker
-    const attackerSide = {
-      ships: toRaw(attackerFleet.value),
-      weaponTech: attackerTech.value.weapon,
-      shieldTech: attackerTech.value.shield,
-      armorTech: attackerTech.value.armor
+    try {
+      // 使用 toRaw 将 Vue 响应式对象转换为普通对象，以便传递给 Worker
+      const attackerSide = {
+        ships: toRaw(attackerFleet.value),
+        weaponTech: attackerTech.value.weapon,
+        shieldTech: attackerTech.value.shield,
+        armorTech: attackerTech.value.armor
+      }
+
+      const defenderSide = {
+        ships: toRaw(defenderFleet.value),
+        defense: toRaw(defenderDefense.value),
+        weaponTech: defenderTech.value.weapon,
+        shieldTech: defenderTech.value.shield,
+        armorTech: defenderTech.value.armor
+      }
+
+      // 使用 Worker 执行战斗模拟
+      const result = await workerManager.simulateBattle({
+        attacker: attackerSide,
+        defender: defenderSide,
+        maxRounds: gameStore.battleToFinish ? 100 : 6
+      })
+
+      // 计算掠夺和残骸场
+      const plunder =
+        result.winner === 'attacker'
+          ? await workerManager.calculatePlunder({
+              defenderResources: toRaw(defenderResources.value),
+              attackerFleet: result.attackerRemaining
+            })
+          : { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
+      const debrisField = await workerManager.calculateDebris({
+        attackerLosses: result.attackerLosses,
+        defenderLosses: result.defenderLosses
+      })
+      const moonChance = planetLogic.calculateMoonChance(debrisField) / 100 // 转换为 0-1 范围
+
+      simulationResult.value = {
+        id: `sim_${Date.now()}`,
+        timestamp: Date.now(),
+        attackerId: 'simulator_attacker',
+        defenderId: 'simulator_defender',
+        attackerPlanetId: 'sim_attacker',
+        defenderPlanetId: 'sim_defender',
+        attackerFleet: attackerFleet.value,
+        defenderFleet: defenderFleet.value,
+        defenderDefense: defenderDefense.value,
+        attackerLosses: result.attackerLosses,
+        defenderLosses: result.defenderLosses,
+        winner: result.winner,
+        plunder,
+        debrisField,
+        rounds: result.rounds,
+        attackerRemaining: result.attackerRemaining,
+        defenderRemaining: result.defenderRemaining,
+        roundDetails: result.roundDetails,
+        moonChance
+      }
+
+      // 显示结果对话框
+      showResultDialog.value = true
+    } catch (error) {
+      console.error('[BattleSimulator] 模拟失败:', error)
+      toast.error(t('simulatorView.simulationError', '模拟失败，请稍后重试'))
     }
-
-    const defenderSide = {
-      ships: toRaw(defenderFleet.value),
-      defense: toRaw(defenderDefense.value),
-      weaponTech: defenderTech.value.weapon,
-      shieldTech: defenderTech.value.shield,
-      armorTech: defenderTech.value.armor
-    }
-
-    // 使用 Worker 执行战斗模拟
-    const result = await workerManager.simulateBattle({
-      attacker: attackerSide,
-      defender: defenderSide,
-      maxRounds: gameStore.battleToFinish ? 100 : 6
-    })
-
-    // 计算掠夺和残骸场
-    const plunder =
-      result.winner === 'attacker'
-        ? await workerManager.calculatePlunder({
-            defenderResources: toRaw(defenderResources.value),
-            attackerFleet: result.attackerRemaining
-          })
-        : { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
-    const debrisField = await workerManager.calculateDebris({
-      attackerLosses: result.attackerLosses,
-      defenderLosses: result.defenderLosses
-    })
-    const moonChance = planetLogic.calculateMoonChance(debrisField) / 100 // 转换为 0-1 范围
-
-    simulationResult.value = {
-      id: `sim_${Date.now()}`,
-      timestamp: Date.now(),
-      attackerId: 'simulator_attacker',
-      defenderId: 'simulator_defender',
-      attackerPlanetId: 'sim_attacker',
-      defenderPlanetId: 'sim_defender',
-      attackerFleet: attackerFleet.value,
-      defenderFleet: defenderFleet.value,
-      defenderDefense: defenderDefense.value,
-      attackerLosses: result.attackerLosses,
-      defenderLosses: result.defenderLosses,
-      winner: result.winner,
-      plunder,
-      debrisField,
-      rounds: result.rounds,
-      attackerRemaining: result.attackerRemaining,
-      defenderRemaining: result.defenderRemaining,
-      roundDetails: result.roundDetails,
-      moonChance
-    }
-
-    // 显示结果对话框
-    showResultDialog.value = true
   }
 
   // 重置模拟

@@ -2490,7 +2490,9 @@ export default {
     defense: '방어 가속',
     hours: '{count}시간',
     minutes: '{count}분',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: '일일 잔여 한도: {remaining} DM',
+    dailyCapExceeded: '일일 가속 한도 도달, 잔여 {remaining} DM'
   },
 
   growthFund: {

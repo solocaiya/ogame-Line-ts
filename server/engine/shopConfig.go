@@ -65,12 +65,12 @@ var MonthlyCards = map[string]MonthlyCard{
 	"small_monthly": {
 		ID: "small_monthly", Name: "小月卡", AmountRMB: 30,
 		DailyDM: 217, DurationDays: 30, VIPLevel: 1, // 217×30 = 6500 DM total
-		Perks: []string{"build_queue_plus_1", "build_speed_10pct"},
+		Perks: []string{"research_queue_plus_1", "auto_upgrade", "trade_bonus_50pct"},
 	},
 	"large_monthly": {
 		ID: "large_monthly", Name: "大月卡", AmountRMB: 68,
 		DailyDM: 367, DurationDays: 30, VIPLevel: 2, // 367×30 = 11000 DM total
-		Perks: []string{"attack_5pct", "defense_5pct", "fleet_speed_25pct", "research_queue_plus_1", "research_speed_10pct"},
+		Perks: []string{"build_queue_plus_1", "travel_time_reduction_25pct", "trade_double", "max_queue_cap_plus_2"},
 	},
 }
 

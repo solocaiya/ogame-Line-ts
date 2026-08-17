@@ -238,7 +238,13 @@
                   class="resource-bar flex items-center gap-3 sm:gap-6 justify-start sm:justify-center"
                   :class="[resourceBarExpanded ? 'hidden' : 'overflow-x-auto']"
                 >
-                  <div v-for="resourceType in resourceTypes" :key="resourceType.key" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  <div
+                    v-for="resourceType in resourceTypes"
+                    :key="resourceType.key"
+                    class="flex items-center gap-1.5 sm:gap-2 shrink-0"
+                    :class="resourceType.key === 'darkMatter' ? 'cursor-pointer' : ''"
+                    @click="resourceType.key === 'darkMatter' && router.push('/recharge')"
+                  >
                     <ResourceIcon :type="resourceType.key" size="md" />
                     <div class="min-w-0">
                       <!-- 电力显示：当前储量/最大容量，净产量/小时 -->

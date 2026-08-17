@@ -2593,7 +2593,9 @@ export default {
     defense: '加速防御',
     hours: '{count} 小时',
     minutes: '{count} 分钟',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: '今日剩余额度: {remaining} DM',
+    dailyCapExceeded: '今日加速额度已用尽，剩余 {remaining} DM'
   },
 
   growthFund: {

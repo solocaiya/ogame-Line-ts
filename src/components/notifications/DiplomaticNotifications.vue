@@ -60,7 +60,7 @@
                 >
                   {{ getNotificationExtra(notification)?.text }}
                 </span>
-                <span class="text-[10px] text-muted-foreground">
+                <span class="text-xs text-muted-foreground">
                   {{ formatRelativeTime((Date.now() - notification.timestamp) / 1000, t) }}{{ t('diplomacy.ago') }}
                 </span>
               </div>

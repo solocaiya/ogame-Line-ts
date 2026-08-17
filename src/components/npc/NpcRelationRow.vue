@@ -46,16 +46,16 @@
 
         <!-- 操作按钮 -->
         <div class="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" class="h-8 w-8" @click.stop="handleGiftResources" :title="t('diplomacy.actions.gift')">
+          <Button variant="ghost" size="icon" class="h-9 w-9" @click.stop="handleGiftResources" :title="t('diplomacy.actions.gift')">
             <Gift class="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" class="h-8 w-8" @click.stop="handleViewPlanets" :title="t('diplomacy.actions.viewPlanets')">
+          <Button variant="ghost" size="icon" class="h-9 w-9" @click.stop="handleViewPlanets" :title="t('diplomacy.actions.viewPlanets')">
             <Globe class="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            class="h-8 w-8"
+            class="h-9 w-9"
             @click.stop="openNoteDialog"
             :title="npc.note ? t('diplomacy.actions.editNote') : t('diplomacy.actions.addNote')"
           >
@@ -103,20 +103,20 @@
             <!-- 好感度数值 -->
             <span class="text-xs font-medium mr-1" :class="reputationColor">{{ reputation > 0 ? '+' : '' }}{{ reputation }}</span>
             <!-- 操作按钮 -->
-            <Button variant="ghost" size="icon" class="h-7 w-7" @click.stop="handleGiftResources" :title="t('diplomacy.actions.gift')">
-              <Gift class="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" class="h-9 w-9" @click.stop="handleGiftResources" :title="t('diplomacy.actions.gift')">
+              <Gift class="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" class="h-7 w-7" @click.stop="handleViewPlanets" :title="t('diplomacy.actions.viewPlanets')">
-              <Globe class="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" class="h-9 w-9" @click.stop="handleViewPlanets" :title="t('diplomacy.actions.viewPlanets')">
+              <Globe class="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              class="h-7 w-7"
+              class="h-9 w-9"
               @click.stop="openNoteDialog"
               :title="npc.note ? t('diplomacy.actions.editNote') : t('diplomacy.actions.addNote')"
             >
-              <Pencil class="h-3.5 w-3.5" />
+              <Pencil class="h-4 w-4" />
             </Button>
           </div>
         </div>

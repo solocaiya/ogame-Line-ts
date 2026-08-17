@@ -20,7 +20,7 @@
 
         <!-- 操作按钮 -->
         <div class="flex items-center justify-end">
-          <Button size="sm" class="text-xs h-7" @click="handleDismiss">
+          <Button size="sm" class="text-xs h-9 min-h-9" @click="handleDismiss">
             {{ t('hints.dontShowAgain') }}
           </Button>
         </div>

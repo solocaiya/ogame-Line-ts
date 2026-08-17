@@ -255,6 +255,7 @@ func main() {
 		accel.POST("/fleet-build", accelHandler.AccelerateFleetBuild)
 		accel.POST("/fleet-travel", accelHandler.AccelerateFleetTravel)
 		accel.GET("/available", accelHandler.GetAvailable)
+		accel.GET("/daily-cap", accelHandler.GetDailyCapStatus)
 	}
 
 	// WebSocket endpoint

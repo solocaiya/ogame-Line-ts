@@ -74,7 +74,7 @@
                 {{ getLocalizedRelationStatus(diagnostic.relationStatusKey) }}
               </Badge>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-3">
               <div class="flex items-center gap-2">
                 <span class="text-muted-foreground">{{ t('diplomacy.diagnostic.difficulty') }}:</span>
                 <span class="font-medium">{{ t(`diplomacy.diagnostic.difficultyLevels.${diagnostic.difficulty}`) }}</span>
@@ -206,6 +206,7 @@
         <Button
           variant="outline"
           size="icon"
+          class="h-9 w-9"
           @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
           :title="sortOrder === 'asc' ? t('diplomacy.sort.ascending') : t('diplomacy.sort.descending')"
         >

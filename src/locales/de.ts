@@ -2565,7 +2565,9 @@ export default {
     defense: 'Verteidigung beschleunigen',
     hours: '{count} Std.',
     minutes: '{count} Min.',
-    costDM: '{amount} DM'
+    costDM: '{amount} DM',
+    dailyCapRemaining: 'Verbleibendes Tageslimit: {remaining} DM',
+    dailyCapExceeded: 'Tägliches Beschleunigungslimit erreicht, {remaining} DM verbleibend'
   },
 
   growthFund: {

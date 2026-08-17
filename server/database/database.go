@@ -211,6 +211,10 @@ func migrate() error {
 
 		// Description field for dark matter transactions
 		`ALTER TABLE dark_matter_transactions ADD COLUMN description TEXT DEFAULT ''`,
+
+		// Daily acceleration spending cap tracking (resets each UTC day)
+		`ALTER TABLE users ADD COLUMN daily_accel_spent INTEGER DEFAULT 0`,
+		`ALTER TABLE users ADD COLUMN daily_accel_reset_date TEXT DEFAULT ''`,
 	}
 
 	for _, m := range migrations {
