@@ -60,22 +60,20 @@ export const unlockAudio = () => {
 export const initAudio = (router?: { afterEach: (cb: (to: { name?: string | symbol }) => void) => void }) => {
   if (typeof window === 'undefined') return
 
-  // 监听首次用户交互以解锁音频
+  // 监听用户交互以解锁音频（不自动移除，每次交互都尝试解锁）
   const unlock = () => {
     unlockAudio()
-    // 解锁后移除监听器
-    window.removeEventListener('click', unlock)
-    window.removeEventListener('keydown', unlock)
-    window.removeEventListener('touchstart', unlock)
   }
   window.addEventListener('click', unlock, { once: false })
   window.addEventListener('keydown', unlock, { once: false })
   window.addEventListener('touchstart', unlock, { once: false })
 
   // 注册路由监听 — 自动切换 BGM 场景
+  // 路由切换是用户主动导航（用户手势），趁机 unlock 并尝试恢复 BGM
   if (router) {
     router.afterEach((to) => {
       if (to.name) {
+        unlockAudio() // 路由切换时尝试解锁 + 恢复 BGM
         switchBgm(to.name)
       }
     })
